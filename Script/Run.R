@@ -61,7 +61,7 @@ VSl = BW*(CalcInput$FVBo + CalcInput$FVBr + CalcInput$FVMu + CalcInput$FVSk);   
 VRa = BW*(CalcInput$FVHe + CalcInput$FVLu + CalcInput$FVSp);                      #rapidly perfused (as above)
 VBl = BW*0.06;                                                                    #0.06 is the fractional volume of blood based on Musther 
 VBi = BW*0.00023495; #bile volume total volume was 46.97 +- 4.21ul; male Fisher rats 180-220g => fractional volume of bile is 0.00023495 https://ncbi.nlm.nih.gov/pmc/articles/PMC1891969/
-VSIL =; #total volume of lumen = 2ml => I assume SI 1 and LI 1
+VSIL = 08; #total volume of lumen = 2ml => I assume SI 1 and LI 1
 VLIL =;
 
 # Tissue Blood Flow Rates (L/h)
