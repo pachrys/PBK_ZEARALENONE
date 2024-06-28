@@ -8,14 +8,17 @@
 LInmplexModel <- function() {
   ModelZEN <- rxode2({  
     
+    #----Concentrations-------------------------------------------------------#
+    
     # Zearalenone
+    
     ##Non perfused organ Concentrations (umol/L)
     CBi = ABi / VBi; #bile
     
     ##Tissue cellular Concentrations (umol/L)                                    #Abbreviation (C for Concentration and then 2 first letters of tissue name)
     CIn = AIn / VIn;                                                              #ZEN Concentration in intestine (umol/L)
     CLi = ALi / VLi;                                                              #Zen Concentration in liver (umol/L)
-    CKi= AKi / VKi;                                                               #ZEN Concentration in the kidney (umol/L)
+    CKi = AKi / VKi;                                                               #ZEN Concentration in the kidney (umol/L)
     CAd = AAd / VAd;                                                              #ZEN Concentration in adipose (umol/L)
     CSl = ASl / VSl;                                                              #ZEN Concentration in slowly perfused tissue (umol/L)
     CRa = ARa / VRa;                                                              #ZEN Concentration in rapidly perfused tissue (umol/L)
@@ -33,11 +36,13 @@ LInmplexModel <- function() {
     CKi_free = CvKi*fub
     CLi_free = CvLi*fub
     
+    
+    
     # Zearalenone glucuronide
+    
     ##Non perfused organ concentrations (umol/L)
     CInL.glu = AInL.glu / VInL; #Concentration intestinal lumen glucuronide
-    CBi.glu = ABi.glu / VBi; #Concentration bile #need to find the bile volume
-    
+    CBi.glu = ABi.glu / VBi; #Concentration bile 
     
     ##Tissue cellular Concentrations (umol/L)                                      #Abbreviation (C for Concentration and then 2 first letters of tissue name)
     CIn.glu = AIn.glu / VIn; #Concentration intestinal tissue glucuronide
@@ -56,16 +61,35 @@ LInmplexModel <- function() {
     CvSl.glu = CSl.glu / PSlb.glu #Concentration leaving slowly perfused tissue glucuronide
     CvRa.glu = CRa.glu / PRab.glu #Concentration leaving rapidly perfused tissue glucuronide
     
-    # Active tnsport
-    GlucExcretion.InL = VmaxExcIn.glu*CIn.glu/(KmExc.glu+CIn.glu); #excretion from the intestinal tissue to intestinal lumen
-    InL.GlucUptake = VmaxAbsIn.glu*CInL.glu/(KmAbs.glu+CInL.glu); #uptake from the small intestinal lumen to the tissue
+    
+    
+    #----Kinetic equations Zearalenone and Glucuronide------------------------#
+    
+    
+    # Active transport
+    ##Glucuronide excretion from intestinal tissue to intestinal lumen
+    GlucExcretion.InL = VmaxExcIn.glu*CIn.glu/(KmExc.glu+CIn.glu);
+    
+    ##Glucuronide uptake from intestinal lumen to intestinal tissue
+    InL.GlucUptake = VmaxAbsIn.glu*CInL.glu/(KmAbs.glu+CInL.glu); 
+    
     
     # Metabolism
-    InL.Gluc.Hydrolysis = (1-kTIn)*AInL.glu; #hydrolysis glucuronide to zen in small intestinal lumen
-    Intestinal.GlucMet = CLint*CIn; #intestinal glucuronidation of zearalenone
-    Liver.GlucMet = Vmax_glu*CLi/(Km_glu+CLi); #liver glucuronidation of zearalenone
+    ##Hydrolysis of glucuronide to zearalenone in small intestinal lumen
+    InL.Gluc.Hydrolysis = (1-kTIn)*AInL.glu; #umol/hhydrolysis is limited by intestinal transit rate
+    #InL.Gluc.Hydrolysis = (kHydro)*AInL.glu; #replacement option
     
-    # Differential equations Zearalenone; rate of change in amounts in each tissue
+    ##Intestinal glucuronidation of zearalenone
+    Intestinal.GlucMet = VmaxMet.In*CIn/(Km_glu+CIn);  
+    
+    ##Liver glucuronidation of zearalenone
+    Liver.GlucMet = VmaxMet.Li*CLi/(Km_glu+CLi); 
+    
+    
+    
+    #----Differential equations Zearalenone and Glucuronide-------------------#
+    
+    # Rate of change in amounts in each tissue (umol/h)
     
     # Intestinal Lumen
     d/dt(AInL) = InL.Gluc.Hydrolysis - (ka*AInL) - (kTIn*AInL); 
@@ -80,8 +104,8 @@ LInmplexModel <- function() {
     d/dt(ALi) = (QPo*CvIn) + (QLi*(CBl-CvLi)) - Liver.GlucMet; 
     
     # Kidney
-    d/dt(AKi) = QKi*(CBl - CvKi) - (CLRe*CKi_free); #CLRe is equal to rat GER
-    d/dt(AUr) = (CLRe*CKi_free); 
+    d/dt(AKi) = QKi*(CBl - CvKi) - (CL_Re*CKi_free); #CL_Re is equal to rat GER
+    d/dt(AUr) = (CL_Re*CKi_free); 
     
     # Adipose
     d/dt(AAd) = QAd*(CBl - CvAd); 
@@ -107,15 +131,15 @@ LInmplexModel <- function() {
     #               fromInLumen
     
     # Liver
-    d/dt(ALi.glu) = (QPo*CvIn.glu) + QLi*(CBl-CvLi.glu) + Liver.GlucMet - (CBi*CLi.glu);
+    d/dt(ALi.glu) = (QPo*CvIn.glu) + QLi*(CBl-CvLi.glu) + Liver.GlucMet - (CL_Bi*CLi.glu);
     #               fromPortal       fromToBlood          fromZEN         toBile
-    d/dt(ABi.glu) = (CBi*CLi.glu) - (kTge*CBi.glu);
+    d/dt(ABi.glu) = (CL_Bi*CLi.glu) - (kTge*CBi.glu);
     #               fromLiver       toSmallIntestine
     
     # Kidney
-    d/dt(AKi.glu) = QKi*(CBl.glu-CvKi.glu) - (CLRe*CKi.glu); #CLRe is equal to rat GER
+    d/dt(AKi.glu) = QKi*(CBl.glu-CvKi.glu) - (CL_Re*CKi.glu); #CL_Re is equal to rat GER
     #               fromToBlood              toUrine
-    d/dt(AUr.glu) = (CLRe*CKi.glu); 
+    d/dt(AUr.glu) = (CL_Re*CKi.glu); 
     
     # Adipose
     d/dt(AAd.glu) = QAd*(CBl.glu - CvAd.glu); 
@@ -167,12 +191,12 @@ PO_EHC.PBKfunction <- function() {
     
     #Differential equations perfused tissues
     d/dt(ALi) = (ka*AIn) + QLi*(CBl - CvLi) +
-      - ((Vmax_glu * CLi_free) / (Km_glu + CLi_free));                            #(umol/h) rate of change in amount of ZEN in the liver: what is absorbed from the intestine + what is absorbed and leaves from/to the blood - rate of metabolism (umol/h) is metabolised to glucuronides
-    d/dt(ALi.glu) = ((Vmax_glu * CLi_free) / (Km_glu + CLi_free)) +
+      - ((VmaxMet.Li * CLi_free) / (Km_glu + CLi_free));                            #(umol/h) rate of change in amount of ZEN in the liver: what is absorbed from the intestine + what is absorbed and leaves from/to the blood - rate of metabolism (umol/h) is metabolised to glucuronides
+    d/dt(ALi.glu) = ((VmaxMet.Li * CLi_free) / (Km_glu + CLi_free)) +
       - (kBi*ALi.glu);                                                           #(umol/h) rate of change in amount in ZEN glucuronides the liver: what is formed after glucuronidation minus what is secreted to the bile 
     
-    d/dt(AKi) = QKi*(CBl - CvKi) - (CLRe*CKi_free);                               #(umol/h) rate of change in amount in the kidney
-    d/dt(AUr) = CLRe*CKi_free;                                                                #(umol/h) rate of change in amount ZEN eliminated in urine
+    d/dt(AKi) = QKi*(CBl - CvKi) - (CL_Re*CKi_free);                               #(umol/h) rate of change in amount in the kidney
+    d/dt(AUr) = CL_Re*CKi_free;                                                                #(umol/h) rate of change in amount ZEN eliminated in urine
     
     d/dt(AAd) = QAd*(CBl - CvAd);                                                 #(umol/h) rate of change in amount in the adipose tissue
     d/dt(ASl) = QSl*(CBl - CvSl);                                                 #(umol/h) rate of change in amount in the slowly perfused
@@ -215,18 +239,18 @@ IV_ECH.PBKfunction <- function() {
     CLi_free = CvLi*fub
     
     #Differential equations gastro-intestinal tract - not perfused
-    d/dt(AIn) = (CLBi*CLi.glu) - (ka*AIn) - (kTSIn*AIn);                             #(umol/h) rate of change in amount of ZEN in the intestine: the dose + the amount of zen formed after microbial hydrolysis of zen-gluc - fecal excretion
+    d/dt(AIn) = (CL_Bi*CLi.glu) - (ka*AIn) - (kTSIn*AIn);                             #(umol/h) rate of change in amount of ZEN in the intestine: the dose + the amount of zen formed after microbial hydrolysis of zen-gluc - fecal excretion
     d/dt(ALIn) = (kTSIn*AIn) - (kTLIn*ALIn);                                            #(umol/h) rate of change in amount of ZEN in LInlon
     d/dt(AFe) = kTLIn*ALIn;                                                           #(umol/h) rate of change in amount of ZEN eliminated in the feces
     
     #Differential equations perfused tissues
     d/dt(ALi) = (ka*AIn) + QLi*(CBl - CvLi) +
-      - ((Vmax_glu * CLi_free) / (Km_glu + CLi_free));                              #(umol/h) rate of change in amount of ZEN in the liver: what is absorbed from the intestine + what is absorbed and leaves from/to the blood - rate of metabolism (umol/h) is metabolised to glucuronides
-    d/dt(ALi.glu) = ((Vmax_glu * CLi_free) / (Km_glu + CLi_free)) +
-      - (CLBi*CLi.glu);                                                             #(umol/h) rate of change in amount in ZEN glucuronides the liver: what is formed after glucuronidation minus what is secreted to the bile 
+      - ((VmaxMet.Li * CLi_free) / (Km_glu + CLi_free));                              #(umol/h) rate of change in amount of ZEN in the liver: what is absorbed from the intestine + what is absorbed and leaves from/to the blood - rate of metabolism (umol/h) is metabolised to glucuronides
+    d/dt(ALi.glu) = ((VmaxMet.Li * CLi_free) / (Km_glu + CLi_free)) +
+      - (CL_Bi*CLi.glu);                                                             #(umol/h) rate of change in amount in ZEN glucuronides the liver: what is formed after glucuronidation minus what is secreted to the bile 
     
-    d/dt(AKi) = QKi*(CBl - CvKi) - (CLRe*CKi_free);                                 #(umol/h) rate of change in amount in the kidney
-    d/dt(AUr) = CLRe*CKi_free;                                            #(umol/h) rate of change in amount ZEN eliminated in urine
+    d/dt(AKi) = QKi*(CBl - CvKi) - (CL_Re*CKi_free);                                 #(umol/h) rate of change in amount in the kidney
+    d/dt(AUr) = CL_Re*CKi_free;                                            #(umol/h) rate of change in amount ZEN eliminated in urine
     
     d/dt(AAd) = QAd*(CBl - CvAd);                                                   #(umol/h) rate of change in amount in the adipose tissue
     d/dt(ASl) = QSl*(CBl - CvSl);                                                   #(umol/h) rate of change in amount in the slowly perfused

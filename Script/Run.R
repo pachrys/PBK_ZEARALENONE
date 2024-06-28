@@ -52,7 +52,7 @@ BW = PO.dat$BW;                                                                 
 QC = 80*60/1000;                                                                  #(L/h) units change; 80ml/min; Musther
 
 # Tissue Volumes (L)                                                              #(these are weights; assumption that every tissue has a density of 1 kg/L); fractional volumes come from Musther (insignificant differences from Brown, Punt, Ruark)
-VSt = BW*CalcInput$FVSt;                                                          #stomach
+#VSt = BW*CalcInput$FVSt;                                                          #stomach
 VIn = BW*CalcInput$FVGu;                                                          #intestine
 VLi = BW*CalcInput$FVLi;                                                          #liver
 VKi = BW*CalcInput$FVKi;                                                          #kidney
@@ -61,11 +61,11 @@ VSl = BW*(CalcInput$FVBo + CalcInput$FVBr + CalcInput$FVMu + CalcInput$FVSk);   
 VRa = BW*(CalcInput$FVHe + CalcInput$FVLu + CalcInput$FVSp);                      #rapidly perfused (as above)
 VBl = BW*0.06;                                                                    #0.06 is the fractional volume of blood based on Musther 
 VBi = BW*0.00023495; #bile volume total volume was 46.97 +- 4.21ul; male Fisher rats 180-220g => fractional volume of bile is 0.00023495 https://ncbi.nlm.nih.gov/pmc/articles/PMC1891969/
-VSIL =; #total volume of lumen = 2ml => I assume SI 1 and LI 1
-VLIL =;
+VInL = 2/1000; #total volume of lumen = 2ml 
 
 # Tissue Blood Flow Rates (L/h)
 QC = 80*60/1000;                                                                  #(L/h) units change; 80ml/min; Musther
+QIn = QC*CalcInput$FQGu;
 QLi = QC*CalcInput$FQLi;                                                          #(L/h) liver
 QKi = QC*CalcInput$FQKi;                                                          #(L/h) kidney
 QAd = QC*CalcInput$FQAd;                                                          #(L/h) adipose
@@ -76,20 +76,34 @@ MassBalanceQC = QC - (QLi + QKi + QAd + QSl + QRa);                             
 
 QGu = QC*CalcInput$FQGu
 
-# Scaling in vitro to in vivo absorption parameters
-Peff.human = (10^(0.4926*log10(ZEN.dat$Papp)- 0.1454));                           #human Peff(cm^-4/s)
-Peff.rat = Peff.human/11.04;                                                      #rat Peff(cm^-4/s)
-Peff = Peff.rat/10000*3600;                                                       #conversion to cm/h
-ka = Peff*2/ZEN.dat$R;                                                            #/h  
+# Intestinal transit parameters
+# kTge = 1/ZEN.dat$kTge, #1/h, gastric emptying rate
+# kTsi = 1/ZEN.dat$kTsi.7, #1/h, small intestine transit time; change to kTsi or kTsi.7 depending on the number of intestines
+# kTco = 1/ZEN.dat$kTco, #1/h, colon transit time
+kTIn = 1/(ZEN.dat$kTsi+ZEN.dat$kTco) #1/h, total intestinal transit time including small and large intestine
 
-# Transforming clearance to rate
-CLBi = ZEN.dat$CLBi*60/1000                                                       #L/h, biliary clearance; scaling from ml/min to L/h
-kBi = CLBi/VLi                                                                   #/h. biliary secretion rate
+# TO CHANGE!!! Scaling in vitro to in vivo absorption parameters 
+Peff.human = (10^(0.4926*log10(ZEN.dat$Papp)- 0.1454)); #human Peff(cm^-4/s)
+Peff.rat = Peff.human/11.04; #rat Peff(cm^-4/s)
+Peff = Peff.rat/10000*3600; #conversion to cm/h
+ka = Peff*2/ZEN.dat$R; #/h  
+
+# Clearance parameters
+CL_Bi = ZEN.dat$CL_Bi*60/1000 #L/h, biliary clearance; scaling from ml/min to L/h; CHANGED FROM 0.4 TO 6.3; BASED ON BAOJIAN WU DOI 10.1002/jps.22827
+#kBi = CL_Bi/VLi #/h. biliary secretion rate
+CL_Re = ZEN.dat$CL_Re*60/1000 #L/h, renal clearance; scaling to L/h
 
 
-# Scaling in vitro to n vivo metabolism parameters
-Vmax_glu = ZEN.dat$Vmax_glu * ZEN.dat$SF * VLi*1000                               #scaling from nmol/min/mg protein to nmol/min for whole liver; equation from {Grandoni, 2019 #457}; in vivo = in vitro * scaling to microsomal protein per gram of rat liver * scaling to total weight (assuming density=1) of rat liver
-#Vmax_hyd = ZEN.dat$Vmax_hyd * ZEN.dat$SF * VIn*1000                              #scaling from nmol/min/mg protein to nmol/min for whole liver; equation from {Grandoni, 2019 #457}; in vivo = in vitro * scaling to microsomal protein per gram of rat liver * scaling to total weight (assuming density=1) of rat liver
+# Scaling in vitro to in vivo metabolism parameters
+VmaxMet.Li = ZEN.dat$VmaxMet.Li * ZEN.dat$SF.Li * VLi*1000 * 60/1000 #umol/h, scaling from nmol/min/mg protein to nmol/min for whole liver; equation from {Grandoni, 2019 #457}; in vivo = in vitro * scaling to microsomal protein per gram of rat liver * scaling to total weight (assuming density=1) of rat liver; SF = 46mg microsomal protein/g liver ({Musther, 2017 #458})
+VmaxMet.In = ZEN.dat$VmaxMet.In * ZEN.dat$SF.In * VIn*1000 * 60/1000 #umol/h, scaling from nmol/min/mg protein to nmol/min for whole liver; equation from {Grandoni, 2019 #457}; in vivo = in vitro * scaling to microsomal protein per gram of rat liver * scaling to total weight (assuming density=1) of rat intestine; SF = 15.5mg microsomal protein/g gut ({Musther, 2017 #458})
+
+#Vmax_hyd = ZEN.dat$Vmax_hyd * ZEN.dat$SF * VIn*1000 #scaling from nmol/min/mg protein to nmol/min for whole liver; equation from {Grandoni, 2019 #457}; in vivo = in vitro * scaling to microsomal protein per gram of rat liver * scaling to total weight (assuming density=1) of rat liver
+#kHydro = 1/1000 #/h according to Veronique
+
+# Scaling in vitro to in vivo transport parameters; according to {Videmann, 2008 #384}; input values are expressed in pmol/h and uM; cell concentration for transport experiments is not mentioned!!
+VmaxExc.In.glu = ZEN.dat$VmaxExc.In.glu/1000000 #umol/h, scaling from pmol/h
+VmaxAbs.In.glu = ZEN.dat$VmaxAbs.In.glu/1000000 #umol/h, scaling from pmol/h
 
 params <- cbind(
   PLib = CalcInput$PLib, #liver:plasma partition coefficient
@@ -111,16 +125,14 @@ params <- cbind(
   QSl = QSl, #L/h, slowlyperfusedtissue flow rate
   QRa = QRa, #L/h, rapidlyperfusedtissue flow rate
   ka = ka, #absorption constant
-  kTge = 1/ZEN.dat$kTge, #1/h, gastric emptying rate
-  kTsi = 1/ZEN.dat$kTsi.7, #1/h, small intestine transit time; change to kTsi or kTsi.7 depending on the number of intestines
-  kTco = 1/ZEN.dat$kTco, #1/h, colon transit time
-  kBi = kBi,
-  # kBi.gluc = 0.693 *100000,
-  # kHydro = 0.231,
-  CLRe = ZEN.dat$CLRe*60/1000, #L/h, renal clearance; scaling to L/h
-  # CLBi = CLBi,
-  Vmax_glu = Vmax_glu*60/1000, #umol/h, maximum rate of metabolism; scaling from nmol/min to umol/h
-  Km_glu = ZEN.dat$Km_glu #uM, enzyme affinity constant
+  kTIn = kTIn, #1/h, total intestinal transit time including small and large intestine
+  CL_Re = CL_Re, #L/h, renal clearance; scaling to L/h
+  CL_Bi = CL_Bi,
+  VmaxMet.Li = VmaxMet.Li, #umol/h, liver maximum rate of metabolism; scaling from nmol/min to umol/h
+  VmaxMet.In = VmaxMet.In, #umol/h, intestine maximum rate of metabolism; scaling from nmol/min to umol/h
+  Km_glu = ZEN.dat$Km_glu, #uM, enzyme affinity constant; proper to the enzyme so same for both liver and intestine
+  KmExc.glu = ZEN.dat$KmExc.glu, #uM, transporter affinity constant; excretion from intestinal tissue to lumen
+  KmAbs.glu = ZEN.dat$KmAbs.glu #uM, transporter affinity constant; absorption from lumen to intestinal tissue
 )
 #-----------------------------------------------------------------------------#
 

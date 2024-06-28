@@ -47,11 +47,11 @@ dAIB/dt = QI*CR   + CL_ef1*CI            - (QI+CL_in1)*Fu*CIB
 
 #Intestinal tissue
 dAI/dt = CL_in1*fu*CIB + ka*AIL    - (CL_ef1 + CL_met + CL_sec1)*fu*CI
-#        fromblood       fromlumen   totissue tomet    tolumen
+#        fromblood       fromlumen   totissue  tomet    tolumen
 
 #Intestinal lumen
 dAIL/dt = CL_sec1*fu*CI - (ka     + kg1)*AIL + Qbile*Cbile + kh*AIL.gluc
-#         fromtissue     tolumen togluc?!     frombile      fromhydrolysis?
+#         fromtissue     tolumen togluc?!      frombile       ?
 
 #Liver blood
 dALB/dt = QI*fu*CIB + QHA*fu*CR    + CL_el1*CL - (QI + QHA + CL_in1)*fu*CLB
