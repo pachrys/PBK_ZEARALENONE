@@ -12,8 +12,8 @@
 TodayIs <- format(Sys.Date())
  
 #Define what you want to test! choose between PO, PO_EHC, IV, IV_EHC this will define the function that will be chosen
-AdminType <- "PO_EHC"
-WhatAmITesting <- "EHCNotRecoveryCorrected"
+AdminType <- "PO_Metab.PBKfunction"
+WhatAmITesting <- "DetailedMetabolism"
 
 
 #*****************************************************************************#
@@ -74,7 +74,6 @@ QSl = QC*(CalcInput$FQBo + CalcInput$FQBr +
 QRa = QC - (QLi + QKi + QAd + QSl);                                               #(L/h) rapidly perfused (as above! without lungs as lungs get everything!)
 MassBalanceQC = QC - (QLi + QKi + QAd + QSl + QRa);                               #check blood flow mass balance; should be 0
 
-QGu = QC*CalcInput$FQGu
 
 # Intestinal transit parameters
 # kTge = 1/ZEN.dat$kTge, #1/h, gastric emptying rate
@@ -174,14 +173,14 @@ inits <- c(
 # Call PBK functions
 source(here("Script/Functions/ModelFunctions.R"))
 
-ModelZEN <- PO_EHC.PBKfunction() #!choose the PBK function accordingly!
+ModelZEN <- PO_Metab.PBKfunction() #!choose the PBK function accordingly!
 print(summary(ModelZEN))
 
 # Event table
 events <- eventTable(amount.units = amount.units,
                        time.units = time.units) %>%
     add.dosing(dose = PO_DOSE, dur = 0.01, nbr.doses = nbr.doses,
-               dosing.to = "ASt") %>%   #!change accordingly!              
+               dosing.to = "AInL") %>%   #!change accordingly!              
     add.sampling(seq(from = sampling.time.from, 
                      to = sampling.time.to, 
                      by = sampling.frequency))

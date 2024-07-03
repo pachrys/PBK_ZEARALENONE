@@ -5,7 +5,7 @@
 #*****************************************************************************#
 #---For oral dose & enterohepatic circulation---------------------------------#
 
-LInmplexModel <- function() {
+PO_Metab.PBKfunction <- function() {
   ModelZEN <- rxode2({  
     
     #----Concentrations-------------------------------------------------------#
@@ -13,7 +13,7 @@ LInmplexModel <- function() {
     # Zearalenone
     
     ##Non perfused organ Concentrations (umol/L)
-    CBi = ABi / VBi; #bile
+    CBi = ABi / VBi; #bile 
     
     ##Tissue cellular Concentrations (umol/L)                                    #Abbreviation (C for Concentration and then 2 first letters of tissue name)
     CIn = AIn / VIn;                                                              #ZEN Concentration in intestine (umol/L)
@@ -32,16 +32,16 @@ LInmplexModel <- function() {
     CvSl = CSl / PSlb;                                                            #ZEN Concentration in slowly perfused venous blood (umol/L)
     CvRa = CRa / PRab;                                                            #ZEN Concentration in rapidly perfused venous blood (umol/L)
     
-    ##Tissue free Concentrations (umol/L)
-    CKi_free = CvKi*fub
-    CLi_free = CvLi*fub
+    ##Tissue free Concentrations (umol/L)87777777777777edotr1tw@A~
+    CKi_free = CvKi*fub;
+    CLi_free = CvLi*fub;
     
     
     
     # Zearalenone glucuronide
     
     ##Non perfused organ concentrations (umol/L)
-    CInL.glu = AInL.glu / VInL; #Concentration intestinal lumen glucuronide
+    CInL.glu = AInL.glu / VInL; #Concentration intestinal lumen glucurok8ujnide
     CBi.glu = ABi.glu / VBi; #Concentration bile 
     
     ##Tissue cellular Concentrations (umol/L)                                      #Abbreviation (C for Concentration and then 2 first letters of tissue name)
@@ -54,12 +54,12 @@ LInmplexModel <- function() {
     CBl.glu = ABl.glu / VBl; #Concentration blood glucuronide
     
     ##Tissue venous Concentrations (umol/L)                                        #Only for perfused organs; Equals tissue Concentration/tissue:blood partition LInefficient
-    CvIn.glu = CIn.glu / PInb.glu #Concentration leaving intestinal tissue glucuronide
-    CvLi.glu = CLi.glu / PLib.glu #Concentration leaving liver tissue glucuronide
-    CvKi.glu = CKi.glu / PKib.glu #Concentration leaving kidney glucuronide
-    CvAd.glu = CAd.glu / PAdb.glu #Concentration leaving adipose tissue glucuronide
-    CvSl.glu = CSl.glu / PSlb.glu #Concentration leaving slowly perfused tissue glucuronide
-    CvRa.glu = CRa.glu / PRab.glu #Concentration leaving rapidly perfused tissue glucuronide
+    CvIn.glu = CIn.glu / PInb.glu; #Concentration leaving intestinal tissue glucuronide
+    CvLi.glu = CLi.glu / PLib.glu; #Concentration leaving liver tissue glucuronide
+    CvKi.glu = CKi.glu / PKib.glu; #Concentration leaving kidney glucuronide
+    CvAd.glu = CAd.glu / PAdb.glu; #Concentration leaving adipose tissue glucuronide
+    CvSl.glu = CSl.glu / PSlb.glu; #Concentration leaving slowly perfused tissue glucuronide
+    CvRa.glu = CRa.glu / PRab.glu; #Concentration leaving rapidly perfused tissue glucuronide
     
     
     
@@ -68,22 +68,22 @@ LInmplexModel <- function() {
     
     # Active transport
     ##Glucuronide excretion from intestinal tissue to intestinal lumen
-    GlucExcretion.InL = VmaxExcIn.glu*CIn.glu/(KmExc.glu+CIn.glu);
+    #Gluc excretion from intestine tissue to lumen = VmaxExcIn.glu*CIn.glu/(KmExc.glu+CIn.glu);
     
     ##Glucuronide uptake from intestinal lumen to intestinal tissue
-    InL.GlucUptake = VmaxAbsIn.glu*CInL.glu/(KmAbs.glu+CInL.glu); 
+    #Gluc uptake from intestine to lumen tissue = VmaxAbsIn.glu*CInL.glu/(KmAbs.glu+CInL.glu); 
     
     
     # Metabolism
     ##Hydrolysis of glucuronide to zearalenone in small intestinal lumen
-    InL.Gluc.Hydrolysis = (1-kTIn)*AInL.glu; #umol/hhydrolysis is limited by intestinal transit rate
-    #InL.Gluc.Hydrolysis = (kHydro)*AInL.glu; #replacement option
+    #Intestinal hydrolysis = (1-kTIn)*AInL.glu; #umol/hhydrolysis is limited by intestinal transit rate
+    #Intestinal hydrolysis = (kHydro)*AInL.glu; #replacement option
     
     ##Intestinal glucuronidation of zearalenone
-    Intestinal.GlucMet = VmaxMet.In*CIn/(Km_glu+CIn);  
+    #Intestinal glucuronidation = VmaxMet.In*CIn/(Km_glu+CIn);  
     
     ##Liver glucuronidation of zearalenone
-    Liver.GlucMet = VmaxMet.Li*CLi/(Km_glu+CLi); 
+    #Liver glucuronidation = VmaxMet.Li*CLi/(Km_glu+CLi); 
     
     
     
@@ -92,16 +92,16 @@ LInmplexModel <- function() {
     # Rate of change in amounts in each tissue (umol/h)
     
     # Intestinal Lumen
-    d/dt(AInL) = InL.Gluc.Hydrolysis - (ka*AInL) - (kTIn*AInL); 
+    d/dt(AInL) = (1-kTIn)*AInL.glu - (ka*AInL) - (kTIn*AInL); 
 
     # Intestinal tissue
-    d/dt(AIn) = (ka*AInL) + (QIn*CBl) - (QPo*CvIn) - Intestinal.GlucMet;  
+    d/dt(AIn) = (ka*AInL) + (QIn*CBl) - (QPo*CvIn) - VmaxMet.In*CIn/(Km_glu+CIn);  
 
     # Feces
     d/dt(AFe) = (kTIn*AInL); 
     
     # Liver
-    d/dt(ALi) = (QPo*CvIn) + (QLi*(CBl-CvLi)) - Liver.GlucMet; 
+    d/dt(ALi) = (QPo*CvIn) + (QLi*(CBl-CvLi)) - VmaxMet.Li*CLi/(Km_glu+CLi); 
     
     # Kidney
     d/dt(AKi) = QKi*(CBl - CvKi) - (CL_Re*CKi_free); #CL_Re is equal to rat GER
@@ -122,16 +122,16 @@ LInmplexModel <- function() {
     
     
     ## Differential equations Glucuronide
-    d/dt(AIn.glu) = Intestinal.GlucMet - GlucExcretion.InL + InL.GlucUptake + (QIn*CBl.glu) - (QPo*CvIn.glu); #(umol/h)
+    d/dt(AIn.glu) = VmaxMet.In*CIn/(Km_glu+CIn) - VmaxExcIn.glu*CIn.glu/(KmExc.glu+CIn.glu) + VmaxAbsIn.glu*CInL.glu/(KmAbs.glu+CInL.glu) + (QIn*CBl.glu) - (QPo*CvIn.glu); #(umol/h)
     #               fromIntZen           toInL               fromInL          fromblood       toportal
     
-    d/dt(AInL.glu) = GlucExcretion.InL + (kTge*CBi.glu) - InL.GlucUptake - InL.Gluc.Hydrolysis - (kTIn*AInL.glu); #(umol/h) 
+    d/dt(AInL.glu) = VmaxExcIn.glu*CIn.glu/(KmExc.glu+CIn.glu) + (kTge*CBi.glu) - VmaxAbsIn.glu*CInL.glu/(KmAbs.glu+CInL.glu) - (1-kTIn)*AInL.glu - (kTIn*AInL.glu); #(umol/h) 
     #                 fromIntissue        fromBile        toSItissue       hydrolysedtoZEN        
     d/dt(AFe.glu) = (kTIn*AInL.glu)
     #               fromInLumen
     
     # Liver
-    d/dt(ALi.glu) = (QPo*CvIn.glu) + QLi*(CBl-CvLi.glu) + Liver.GlucMet - (CL_Bi*CLi.glu);
+    d/dt(ALi.glu) = (QPo*CvIn.glu) + QLi*(CBl-CvLi.glu) + VmaxMet.Li*CLi/(Km_glu+CLi) - (CL_Bi*CLi.glu);
     #               fromPortal       fromToBlood          fromZEN         toBile
     d/dt(ABi.glu) = (CL_Bi*CLi.glu) - (kTge*CBi.glu);
     #               fromLiver       toSmallIntestine
@@ -150,7 +150,7 @@ LInmplexModel <- function() {
     # Blood
     d/dt(ABl.glu) = (QLi*CvLi) + (QKi*CvKi.glu) + (QAd*CvAd.glu) + (QSl*CvSl.glu) + (QRa*CvRa.glu) + 
       -((QIn + QLi + QKi + QAd + QSl + QRa)*CBl.glu); 
-  }) 
+  }, verbose = TRUE) 
   return(ModelZEN)
 }
 
@@ -179,8 +179,8 @@ PO_EHC.PBKfunction <- function() {
     CvRa = CRa / PRab;                                                            #ZEN Concentration in rapidly perfused venous blood (umol/L)
     
     #Tissue free Concentrations (umol/L)
-    CKi_free = CvKi*fub
-    CLi_free = CvLi*fub
+    CKi_free = CvKi*fub;
+    CLi_free = CvLi*fub;
     
     #Differential equations gastro-intestinal tract - not perfused
     d/dt(ASt) = -(kTge*ASt);                                                      #(umol/h) rate of change of amount reaching the intestine (LInrrecting for gastric emptying time)
