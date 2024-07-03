@@ -15,8 +15,8 @@ library(tidyverse)
 BW <- 0.250 #(kg)
 QC <- 80 * 60 / 1000 #(L/h)
 
-Rat.input <- read.csv(here("InputData/Rat.input.csv"), header=1)            #tissue composition mainly as R&R composition, unified by Utsey and optimised as per Musther
-Rat.dat <- Rat.input %>% filter(!tissue %in% c("RBCs", "Plasma"))               #df for all tissues except for adipose and RBCs
+Rat.input <- read.csv(here("InputData/Rat.input.csv"), header=1) #tissue composition mainly as R&R composition, unified by Utsey and optimised as per Musther
+Rat.dat <- Rat.input %>% filter(!tissue %in% c("RBCs", "Plasma")) #df for all tissues except for adipose and RBCs
 
 # Flow rates
 ## Extracting fractional flow rate (constant)
@@ -157,7 +157,8 @@ logP = ZEN.dat$logP
 BW = BW
 QC = QC
 QIn = QC.dat$QGu #Intestinal blood flow
-QLi = QC.dat$QLi #Liver blood flow                                            
+QPo = QC.dat$QGu + QC.dat$QSp #Portal blood flow = Σ small intestine, colon, pancreas, stomach, spleen
+QLi = QC.dat$QLi #Liver blood flow (this includes portal! to be changed later! to add Q hepatic artery only)                                           
 QKi = QC.dat$QKi #Kidney blood flow                                                 
 QAd = QC.dat$QAd #Adipose blood flow                                                 
 QSl = QC.dat$QBo + QC.dat$QBr + QC.dat$QMu + QC.dat$QSk #Slowly perfused blood flow   
@@ -175,6 +176,7 @@ VInL = 2/1000 #total volume of lumen = 2ml
 PIn = PCB.dat$PGu #Intestine:Blood partition coefficient
 PLi = PCB.dat$PLi #Liver:Blood partition coefficient
 PKi = PCB.dat$PKi #Kidney:Blood partition coefficient                                         
+PAd = PCB.dat$PKi #Adipose:Blood partition coefficient
 PSl = (F_Vo.dat$FVBo*PCB.dat$PBo + F_Vo.dat$FVBr*PCB.dat$PBr + 
          F_Vo.dat$FVMu*PCB.dat$PMu + F_Vo.dat$FVSk*PCB.dat$PSk) /
   (F_Vo.dat$FVBo + F_Vo.dat$FVBr + F_Vo.dat$FVMu + F_Vo.dat$FVSk) #slowly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
@@ -205,7 +207,8 @@ INPUT.parameters <- cbind(
   logP,
   BW,
   QC,
-  QIn, 
+  QIn,
+  QPo,
   QLi,   
   QKi, 
   QAd, 
@@ -219,10 +222,11 @@ INPUT.parameters <- cbind(
   VRa, 
   VBl, 
   VBi, 
-  VIn, 
+  VInL, 
   PIn, 
   PLi, 
-  PKi, 
+  PKi,
+  PAd,
   PSl, 
   PRa,
   fup, 

@@ -2,7 +2,7 @@
 library(deSolve)
 
 #---Model functions-----------------------------------------------------------#
-PBK_ZENandGLUC=function(t,state,parameters){
+PBK_ZENandGLUC <- function(t,state,parameters){
   with(as.list(c(state,parameters)),{
     
     #----Concentrations-------------------------------------------------------#
@@ -11,7 +11,7 @@ PBK_ZENandGLUC=function(t,state,parameters){
     
     ## Non perfused organ Concentrations (umol/L)
     CInL = AInL / VInL #intestinal lumen
-    CBi = ABi / VBi #bile 
+    # CBi = ABi / VBi #bile 
     
     ## Tissue cellular Concentrations (umol/L)                                    #Abbreviation (C for Concentration and then 2 first letters of tissue name)
     CIn = AIn / VIn #intestine                                                             
@@ -63,18 +63,19 @@ PBK_ZENandGLUC=function(t,state,parameters){
     
     #----Differential equations-------------------------------------------------------#
     # Rate of change in amounts in each tissue (umol/h)
+    #dD = -D
     
     # Intestinal Lumen
-    dAInL = - ka*AInL - kTIn*AInL + (1-kTIn)*AInL.glu
+    dAInL = - ka*AInL - kTIn*AInL + (1-kTIn)*AInL.glu #+D
     
     # Intestinal tissue
-    dAIn = ka*AInL + QIn*CBl - QPo*CvIn - VmaxMet.In*CIn/(Km_glu+CIn)  
+    dAIn = ka*AInL + QIn*CBl - QPo*CvIn - VmaxMet.In*CIn/(KmGluc.In+CIn)  
     
     # Feces
     dAFe = kTIn*AInL
     
     # Liver
-    dALi = QPo*CvIn + QLi*(CBl-CvLi) - VmaxMet.Li*CLi/(Km_glu+CLi) 
+    dALi = QPo*CvIn + QLi*(CBl-CvLi) - VmaxMet.Li*CLi/(KmGluc.Li+CLi) 
     
     # Kidney
     dAKi = QKi*(CBl - CvKi) - CL_Re*CKi_free #CL_Re is equal to rat GER
@@ -95,17 +96,17 @@ PBK_ZENandGLUC=function(t,state,parameters){
     
     
     ## Differential equations Glucuronide
-    dAIn.glu = VmaxMet.In*CIn/(Km_glu+CIn) - VmaxExcIn.glu*CIn.glu/(KmExc.glu+CIn.glu) + VmaxAbsIn.glu*CInL.glu/(KmAbs.glu+CInL.glu) + QIn*CBl.glu - QPo*CvIn.glu #(umol/h)
-    #          fromIntZen                    toInL                                       fromInL                                       fromblood     toportal
+    dAIn.glu = VmaxMet.In*CIn/(KmGluc.In+CIn) - VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) + VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu) + QIn*CBl.glu - QPo*CvIn.glu #(umol/h)
+    #          fromIntZen                       toInL                                       fromInL                                       fromblood     toportal
     
-    dAInL.glu = VmaxExcIn.glu*CIn.glu/(KmExc.glu+CIn.glu) + kTge*CBi.glu - VmaxAbsIn.glu*CInL.glu/(KmAbs.glu+CInL.glu) - (1-kTIn)*AInL.glu - kTIn*AInL.glu #(umol/h) 
-    #           fromIntissue                                fromBile       toSItissue                                    hydrolysedtoZEN        
+    dAInL.glu = VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) + kTge*CBi.glu - VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu) - (1-kTIn)*AInL.glu - kTIn*AInL.glu #(umol/h) 
+    #           fromIntissue                                  fromBile       toSItissue                                    hydrolysedtoZEN        
     dAFe.glu = kTIn*AInL.glu
-    #               fromInLumen
+    #         fromInLumen
     
     # Liver
-    dALi.glu = QPo*CvIn.glu + QLi*(CBl-CvLi.glu) + VmaxMet.Li*CLi/(Km_glu+CLi) - CL_Bi*CLi.glu;
-    #          fromPortal     fromToBlood          fromZEN                       toBile
+    dALi.glu = QPo*CvIn.glu + QHa*CBl -QLi*CvLi.glu + VmaxMet.Li*CLi/(KmGluc.Li+CLi) - CL_Bi*CLi.glu;
+    #          fromPortal     fromToBlood             fromZEN                          toBile
     # Bile
     dABi.glu = CL_Bi*CLi.glu - kTge*CBi.glu
     #          fromLiver       toSmallIntestine
@@ -126,8 +127,10 @@ PBK_ZENandGLUC=function(t,state,parameters){
       - (QIn + QLi + QKi + QAd + QSl + QRa)*CBl.glu 
     
     #it gives bback the amount in each organ but also the total for mass balance calculations
-    return(list(c(dAInL, dAIn, dAFe, dALi, dAKi, dAUr, dAAd, dASl, dARa, dABl,
-           dAIn.glu, dAInL.glu, dAFe.glu, ALi.glu, dABi.glu, dAKi.glu, dAUr.glu, dAAd.glu, dASl.glu, dARa.glu, dABl.glu
+    return(list(c(#dD,
+                  dAInL, dAIn, dAFe, dALi, dAKi, dAUr, dAAd, dASl, dARa, dABl,
+                  dAIn.glu, dAInL.glu, dAFe.glu, ALi.glu, dABi.glu, dAKi.glu, 
+                  dAUr.glu, dAAd.glu, dASl.glu, dARa.glu, dABl.glu
            )))
   })
 }
