@@ -112,8 +112,8 @@ Peff <- Peff.rat / 10000 * 3600 #conversion to cm/h
 ka = Peff * 2 / ZEN.dat$R #/h  
 
 # Clearance (L/h)
-CL_Bi <- ZEN.dat$CL_Bi * 60 / 1000 #L/h, biliary clearance; scaling from ml/min to L/h; CHANGED FROM 0.4 TO 6.3; BASED ON BAOJIAN WU DOI 10.1002/jps.22827
-CL_Re <- ZEN.dat$CL_Re * 60 / 1000 #L/h, renal clearance; scaling to L/h
+CL_Bi <- ZEN.dat$CLBi * 60 / 1000 #L/h, biliary clearance; scaling from ml/min to L/h; CHANGED FROM 0.4 TO 6.3; BASED ON BAOJIAN WU DOI 10.1002/jps.22827
+CL_Re <- ZEN.dat$CLRe * 60 / 1000 #L/h, renal clearance; scaling to L/h
 
 
 # Metabolism 
@@ -121,7 +121,7 @@ CL_Re <- ZEN.dat$CL_Re * 60 / 1000 #L/h, renal clearance; scaling to L/h
 ## Intestine
 VmaxGluc.SI <- 8.617 #nmol/min/mg; S9 incubations Diana ;other input 5nmol/min/mg
 KmGluc.In <- 6.198 #umol/L; S9 incubations Diana
-VmaxMet.In <- VmaxGluc.SI * ZEN.dat$SF.In * Vo.dat$VIn * 1000 * 60 / 1000 #umol/h, scaling from nmol/min/mg protein to nmol/min for whole liver; equation from {Grandoni, 2019 #457}; in vivo = in vitro * scaling to microsomal protein per gram of rat liver * scaling to total weight (assuming density=1) of rat intestine; SF = 15.5mg microsomal protein/g gut ({Musther, 2017 #458})
+VmaxMet.In <- VmaxGluc.SI * ZEN.dat$SF.In * Vo.dat$VGu * 1000 * 60 / 1000 #umol/h, scaling from nmol/min/mg protein to nmol/min for whole liver; equation from {Grandoni, 2019 #457}; in vivo = in vitro * scaling to microsomal protein per gram of rat liver * scaling to total weight (assuming density=1) of rat intestine; SF = 15.5mg microsomal protein/g gut ({Musther, 2017 #458})
 
 
 ## Liver
@@ -145,7 +145,10 @@ KmGluc.Exc <- 40 #umol/L
 VmaxExc.In.glu <- VmaxGluc.Exc.In / 1000000 #umol/h, scaling from pmol/h
 
 
-# Extracting all data
+
+
+#----Extracting all data-----------------------------------------------------#
+
 F_Vo.dat <- F_Vo.dat %>%
   pivot_wider(names_from = F_Vo.names, values_from = F_Vo)
 
@@ -194,6 +197,8 @@ VmaxAbs.In.glu = VmaxAbs.In.glu #max transport velocity to intestinal tissue (um
 KmGluc.Exc = KmGluc.Exc #affinity constant efflux transporter (umol/L)
 VmaxExc.In.glu = VmaxExc.In.glu #max transport velocity from intestinal tissue (umol/h)
 
+
+#----Saving-------------------------------------------------------------------#
 
 INPUT.parameters <- cbind(
   MW, 
