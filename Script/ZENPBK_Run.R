@@ -33,14 +33,14 @@ INPUT <- read.csv(here("InputData/CALCULATED.INPUT.csv"), header=1) %>%  #The fu
 # Tout
 STARTtime <- 0 # start of simulation (h)
 STOPtime <- 24 # end of simmulation (h) (can be from 24h to years)
-Dt <- 1/60 # steps of simulation (now it per minute) (could be 1/100, 1/200 or 1 for simulations over years)
+Dt <- 1/100 # steps of simulation (now it per minute) (could be 1/100, 1/200 or 1 for simulations over years)
 times <- seq(STARTtime,STOPtime,by=Dt)
 
 # ExPOsure
 PO_CONC = 1 #mg/kg day, Videmann
 PO_DOSE = PO_CONC*INPUT$BW/INPUT$MW*1000 #umol
 
-PO_TIME = 1 #h time it takes to administer the dose to the intestinal lumen; assumption
+PO_TIME = 0.01 #h time it takes to administer the dose to the intestinal lumen; I checked that the amount at t=0.01 in InL is 0.781408707582861
 
 # dosing = data.frame(var = c("AInL"),
 #                    time = c(seq(0, 24, by = 24)), 
@@ -99,12 +99,12 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
 #Initial state
 INITIALstate=c(
   In = 0,
-  D = 0,
+  #D = 0,
   AInL = 0, 
   AIn = 0, 
   AFe = 0, 
   ALi = 0,
-  # ABi = 0,
+  #ABi = 0,
   AKi = 0, 
   AUr = 0, 
   AAd = 0, 
@@ -138,63 +138,66 @@ head(PBK)
 plot(PBK)
 
 OUTPUT <- as.data.frame(PBK) #(umol)
+write.csv(OUTPUT, file = here(TodaysOuput, "OUTPUT.amounts21.csv"), row.names=FALSE)
 
-# # Mass Balance
-# Calculated <- c( #!Change accordingly depending on the compartments in the function#
-#   "D",
-#   "AInL", 
-#   "AIn", 
-#   "AFe", 
-#   "ALi",
-#   "AKi", 
-#   "AUr", 
-#   "AAd", 
-#   "ASl", 
-#   "ARa", 
-#   "ABl",
-#   "AIn.glu", 
-#   "AInL.glu", 
-#   "AFe.glu", 
-#   "ALi.glu", 
-#   "ABi.glu", 
-#   "AKi.glu", 
-#   "AUr.glu", 
-#   "AAd.glu", 
-#   "ASl.glu", 
-#   "ARa.glu", 
-#   "ABl.glu")
-# 
-# # Plotting function
-# source(here("Script/Functions/PlottingFunction.R"))                               #call plotting function
-# 
-# 
-# #-----Mass Balance Calculations----------------------------------------------#
-# Calculated <- rowSums(OUTPUT[ ,Calculated])
-# Total <- PO_DOSE
-# 
-# Massbalance <- Total - Calculated + 1
-# ErrPOl <- (Total - Calculated) / (Total + 1*10^(-30)) * 100                     #mass error (% of mass lost)
-# 
-# MassBalance_Error <- cbind("time" = OUTPUT[, "time"],                       #data frame
-#                            Massbalance, ErrPOl) %>%
-#   as.data.frame()
-# 
-# # Mass Balance and Error plot
-# MassBalance_Error %>%
-#   filter(time >= 0.01) %>% #as PO administration time is 0,01h
-#   ggplot(aes(time, Massbalance)) +
-#   geom_line(color = "grey") +
-#   geom_line(aes(time, ErrPOl), color = "grey6") +
-#   labs(x = "Time (h)", y = "Value",
-#        caption = "Massbalance in grey, Error in black") +
-#   CP_theme()
-# ggsave(here(TodaysOuput, "MassbalanceError.png"), dpi = 300)             #saving the plot
-# 
-# 
-# 
+
+# Mass Balance
+Calculated <- c( #!Change accordingly depending on the compartments in the function#
+  "AInL",
+  "AIn",
+  "AFe",
+  "ALi",
+  "AKi",
+  "AUr",
+  "AAd",
+  "ASl",
+  "ARa",
+  "ABl",
+  "AIn.glu",
+  "AInL.glu",
+  "AFe.glu",
+  "ALi.glu",
+  "ABi.glu",
+  "AKi.glu",
+  "AUr.glu",
+  "AAd.glu",
+  "ASl.glu",
+  "ARa.glu",
+  "ABl.glu")
+
+# Plotting function
+source(here("Script/Functions/PlottingFunction.R"))                               #call plotting function
+
+
+#-----Mass Balance Calculations----------------------------------------------#
+Calculated <- rowSums(OUTPUT[ ,Calculated])
+Total <- 7.814339e-01
+
+
+Massbalance <- Total - Calculated + 1
+ErrPOl <- (Total - Calculated) / (Total + 1*10^(-30)) * 100                     #mass error (% of mass lost)
+
+MassBalance_Error <- cbind("time" = OUTPUT[, "time"],                       #data frame
+                           Massbalance, ErrPOl) %>%
+  as.data.frame()
+
+# Mass Balance and Error plot
+MassBalance_Error %>%
+  filter(time >= 0.01) %>% #as PO administration time is 0,01h
+  ggplot(aes(time, Massbalance)) +
+  geom_line(color = "grey") +
+  geom_line(aes(time, ErrPOl), color = "grey6") +
+  labs(x = "Time (h)", y = "Value",
+       caption = "Massbalance in grey, Error in black") +
+  CP_theme()
+ggsave(here(TodaysOuput, "MassbalanceError.png"), dpi = 300)             #saving the plot
+
+
+
 
 #**STEP 5**#
 #****************************************************************************#
+
 #------------------------Plotting Simulated Output---------------------------#
 # 
 # 
