@@ -23,7 +23,7 @@ source(here("Script/ZENPBK_Function.R"))
 
 
 #----Extracting input---------------------------------------------------------#
-# Script for calculated input
+# Script for CALCULATED input
 INPUT <- read.csv(here("InputData/CALCULATED.INPUT.csv"), header=1) %>%  #The function for calculating input can be called here: source(here("Script/ZENPBK_Input"))                                         #call input script
   pivot_wider(names_from = "Parameter", 
               values_from = "Value")
@@ -137,12 +137,12 @@ head(PBK)
 #----Results------------------------------------------------------------------#
 plot(PBK)
 
-OUTPUT <- as.data.frame(PBK) #(umol)
-write.csv(OUTPUT, file = here(TodaysOuput, "OUTPUT.amounts21.csv"), row.names=FALSE)
+OUTPUT.A <- as.data.frame(PBK) #(umol)
+write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A.amounts21.csv"), row.names=FALSE)
 
 
 # Mass Balance
-Calculated <- c( #!Change accordingly depending on the compartments in the function#
+CALCULATED <- c( #!Change accordingly depending on the compartments in the function#
   "AInL",
   "AIn",
   "AFe",
@@ -170,27 +170,27 @@ source(here("Script/Functions/PlottingFunction.R"))                             
 
 
 #-----Mass Balance Calculations----------------------------------------------#
-Calculated <- rowSums(OUTPUT[ ,Calculated])
-Total <- 0.7814087
+CALCULATED <- rowSums(OUTPUT.A[ ,CALCULATED])
+TOTAL <- 0.7814087
 
 
-Massbalance <- Total - Calculated + 1
-ErrPOl <- (Total - Calculated) / (Total + 1*10^(-30)) * 100                     #mass error (% of mass lost)
+MASSBALANCE <- TOTAL - CALCULATED + 1
+ERROR <- (TOTAL - CALCULATED) / (TOTAL + 1*10^(-30)) * 100                     #mass error (% of mass lost)
 
-MassBalance_Error <- cbind("time" = OUTPUT[, "time"],                       #data frame
-                           Massbalance, ErrPOl) %>%
+MASSBALANCE_Error <- cbind("time" = OUTPUT.A[, "time"],                       #data frame
+                           MASSBALANCE, ERROR) %>%
   as.data.frame()
 
 # Mass Balance and Error plot
-MassBalance_Error %>%
+MASSBALANCE_Error %>%
   filter(time >= 0.01) %>% #as PO administration time is 0,01h
-  ggplot(aes(time, Massbalance)) +
+  ggplot(aes(time, MASSBALANCE)) +
   geom_line(color = "grey") +
-  geom_line(aes(time, ErrPOl), color = "grey6") +
+  geom_line(aes(time, ERROR), color = "grey6") +
   labs(x = "Time (h)", y = "Value",
-       caption = "Massbalance in grey, Error in black") +
+       caption = "MASSBALANCE in grey, Error in black") +
   CP_theme()
-ggsave(here(TodaysOuput, "MassbalanceError.png"), dpi = 300)             #saving the plot
+ggsave(here(TodaysOuput, "MB_ERROR.png"), dpi = 300)             #saving the plot
 
 
 
@@ -199,82 +199,103 @@ ggsave(here(TodaysOuput, "MassbalanceError.png"), dpi = 300)             #saving
 #****************************************************************************#
 
 #------------------------Plotting Simulated Output---------------------------#
-# 
-# 
-# # From amounts to concentrations
-# OUTPUT %>% 
-#   select(c("AInL":"ABl.glu")) %>% 
-#   mutate(
-#     AInL =   
-#   )
-# 
-# # To create df of simulated data for plotting
-# PlotConc <- OUTPUT %>% #!change accordingly depending on the compartments in the model
-#   rename("Time" = "time",
-#          "Intestine" = "CIn",
-#          "Liver" = "CLi",
-#          "Liver_glu" = "CLi.glu",
-#          "Kidney" = "CKi",
-#          "AdiPOse" = "CAd",
-#          "POorlyPerfused" = "CSl",
-#          "RapidlyPerfused" = "CRa",
-#          "Blood" = "CBl",
-#          "LiverVenous" = "CvLi",
-#          "KidneyVenous" = "CvKi",
-#          "AdiPOseVenous" = "CvAd",
-#          "POorlyPerfusedVenous" = "CvSl",
-#          "RapidlyPerfusedVenous" = "CvRa") %>%
-#   select(Time, Intestine:RapidlyPerfusedVenous) %>% #!change accordingly depending on the compartments in the model
-#   pivot_longer(names_to = "Tissue",
-#                values_to = "Concentration",
-#                Intestine:RapidlyPerfusedVenous,
-#   ) %>%
-#   mutate(Concentration = Concentration*INPUT$MW)  #converting umol/L to ng/ml
-# 
-# # To plot only simulated data
-# PlotConc %>%
-#   filter(Tissue %in% c("Liver", "Blood", "Kidney", "Intestine",
-#                        "AdiPOse", "POorlyPerfused", "RapidlyPerfused")) %>%
-#   ggplot(aes(Time, Concentration, color = Tissue)) +
-#   geom_line() +
-#   labs(title = "Simulated zearalenone tissue concentrations",
-#        x = "Time (h)",
-#        y = "Concentration (ng/ml)",
-#        caption = paste("Administration type:", AdminType, "Dose:", PO_DOSE.mgkg, "mg/kg bw")) +
-#   CP_theme() +
-#   scale_colour_manual(values=Chrysa_colors)
-# ggsave(here(PlotFolderIs, "Simulated.png"), dpi = 300)
-# 
-# # To plot blood concentrations
-# PlotConc %>%
-#   filter(Tissue == "Blood") %>%
-#   ggplot(aes(Time, Concentration)) +
-#   geom_path(linewidth = 0.5) +
-#   labs(title = "Zearalenone blood concentrations",
-#        x = "Time (h)",
-#        y = "Concentration (ng/ml)",
-#        caption = paste(AdminType)) +
-#   CP_theme() +
-#   scale_colour_manual(values=Chrysa_colors)
-# ggsave(here(PlotFolderIs, "Simulated_blood.png"), dpi = 300)
-# 
-# 
-# # To plot glucuronide
-# PlotConc %>%
-#   filter(Tissue %in% c("Intestine", "Liver", "Liver_glu")) %>% #"Intestine_glu", )) %>%
-#   ggplot(aes(Time, Concentration, color = Tissue)) +
-#   geom_path(linewidth = 0.5) +
-#   labs(title = "Zearalenone and zearalenone-glucuronide intestine",
-#        x = "Time (h)",
-#        y = "Concentration (ng/ml)",
-#        caption = paste(AdminType)) +
-#   CP_theme() +
-#   scale_colour_manual(values=Chrysa_colors)
-# ggsave(here(PlotFolderIs, "Simulated_GlucTissueConc.png"), dpi = 300)
-# 
-# 
-# 
-# #---End-----------------------------------------------------------------------#
-# #*****************************************************************************#
-# 
-# 
+
+
+# From amounts to concentrations
+OUTPUT.C <- OUTPUT.A %>% 
+  mutate(
+    AInL = AInL/INPUT$VInL, 
+    AIn = AIn/INPUT$VIn, 
+    ALi = ALi/INPUT$VLi,
+    AKi = AKi/INPUT$VKi,
+    AAd = AAd/INPUT$VAd, 
+    ASl = ASl/INPUT$VSl,
+    ARa = ARa/INPUT$VRa,
+    ABl = ABl/INPUT$VBl,
+    AIn.glu = AIn.glu/INPUT$VIn,
+    AInL.glu = AInL.glu/INPUT$VInL,
+    ALi.glu = ALi.glu/INPUT$VLi,
+    ABi.glu = ABi.glu/INPUT$VBi,
+    AKi.glu = AKi.glu/INPUT$VKi,
+    AAd.glu = AAd.glu/INPUT$VAd,
+    ASl.glu = ASl.glu/INPUT$VSl,
+    ARa.glu = ARa.glu/INPUT$VRa,
+    ABl.glu = ABl.glu/INPUT$VBl
+  ) %>% 
+  select(!c("In", "AFe", "AUr", "AFe.glu", "AUr.glu"))
+  
+names(OUTPUT.C) <- sub("^A", "C", names(OUTPUT.C))
+
+# To create df of simulated data for plotting
+CONCENTRATIONS <- OUTPUT.C %>% #!change accordingly depending on the compartments in the model
+  rename(#!change accordingly depending on the compartments in the model
+    "Time" = "time",
+    "Intestinal_lumen" = "CInL",
+    "Intestinal_tissue" = "CIn",
+    "Liver" = "CLi",
+    "Kidney" = "CKi",
+    "Adipose" = "CAd",
+    "Slowly_perfused" = "CSl",
+    "Rapidly_perfused" = "CRa",
+    "Blood" = "CBl",
+    "Intestinal_tissue_glucuronide" = "CIn.glu",
+    "Intestinal_lumen_glucuronide" = "CInL.glu",
+    "Liver_glucuronide" =  "CLi.glu",
+    "Bile_glucuronide" = "CBi.glu",
+    "Kidney_glucuronide" = "CKi.glu",
+    "Adipose_glucuronide" = "CAd.glu",
+    "Slowly_perfused_glucuronide" = "CSl.glu",
+    "Rapidly_perfused_glucuronide" = "CRa.glu",
+    "Blood_glucuronide" = "CBl.glu" 
+  ) %>% 
+  pivot_longer(names_to = "Tissue",
+               values_to = "Concentration",
+               Intestinal_lumen:Blood_glucuronide,
+  ) %>%
+  mutate(Concentration = Concentration*INPUT$MW)  #converting umol/L to ng/ml
+
+# To plot only simulated data
+CONCENTRATIONS %>%
+  filter(Tissue %in% c("Liver", "Blood", "Kidney", "Intestine",
+                       "Adipose", "PIorlyPerfused", "RapidlyPerfused")) %>%
+  ggplot(aes(Time, Concentration, color = Tissue)) +
+  geom_line() +
+  labs(title = "Simulated zearalenone tissue concentrations",
+       x = "Time (h)",
+       y = "Concentration (ng/ml)",
+       caption = paste("Administration type:", "Dose:1 mg/kg bw")) +
+  CP_theme() #+
+  #scale_colour_manual(values=Chrysa_colors)
+ggsave(here(PlotFolderIs, "Simulated.png"), dpi = 300)
+
+# To plot blood concentrations
+CONCENTRATIONS %>%
+  filter(Tissue == "Blood") %>%
+  ggplot(aes(Time, Concentration)) +
+  geom_path(linewidth = 0.5) +
+  labs(title = "Zearalenone blood concentrations",
+       x = "Time (h)",
+       y = "Concentration (ng/ml)") +
+  CP_theme() 
+ggsave(here(PlotFolderIs, "Simulated_blood.png"), dpi = 300)
+
+
+# To plot glucuronide
+CONCENTRATIONS %>%
+  filter(Tissue %in% c("Intestine", "Liver", "Liver_glu")) %>% #"Intestine_glu", )) %>%
+  ggplot(aes(Time, Concentration, color = Tissue)) +
+  geom_path(linewidth = 0.5) +
+  labs(title = "Zearalenone and zearalenone-glucuronide intestine",
+       x = "Time (h)",
+       y = "Concentration (ng/ml)",
+       caption = paste(AdminType)) +
+  CP_theme() +
+  scale_colour_manual(values=Chrysa_colors)
+ggsave(here(PlotFolderIs, "Simulated_GlucTissueConc.png"), dpi = 300)
+
+
+
+#---End-----------------------------------------------------------------------#
+#*****************************************************************************#
+
+
