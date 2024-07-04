@@ -171,7 +171,7 @@ source(here("Script/Functions/PlottingFunction.R"))                             
 
 #-----Mass Balance Calculations----------------------------------------------#
 Calculated <- rowSums(OUTPUT[ ,Calculated])
-Total <- 7.814339e-01
+Total <- 0.7814087
 
 
 Massbalance <- Total - Calculated + 1

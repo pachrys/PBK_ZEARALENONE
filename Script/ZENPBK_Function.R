@@ -70,11 +70,11 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     
     # Input
     In <- PO_DOSE/PO_TIME #finding a way to input the dose quickly
-    dD <- -D + In*DOSING
+    #dD <- -D + In*DOSING
     
     ## Zearalenone-------------------- ##
     # Intestinal Lumen
-    dAInL <- - ka*AInL - kTIn*AInL + (1-kTIn)*AInL.glu + D
+    dAInL <- - ka*AInL - kTIn*AInL + (1-kTIn)*AInL.glu + In*DOSING
     
     # Intestinal tissue
     dAIn <- ka*AInL + QIn*CBl - QPo*CvIn - VmaxMet.In*CIn/(KmGluc.In+CIn)
@@ -140,10 +140,9 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     
     
     
-C
     #----Output---------------------------------------------------------------#
     
-    return(list(c(In, dD,
+    return(list(c(In, #dD,
                   dAInL, dAIn, dAFe, dALi, dAKi, dAUr, dAAd, dASl, dARa, dABl,
                   dAIn.glu, dAInL.glu, dAFe.glu, ALi.glu, dABi.glu, dAKi.glu, 
                   dAUr.glu, dAAd.glu, dASl.glu, dARa.glu, dABl.glu #, 
