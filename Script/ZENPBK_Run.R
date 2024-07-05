@@ -24,7 +24,7 @@ source(here("Script/ZENPBK_Function.R"))
 
 #----Extracting input---------------------------------------------------------#
 # Script for CALCULATED input
-INPUT <- read.csv(here("InputData/CALCULATED.INPUT.csv"), header=1) %>%  #The function for calculating input can be called here: source(here("Script/ZENPBK_Input"))                                         #call input script
+INPUT <- read.csv(here("InputData/MY.CALCULATED.INPUT.csv"), header=1) %>%  #The function for calculating input can be called here: source(here("Script/ZENPBK_Input"))                                         #call input script
   pivot_wider(names_from = "Parameter", 
               values_from = "Value")
 
@@ -40,16 +40,9 @@ times <- seq(STARTtime,STOPtime,by=Dt)
 PO_CONC = 1 #mg/kg day, Videmann
 PO_DOSE = PO_CONC*INPUT$BW/INPUT$MW*1000 #umol
 
-PO_TIME = 0.01 #h time it takes to administer the dose to the intestinal lumen; I checked that the amount at t=0.01 in InL is 0.781408707582861
-
-# dosing = data.frame(var = c("AInL"),
-#                    time = c(seq(0, 24, by = 24)), 
-#                    value = c(PO_DOSE),
-#                    method = c("add"))
 
 # Model parameters 
 PARAMETERS=c(PO_DOSE = PO_DOSE, 
-             PO_TIME = PO_TIME,
              VInL = INPUT$VInL,
              VBi = INPUT$VBi,
              VIn = INPUT$VIn,
@@ -98,7 +91,7 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
 
 #Initial state
 INITIALstate=c(
-  AInL = 0, 
+  AInL = PO_DOSE, 
   AIn = 0, 
   AFe = 0, 
   ALi = 0,
@@ -136,7 +129,7 @@ head(PBK)
 plot(PBK)
 
 OUTPUT.A <- as.data.frame(PBK) #(umol)
-write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A2.csv"), row.names=FALSE)
+write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A3.csv"), row.names=FALSE)
 
 
 # Mass Balance
@@ -169,7 +162,7 @@ source(here("Script/Functions/PlottingFunction.R"))                             
 
 #-----Mass Balance Calculations----------------------------------------------#
 CALCULATED <- rowSums(OUTPUT.A[ ,CALCULATED])
-TOTAL <- 0.7814087
+TOTAL <- PO_DOSE
 
 
 MASSBALANCE <- TOTAL - CALCULATED + 1

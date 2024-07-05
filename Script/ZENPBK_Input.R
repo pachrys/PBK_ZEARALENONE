@@ -152,37 +152,37 @@ VmaxExc.In.glu <- VmaxGluc.Exc.In / 1000000 #umol/h, scaling from pmol/h
 F_Vo.dat <- F_Vo.dat %>%
   pivot_wider(names_from = F_Vo.names, values_from = F_Vo)
 
-MW = ZEN.dat$MW 
+MW = ZEN.dat$MW
 logP = ZEN.dat$logP
 BW = BW
 QC = QC
 QIn = QC.dat$QGu #Intestinal blood flow
 QPo = QC.dat$QGu + QC.dat$QSp #Portal blood flow = Σ small intestine, colon, pancreas, stomach, spleen
-QLi = QC.dat$QLi #Liver blood flow (this includes portal! to be changed later! to add Q hepatic artery only)                                           
-QKi = QC.dat$QKi #Kidney blood flow                                                 
-QAd = QC.dat$QAd #Adipose blood flow                                                 
-QSl = QC.dat$QBo + QC.dat$QBr + QC.dat$QMu + QC.dat$QSk #Slowly perfused blood flow   
-QRa = QC - (QIn + QLi + QKi + QAd + QSl) #Rapidly perfused blood flow                                    
+QLi = QC.dat$QLi #Liver blood flow (this includes portal! to be changed later! to add Q hepatic artery only)
+QKi = QC.dat$QKi #Kidney blood flow
+QAd = QC.dat$QAd #Adipose blood flow
+QSl = QC.dat$QBo + QC.dat$QBr + QC.dat$QMu + QC.dat$QSk #Slowly perfused blood flow
+QRa = QC - (QIn + QLi + QKi + QAd + QSl) #Rapidly perfused blood flow
 MassBalanceQC = QC - (QIn + QLi + QKi + QAd + QSl + QRa)  #check blood flow mass balance; should be 0
-VIn = Vo.dat$VGu #Intestinal volume                                           
-VLi = Vo.dat$VLi #Liver volume                                              
-VKi = Vo.dat$VKi #Kidney volume                                              
-VAd = Vo.dat$VAd #Adipose volume                                            
-VSl = Vo.dat$VBo + Vo.dat$VBr + Vo.dat$VMu + Vo.dat$VSk #Slowly perfused volume 
+VIn = Vo.dat$VGu #Intestinal volume
+VLi = Vo.dat$VLi #Liver volume
+VKi = Vo.dat$VKi #Kidney volume
+VAd = Vo.dat$VAd #Adipose volume
+VSl = Vo.dat$VBo + Vo.dat$VBr + Vo.dat$VMu + Vo.dat$VSk #Slowly perfused volume
 VRa = Vo.dat$VHe + Vo.dat$VLu + Vo.dat$VSp #Rapidly perfused volume
-VBl = BW*0.06 # 0.06 is the fractional volume of blood based on Musther 
+VBl = BW*0.06 # 0.06 is the fractional volume of blood based on Musther
 VBi = BW*0.00023495 #bile volume total volume was 46.97 +- 4.21ul; male Fisher rats 180-220g => fractional volume of bile is 0.00023495 https://ncbi.nlm.nih.gov/pmc/articles/PMC1891969/
-VInL = 2/1000 #total volume of lumen = 2ml 
+VInL = 2/1000 #total volume of lumen = 2ml
 PIn = PCB.dat$PGu #Intestine:Blood partition coefficient
 PLi = PCB.dat$PLi #Liver:Blood partition coefficient
-PKi = PCB.dat$PKi #Kidney:Blood partition coefficient                                         
-PAd = PCB.dat$PKi #Adipose:Blood partition coefficient
-PSl = (F_Vo.dat$FVBo*PCB.dat$PBo + F_Vo.dat$FVBr*PCB.dat$PBr + 
+PKi = PCB.dat$PKi #Kidney:Blood partition coefficient
+PAd = PCB.dat$PAd #Adipose:Blood partition coefficient
+PSl = (F_Vo.dat$FVBo*PCB.dat$PBo + F_Vo.dat$FVBr*PCB.dat$PBr +
          F_Vo.dat$FVMu*PCB.dat$PMu + F_Vo.dat$FVSk*PCB.dat$PSk) /
   (F_Vo.dat$FVBo + F_Vo.dat$FVBr + F_Vo.dat$FVMu + F_Vo.dat$FVSk) #slowly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
-PRa = ZEN.dat$BP*(F_Vo.dat$FVHe*PCB.dat$PHe + F_Vo.dat$FVLu*PCB.dat$PLu + 
-                    F_Vo.dat$FVSp*PCB.dat$PSp + F_Vo.dat$FVGu*PCB.dat$PKi) /
-  (F_Vo.dat$FVHe + F_Vo.dat$FVLu + F_Vo.dat$FVSp + F_Vo.dat$FVKi)
+PRa = ZEN.dat$BP*(F_Vo.dat$FVHe*PCB.dat$PHe + F_Vo.dat$FVLu*PCB.dat$PLu +
+                    F_Vo.dat$FVSp*PCB.dat$PSp) /
+  (F_Vo.dat$FVHe + F_Vo.dat$FVLu + F_Vo.dat$FVSp)
 fup = fup #free fraction plasma
 fub = fub #free fraction blood
 kTIn = kTIn #intestinal transit time (1/h)
@@ -198,6 +198,56 @@ KmGluc.Abs = KmGluc.Abs #affinity constant influx transporter (umol/L)
 VmaxAbs.In.glu = VmaxAbs.In.glu #max transport velocity to intestinal tissue (umol/h)
 KmGluc.Exc = KmGluc.Exc #affinity constant efflux transporter (umol/L)
 VmaxExc.In.glu = VmaxExc.In.glu #max transport velocity from intestinal tissue (umol/h)
+
+
+# MW = ZEN.dat$MW 
+# logP = ZEN.dat$logP
+# BW = BW
+# QC = QC
+# QIn = QC.dat$QGu #Intestinal blood flow
+# QPo = QC.dat$QGu + QC.dat$QSp #Portal blood flow = Σ small intestine, colon, pancreas, stomach, spleen
+# QLi = QC.dat$QLi #Liver blood flow (this includes portal! to be changed later! to add Q hepatic artery only)                                           
+# QKi = QC.dat$QKi #Kidney blood flow                                                 
+# QAd = QC.dat$QAd #Adipose blood flow                                                 
+# QSl = QC.dat$QBo + QC.dat$QBr + QC.dat$QMu + QC.dat$QSk #Slowly perfused blood flow   
+# QRa = QC - (QIn + QLi + QKi + QAd + QSl) #Rapidly perfused blood flow                                    
+# MassBalanceQC = QC - (QIn + QLi + QKi + QAd + QSl + QRa)  #check blood flow mass balance; should be 0
+# VIn = Vo.dat$VGu #Intestinal volume                                           
+# VLi = Vo.dat$VLi #Liver volume                                              
+# VKi = Vo.dat$VKi #Kidney volume                                              
+# VAd = Vo.dat$VAd #Adipose volume                                            
+# VSl = Vo.dat$VBo + Vo.dat$VBr + Vo.dat$VMu + Vo.dat$VSk #Slowly perfused volume 
+# VRa = Vo.dat$VHe + Vo.dat$VLu + Vo.dat$VSp #Rapidly perfused volume
+# VBl = BW*0.06 # 0.06 is the fractional volume of blood based on Musther 
+# VBi = BW*0.00023495 #bile volume total volume was 46.97 +- 4.21ul; male Fisher rats 180-220g => fractional volume of bile is 0.00023495 https://ncbi.nlm.nih.gov/pmc/articles/PMC1891969/
+# VInL = 2/1000 #total volume of lumen = 2ml 
+# PIn = 6.51 #Intestine:Blood partition coefficient
+# PLi = 4.54 #Liver:Blood partition coefficient
+# PKi = 4.18 #Kidney:Blood partition coefficient                                         
+# PAd = 24.06 #Adipose:Blood partition coefficient
+# PSl = (F_Vo.dat$FVBo*5.42 + F_Vo.dat$FVBr*10.60 + 
+#          F_Vo.dat$FVMu*2.66 + F_Vo.dat$FVSk*5.72) /
+#   (F_Vo.dat$FVBo + F_Vo.dat$FVBr + F_Vo.dat$FVMu + F_Vo.dat$FVSk) #slowly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
+# PRa = ZEN.dat$BP*(F_Vo.dat$FVHe*3.57 + F_Vo.dat$FVLu*5.17 + 
+#                     F_Vo.dat$FVSp*2.49) /
+#   (F_Vo.dat$FVHe + F_Vo.dat$FVLu + F_Vo.dat$FVSp)
+# fup = fup #free fraction plasma
+# fub = fub #free fraction blood
+# kTIn = kTIn #intestinal transit time (1/h)
+# kTge = kTge #gastric emptying rate (1/h)
+# ka = ka #intestinal absorption constant (1/h)
+# CL_Bi = CL_Bi #biliary clearance (L/h)
+# CL_Re = CL_Re #renal clearance (L/h)
+# KmGluc.In = KmGluc.In #affinity constant intestinal UGT (umol/L)
+# VmaxMet.In = VmaxMet.In #max metab. velocity intestinal glucuronidation (umol/h)
+# KmGluc.Li = KmGluc.In #affinity constant liver UGT (umol/L)
+# VmaxMet.Li = VmaxMet.Li #max metab. velocity liver glucuronidation (umol/h)
+# KmGluc.Abs = KmGluc.Abs #affinity constant influx transporter (umol/L)
+# VmaxAbs.In.glu = VmaxAbs.In.glu #max transport velocity to intestinal tissue (umol/h)
+# KmGluc.Exc = KmGluc.Exc #affinity constant efflux transporter (umol/L)
+# VmaxExc.In.glu = VmaxE-xc.In.glu #max transport velocity from intestinal tissue (umol/h)
+
+
 
 
 #----Saving-------------------------------------------------------------------#
@@ -247,4 +297,4 @@ INPUT.parameters <- cbind(
 ) %>% as.data.frame() %>% 
   pivot_longer(names_to = "Parameter", values_to = "Value", MW:VmaxExc.In.glu)
 
-write.csv(INPUT.parameters, file = here("InputData/", "CALCULATED.INPUT.csv"), row.names=FALSE)
+write.csv(INPUT.parameters, file = here("InputData/", "MY.CALCULATED.INPUT.csv"), row.names=FALSE)
