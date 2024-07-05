@@ -5,10 +5,6 @@ library(deSolve)
 PBK_ZENandGLUC <- function(t,state,parameters){
   with(as.list(c(state,parameters)),{
     
-    if(t < 0.01){DOSING = 1}
-    else{DOSING = 0}
-    
-    
     #----Concentrations-------------------------------------------------------#
     
     # Zearalenone
@@ -67,14 +63,9 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     #----Differential equations-----------------------------------------------#
     # Rate of change in amounts in each tissue (umol/h)
     
-    
-    # Input
-    In <- PO_DOSE/PO_TIME #finding a way to input the dose quickly
-    #dD <- -D + In*DOSING
-    
     ## Zearalenone-------------------- ##
     # Intestinal Lumen
-    dAInL <- - ka*AInL - kTIn*AInL + (1-kTIn)*AInL.glu + In*DOSING
+    dAInL <- - ka*AInL - kTIn*AInL + (1-kTIn)*AInL.glu
     
     # Intestinal tissue
     dAIn <- ka*AInL + QIn*CBl - QPo*CvIn - VmaxMet.In*CIn/(KmGluc.In+CIn)
@@ -142,31 +133,9 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     
     #----Output---------------------------------------------------------------#
     
-    return(list(c(In, #dD,
-                  dAInL, dAIn, dAFe, dALi, dAKi, dAUr, dAAd, dASl, dARa, dABl,
+    return(list(c(dAInL, dAIn, dAFe, dALi, dAKi, dAUr, dAAd, dASl, dARa, dABl,
                   dAIn.glu, dAInL.glu, dAFe.glu, ALi.glu, dABi.glu, dAKi.glu, 
-                  dAUr.glu, dAAd.glu, dASl.glu, dARa.glu, dABl.glu #, 
-                  # ERROR <- ERROR, 
-                  # MASSBBAL <- MASSBBAL, 
-                  # CALCULATED <- CALCULATED, 
-                  # TOTAL <- TOTAL, 
-                  # CInL <- CInL, 
-                  # CIn <- CIn,                                                         
-                  # CLi <- CLi,                                                             
-                  # CKi <- CKi,                                                              
-                  # CAd <- CAd,                                                              
-                  # CSl <- CSl,                                                     
-                  # CRa <- CRa,                                                              
-                  # CBl <- CBl, 
-                  # CInL.glu <- CInL.glu,
-                  # CBi.glu <- CBi.glu,
-                  # CIn.glu <- CIn.glu,
-                  # CLi.glu <- CLi.glu,
-                  # CKi.glu <- CKi.glu, 
-                  # CAd.glu <- CAd.glu, 
-                  # CSl.glu <- CSl.glu, 
-                  # CRa.glu <- CRa.glu, 
-                  # CBl.glu <- CBl.glu
+                  dAUr.glu, dAAd.glu, dASl.glu, dARa.glu, dABl.glu
                   )))
   })
 }

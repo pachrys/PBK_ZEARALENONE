@@ -98,8 +98,6 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
 
 #Initial state
 INITIALstate=c(
-  In = 0,
-  #D = 0,
   AInL = 0, 
   AIn = 0, 
   AFe = 0, 
@@ -138,7 +136,7 @@ head(PBK)
 plot(PBK)
 
 OUTPUT.A <- as.data.frame(PBK) #(umol)
-write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A.amounts21.csv"), row.names=FALSE)
+write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A2.csv"), row.names=FALSE)
 
 
 # Mass Balance
