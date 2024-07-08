@@ -9,7 +9,7 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "PartCoeffInfuence"
+WhatAmITesting <- "Influence of each parameter"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
@@ -25,7 +25,7 @@ source(here("Script/ZENPBK_Function.R"))
 
 #----Extracting input---------------------------------------------------------#
 # Script for CALCULATED input
-INPUT <- read.csv(here("InputData/CALCULATED.INPUT2.csv"), header=1) %>%  #The function for calculating input can be called here: source(here("Script/ZENPBK_Input"))                                         #call input script
+INPUT <- read.csv(here("InputData/PT.CALCULATED.INPUT.csv"), header=1) %>%  #The function for calculating input can be called here: source(here("Script/ZENPBK_Input"))                                         #call input script
   pivot_wider(names_from = "Parameter", 
               values_from = "Value")
 
