@@ -63,16 +63,18 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     #----Differential equations-----------------------------------------------#
     # Rate of change in amounts in each tissue (umol/h)
     
-    ## Zearalenone-------------------- ##
+    # Zearalenone-------------------- ##
     # Intestinal Lumen
-    dAInL <- - ka*AInL - kTIn*AInL + (1-kTIn)*AInL.glu
-    #          toIntest  toFeces     fromGluhydro
+    dAInL <- - ka*AInL - VmaxAbs*CInL/(KmAbs+CInL) - kTIn*AInL + (1-kTIn)*AInL.glu + VmaxSec*CIn/(KmSec+CIn)
+    #          toIntest  toIntestActive              fromGluhydro                    fromIntestine
+
     # Intestinal tissue
-    dAIn <- ka*AInL + QIn*CBl - QPo*CvIn - VmaxMet.In*CIn/(KmGluc.In+CIn)
-    #       fromLumen fromBlood toLiver    toglucuronide
+    dAIn <- ka*AInL + QIn*CBl - QPo*CvIn - VmaxMet.In*CIn/(KmGluc.In+CIn) - VmaxSec*CIn/(KmSec+CIn) + VmaxAbs*CInL/(KmAbs+CInL)
+    #       fromLumen fromBlood toLiver    toglucuronide                    toLumen                   fromLumen active
     # Feces
     dAFe <- kTIn*AInL
     #       fromIntestine
+    
     # Liver
     dALi <- QPo*CvIn + QHa*CBl - QLi*CvLi - VmaxMet.Li*CLi/(KmGluc.Li+CLi) 
     #       fromIntest fromBlo   toBlood    toglucuronide
@@ -142,10 +144,32 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     
     #----Output---------------------------------------------------------------#
     
-    return(list(c(dAInL, dAIn, dAFe, dALi, dAKi, dAUr, dAAd, dASl, dARa, dABl,
+    return(list(c(dAInL, dAIn, dAFe,
+                  dALi, dAKi, dAUr, dAAd, dASl, dARa, dABl,
                   dAIn.glu, dAInL.glu, dAFe.glu,
                   dABl.glu, dALi.glu, dABi.glu, dAKi.glu, dAUr.glu, dAAd.glu,
                   dASl.glu, dARa.glu
                   )))
   })
 }
+
+
+# Tests Archive
+
+# # Intestinal Lumen As Mukherjee
+# dAInL <- - (ka.fa + ka.sl)*AInL + (1-kTIn)*AInL.glu
+# #          toIntest  toFeces      fromGluhydro
+# 
+# # Fast Lumen As Mukherjee
+# dAInL.f <- ka.fa*AInL - ka.fit*AInL.f
+# 
+# # Slow Lumen As Mukherjee
+# dAInL.s <- ka.sl*AInL - kex*AInL.s
+# 
+# # Intestinal tissue As Mukherjee
+# dAIn <- ka.fit*AInL.f + QIn*CBl - QPo*CvIn - VmaxMet.In*CIn/(KmGluc.In+CIn)
+# #       fromLumen fromBlood toLiver    toglucuronide
+# 
+# # Feces As Mukherjee
+# dAFe <- kex*AInL.s
+# #       fromIntestine

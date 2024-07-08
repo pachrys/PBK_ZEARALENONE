@@ -51,76 +51,37 @@ Vo.dat <- F_Vo.dat %>%
 
 #----Physicochemical parameters-----------------------------------------------#
 
+## ZEARALENONE ##
+
 ZEN.dat <- read.csv(here("InputData/Zen.input.csv"), header=1)     #from {Agahi, 2020 #456} and chemicalize, BP from Shin, Hong et al.2009
-Rat.input <- Rat.input %>% filter(!tissue %in% c("Plasma","Adipose","RBCs")) #df for all tissues except for adipose, RBCs and plasma
-Rat.dat2 <- Rat.input %>% filter(!tissue %in% c("Plasma","RBCs")) 
-fup <- 0.156 #Mukherjee
-
-# Tissue partitioning (Poulin and Theil http://jpharmsci.org/article/S0022-3549(16)30889-9/fulltext), as coded by kmutsey: https://github.com/metrumresearchgroup/PBPK_PC/blob/master/script/CalcKp_P%26T.R
-
-n <- length(Rat.input$tissue)
-Kp_all <- vector(mode = "numeric", length = n)
-
-#Plasma composition
-Vwp <- Rat.input$f_water[Rat.input$tissue == "Plasma"] #fraction of water in plasma
-Vnlp <- Rat.input$f_n_l[Rat.input$tissue == "Plasma"] #fraction of natural lipids in plasma
-Vphp <- Rat.input$f_pl[Rat.input$tissue == "Plasma"] #fraction of phospholipids in plasma
-
-# Partition coefficients of all tissues except adipose
-Vwt <- Rat.dat2$f_water[Rat.dat2$tissue != "Adipose"] #fraction of water in all tissues except adipose
-Vnlt <- Rat.dat2$f_n_l[Rat.dat2$tissue != "Adipose"] #fraction of natural lipids all tissues except adipose
-Vpht <- Rat.dat2$f_pl[Rat.dat2$tissue != "Adipose"] #fraction of phospholipids in all tissues except adipose
 
 
-# Partition coefficient of adipose
-Vwad <- Rat.dat2$f_water[Rat.dat2$tissue == "Adipose"] #fraction of water in adipose
-Vnlad <- Rat.dat2$f_n_l[Rat.dat2$tissue == "Adipose"] #fraction of natural lipids in adipose
-Vphad <- Rat.dat2$f_pl[Rat.dat2$tissue == "Adipose"] #fraction of phospholipids in adipose
+# Tissue partitioning (based on Schmitt)
 
-pH <- Rat.dat2$pH[Rat.dat2$tissue == "Adipose"] #pH in adipose
-logD <- 1.115*ZEN.dat$logP-1.35 #logD is the olive oil:buffer(water) partition coefficient of nonionized species
+## Calculating fraction unbound in plasma #Reference: Lobell M, Sivarajah V. In silico prediction of aqueous solubility, human plasma protein binding and volume of distribution of compounds from calculated pKa and AlogP98 values. Mol Divers. 2003;7(1):69-87. doi: 10.1023/b:modi.0000006562.93049.36. PMID: 14768905.
+fup <- 1 / (1 + 10^(0.4485 * ZEN.dat$logP - 0.4782))
 
-logD_star <- logD-log10(1+10^(pH-ZEN.dat$pKa)) #as monoprotic acid
-D_star <- 10^logD_star   
-Kpad <- ((D_star*(Vnlad+0.3*Vphad)+(1*(Vwad+0.7*Vphad)))/(D_star*(Vnlp+0.3*Vphp)+(1*(Vwp+0.7*Vphp)))) * fup
+## Calculating ionisation status
+## Assumption that Zearalenone is a monoprotic acid; in reality it's a diprotic acid with pKa2=10.38. Insignificant difference in tissue:plasma partition coefficients was observed when diprotic acid equations were tested. Check.As.Diprotic.RnR.R file.
+## Zearalenone is not ionized at physiological pH. RnR's equation for neutrals was overestimating the partition in all tissues by 7%. Check As.Neutral.RnR.R
+K_n_pl <- 10^ZEN.dat$logP #neutral phospholipids:water partition coefficient (logP here is logMA of Shmitt)
+K_protein <- ((0.81 + 0.11 * K_n_pl) / 24.92) * 5 #protein:water partition; Schmitt, Walter (2008)
+pH <- Rat.dat$pH #tissue pH
+alpha <- 1e-3 #ratio between ditribution coefficient at given pH (D) and that in neutral form (D0)
 
-P <- 10^ZEN.dat$logP
-fut <- 1/(1+((1-fup)/fup)*0.5) #fraction unbound in the tissues
-Kpt <- ((P*(Vnlt+0.3*Vpht) + #partition in the natural lipids and phospholipids of the tissue
-           (1*(Vwt+0.7*Vpht))) / #partition in the water and the phospholipids of the tissue
-          (P*(Vnlp+0.3*Vphp) + #partition in the natural lipids and phospholipids of plasma
-             (1*(Vwp+0.7*Vphp)))) * #partition in the water and phospholipids of plasma
-  (fup/fut) #related to the fraction unbound in the plasma compared to the tissue
+W <- 10^(Rat.dat$pH - ZEN.dat$pKa) #Calculates ZEN ionisation status depending on tissue pH
+K_n_l <- K_n_pl * (((1 - alpha) / (1 + W)) + alpha) #Calculates neutral lipids:neutral phospholipids partition coefficient
+K_a_pl <- K_n_pl * ((1 / (1 + W)) + 0.05 * (1 - (1 / (1 + W)))) #Calculates acid phospholipids:neutral lipids partition coefficient based on ionisation status
 
-Kp <- c(Kpad, Kpt)
+## Calculating Tissue:Plasma partition coefficients
+kp <- (Rat.dat$f_water +
+         (K_n_l * Rat.dat$f_n_l) +
+         (K_n_pl * Rat.dat$f_n_pl) +
+         (K_a_pl * Rat.dat$f_a_pl) +
+         (K_protein * Rat.dat$f_proteins)) * fup
 
 PC.names <- paste0("P", names)
-PC.dat <- data.frame(PC.names, kp = as.numeric(Kp))
-
-# ## Calculating fraction unbound in plasma #Reference: Lobell M, Sivarajah V. In silico prediction of aqueous solubility, human plasma protein binding and volume of distribution of compounds from calculated pKa and AlogP98 values. Mol Divers. 2003;7(1):69-87. doi: 10.1023/b:modi.0000006562.93049.36. PMID: 14768905.
-# fup <- 1 / (1 + 10^(0.4485 * ZEN.dat$logP - 0.4782))
-# 
-# ## Calculating ionisation status
-# ## Assumption that Zearalenone is a monoprotic acid; in reality it's a diprotic acid with pKa2=10.38. Insignificant difference in tissue:plasma partition coefficients was observed when diprotic acid equations were tested. Check.As.Diprotic.RnR.R file.
-# ## Zearalenone is not ionized at physiological pH. RnR's equation for neutrals was overestimating the partition in all tissues by 7%. Check As.Neutral.RnR.R
-# K_n_pl <- 10^ZEN.dat$logP #neutral phospholipids:water partition coefficient (logP here is logMA of Shmitt)
-# K_protein <- ((0.81 + 0.11 * K_n_pl) / 24.92) * 5 #protein:water partition; Schmitt, Walter (2008)
-# pH <- Rat.dat$pH #tissue pH
-# alpha <- 1e-3 #ratio between ditribution coefficient at given pH (D) and that in neutral form (D0)
-# 
-# W <- 10^(Rat.dat$pH - ZEN.dat$pKa) #Calculates ZEN ionisation status depending on tissue pH
-# K_n_l <- K_n_pl * (((1 - alpha) / (1 + W)) + alpha) #Calculates neutral lipids:neutral phospholipids partition coefficient
-# K_a_pl <- K_n_pl * ((1 / (1 + W)) + 0.05 * (1 - (1 / (1 + W)))) #Calculates acid phospholipids:neutral lipids partition coefficient based on ionisation status
-# 
-# ## Calculating Tissue:Plasma partition coefficients
-# kp <- (Rat.dat$f_water +
-#          (K_n_l * Rat.dat$f_n_l) +
-#          (K_n_pl * Rat.dat$f_n_pl) +
-#          (K_a_pl * Rat.dat$f_a_pl) +
-#          (K_protein * Rat.dat$f_proteins)) * fup
-# 
-# PC.names <- paste0("P", names)
-# PC.dat <- data.frame(PC.names, kp = as.numeric(kp))
+PC.dat <- data.frame(PC.names, kp = as.numeric(kp))
 
 
 ## Calculate Tissue:Blood partition coefficient 
@@ -134,6 +95,14 @@ PCB.dat <- PC.dat %>%
 
 # Calculate free fraction in blood
 fub = fup * ZEN.dat$BP 
+
+
+
+
+## ZEARALENONE GLUCURONIDE ##
+
+
+
 
 
 
@@ -184,7 +153,6 @@ VmaxAbs.In.glu <- VmaxGlucAbs.In / 1000000 #umol/h, scaling from pmol/h
 VmaxGluc.Exc.In <- 33.3 #pmol/h
 KmGluc.Exc <- 40 #umol/L
 VmaxExc.In.glu <- VmaxGluc.Exc.In / 1000000 #umol/h, scaling from pmol/h
-
 
 
 
@@ -338,4 +306,4 @@ INPUT.parameters <- cbind(
 ) %>% as.data.frame() %>% 
   pivot_longer(names_to = "Parameter", values_to = "Value", MW:VmaxExc.In.glu)
 
-write.csv(INPUT.parameters, file = here("InputData/", "PT.CALCULATED.INPUT.csv"), row.names=FALSE)
+write.csv(INPUT.parameters, file = here("InputData/", "MY.CALCULATED.INPUT.csv"), row.names=FALSE)

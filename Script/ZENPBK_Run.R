@@ -1,18 +1,19 @@
 # Libraries-------------------------------------------------------------------#
 
-# library(deSolve)
-# library(tidyverse)
-# library(ggplot2)
-# library(here)
-# library(showtext)
+library(deSolve)
+library(tidyverse)
+library(ggplot2)
+library(here)
+library(showtext)
 font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "Influence of each parameter"
+WhatAmITesting <- "Vmax/KmForAbsorption"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
-PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
+PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
+dir.create(PlotFolderIs, WhatAmITesting,recursive = TRUE)
 
 
 #*****************************************************************************#
@@ -25,7 +26,7 @@ source(here("Script/ZENPBK_Function.R"))
 
 #----Extracting input---------------------------------------------------------#
 # Script for CALCULATED input
-INPUT <- read.csv(here("InputData/PT.CALCULATED.INPUT.csv"), header=1) %>%  #The function for calculating input can be called here: source(here("Script/ZENPBK_Input"))                                         #call input script
+INPUT <- read.csv(here("InputData/CALCULATED.INPUT.csv"), header=1) %>%  #The function for calculating input can be called here: source(here("Script/ZENPBK_Input"))                                         #call input script
   pivot_wider(names_from = "Parameter", 
               values_from = "Value")
 
@@ -60,12 +61,13 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
              PSlb = INPUT$PSl,
              PRab = INPUT$PRa, 
              fub = INPUT$fub,
-             PInb.glu = INPUT$PIn, 
-             PLib.glu = INPUT$PLi,
-             PKib.glu = INPUT$PKi, 
-             PAdb.glu = INPUT$PAd,
-             PSlb.glu = INPUT$PSl,
-             PRab.glu = INPUT$PRa,
+             PInb.glu = INPUT$PIn.glu, 
+             PLib.glu = INPUT$PLi.glu,
+             PKib.glu = INPUT$PKi.glu, 
+             PAdb.glu = INPUT$PAd.glu,
+             PSlb.glu = INPUT$PSl.glu,
+             PRab.glu = INPUT$PRa.glu,
+             fub.glu = INPUT$fub.glu,
              QIn = INPUT$QIn,
              QPo = INPUT$QPo,
              QLi = INPUT$QLi,
@@ -75,6 +77,23 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
              QSl = INPUT$QSl,  
              QRa = INPUT$QRa,
              ka = INPUT$ka,
+             ka.is = INPUT$ka.is,
+             ka.sl = INPUT$ka.sl, 
+             ka.fa = INPUT$ka.fa, 
+             ka.fit = INPUT$ka.fit, 
+             kex = INPUT$kex, 
+             kfil = INPUT$kfil, 
+             kbil = INPUT$kbil, 
+             ka.sl.glu = INPUT$ka.sl.glu, 
+             ka.fa.glu = INPUT$ka.fa.glu, 
+             ka.fit.glu = INPUT$ka.fit.glu, 
+             kex.glu = INPUT$kex.glu, 
+             kfil.glu = INPUT$kfil.glu, 
+             kbil.glu = INPUT$kbil.glu, 
+             VmaxAbs = INPUT$VmaxAbs, 
+             KmAbs = INPUT$KmAbs, 
+             VmaxSec = INPUT$VmaxSec, 
+             KmSec = INPUT$KmSec, 
              kTIn = INPUT$kTIn,
              kTge = INPUT$kTge, #gastric emptying rate, assumed to mimic bile secretion rate
              CL_Re = INPUT$CL_Re,
@@ -93,6 +112,8 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
 #Initial state
 INITIALstate=c(
   AInL = PO_DOSE, 
+  # AInL.f = 0,
+  # AInL.s = 0,
   AIn = 0, 
   AFe = 0, 
   ALi = 0,
@@ -131,12 +152,14 @@ head(PBK)
 plot(PBK)
 
 OUTPUT.A <- as.data.frame(PBK) #(umol)
-write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A2.csv"), row.names=FALSE)
+write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A.csv"), row.names=FALSE)
 
 
 # Mass Balance
 CALCULATED <- c( #!Change accordingly depending on the compartments in the function#
   "AInL",
+  # "AInL.f",
+  # "AInL.s",
   "AIn",
   "AFe",
   "ALi",
@@ -184,7 +207,7 @@ MASSBALANCE_Error %>%
   labs(x = "Time (h)", y = "Value",
        caption = "Mass balance in grey, Error in black") +
   CP_theme()
-ggsave(here(TodaysOuput, "MB_ERROR2.png"), dpi = 300)             
+ggsave(here(TodaysOuput, "MB_ERROR2=.png"), dpi = 300)             
 
 
 
@@ -220,7 +243,7 @@ OUTPUT.C <- OUTPUT.A %>%
   
 names(OUTPUT.C) <- sub("^A", "C", names(OUTPUT.C))
 
-write.csv(OUTPUT.C, file = here(TodaysOuput, "OUTPUT.C2.csv"), row.names=FALSE)
+write.csv(OUTPUT.C, file = here(TodaysOuput, "OUTPUT.C.csv"), row.names=FALSE)
 
 
 # To create df of simulated data for plotting
@@ -228,14 +251,14 @@ CONCENTRATIONS <- OUTPUT.C %>% #!change accordingly depending on the compartment
   rename(#!change accordingly depending on the compartments in the model
     "Time" = "time",
     "Intestinal_lumen" = "CInL",
-    "Intestinal_tissue" = "CIn",
+    "Intestine" = "CIn",
     "Liver" = "CLi",
     "Kidney" = "CKi",
     "Adipose" = "CAd",
     "Slowly_perfused" = "CSl",
     "Rapidly_perfused" = "CRa",
     "Blood" = "CBl",
-    "Intestinal_tissue_glucuronide" = "CIn.glu",
+    "Intestine_glucuronide" = "CIn.glu",
     "Intestinal_lumen_glucuronide" = "CInL.glu",
     "Blood_glucuronide" = "CBl.glu",
     "Liver_glucuronide" =  "CLi.glu",
@@ -257,14 +280,14 @@ CONCENTRATIONS <- OUTPUT.C %>% #!change accordingly depending on the compartment
 CONCENTRATIONS %>%
   filter(str_starts(Tissue, "Blood"),
          !str_ends(Tissue, "_glucuronide")) %>%
-  ggplot(aes(Time, Concentration, colour = Tissue)) +
+  ggplot(aes(Time, Concentration)) +
   facet_wrap(~Tissue) +
   geom_path(linewidth = 0.5) +
-  labs(title = "Zearalenone tissue concentration",
+  labs(title = "Zearalenone blood concentration",
        x = "Time (h)",
        y = "Concentration (ng/ml)") +
   CP_theme() 
-ggsave(here(PlotFolderIs, "ZEN.blood.simulated2.png"), dpi = 300)
+ggsave(here(PlotFolderIs, "ZEN.blood.simulated.png"), dpi = 300)
 
 
 
@@ -279,7 +302,7 @@ CONCENTRATIONS %>%
        x = "Time (h)",
        y = "Concentration (ng/ml)") +
   CP_theme() 
-ggsave(here(PlotFolderIs, "ZEN&Gluc.blood.simulated2.png"), dpi = 300)
+ggsave(here(PlotFolderIs, "ZEN&Gluc.blood.simulated.png"), dpi = 300)
 
 
 # To plot Zearalenone tissue concentrations
@@ -295,7 +318,7 @@ CONCENTRATIONS %>%
        x = "Time (h)",
        y = "Concentration (ng/ml)") +
   CP_theme() 
-ggsave(here(PlotFolderIs, "ZEN.simulated2.png"), dpi = 300)
+ggsave(here(PlotFolderIs, "ZEN.simulated.png"), dpi = 300)
 
 # To plot Zearalenone glucuronide tissue concentrations
 CONCENTRATIONS %>%
@@ -310,7 +333,7 @@ CONCENTRATIONS %>%
        x = "Time (h)",
        y = "Concentration (ng/ml)") +
   CP_theme() 
-ggsave(here(PlotFolderIs, "ZEN_gluc.simulated.1.2.png"), dpi = 300) 
+ggsave(here(PlotFolderIs, "ZEN_gluc.simulated.png"), dpi = 300) 
 
 #---End-----------------------------------------------------------------------#
 #*****************************************************************************#
