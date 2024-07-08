@@ -22,7 +22,7 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     CRa <- ARa / VRa #rapidly perfused                                                              
     CBl <- ABl / VBl #blood                                                              
     
-    ## Tissue venous Concentrations (umol/L)                                      #Only for perfused organs; Equals tissue Concentration/tissue:blood partition coeefficient
+    ## Tissue venous Concentrations (umol/L)                                      #Only for perfused organs Equals tissue Concentration/tissue:blood partition coeefficient
     CvIn <- CIn / PInb #intestinal tissue
     CvLi <- CLi / PLib #liver                                                            
     CvKi <- CKi / PKib #kidney                                                            
@@ -47,95 +47,105 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     CLi.glu <- ALi.glu / VLi #liver 
     CKi.glu <- AKi.glu / VKi #kidney 
     CAd.glu <- AAd.glu / VAd #adipose tissue 
-    CSl.glu <- ASl.glu / VSl #slowly perfused tissue 
+    CSl.glu <- ASl.glu / VSl #slowly perfused tissue
     CRa.glu <- ARa.glu / VRa #rapidly perfused tissue 
-    CBl.glu <- ABl.glu / VBl #blood 
+    CBl.glu <- ABl.glu / VBl #blood
     
-    ## Tissue venous Concentrations (umol/L)                                      #Only for perfused organs; Equals tissue Concentration/tissue:blood partition LInefficient
+    ## Tissue venous Concentrations (umol/L)                                      #Only for perfused organs Equals tissue Concentration/tissue:blood partition LInefficient
     CvIn.glu <- CIn.glu / PInb.glu #Concentration leaving intestinal tissue 
     CvLi.glu <- CLi.glu / PLib.glu #Concentration leaving liver  
     CvKi.glu <- CKi.glu / PKib.glu #Concentration leaving kidney 
     CvAd.glu <- CAd.glu / PAdb.glu #Concentration leaving adipose  
     CvSl.glu <- CSl.glu / PSlb.glu #Concentration leaving slowly perfused tissue 
-    CvRa.glu <- CRa.glu / PRab.glu #Concentration leaving rapidly perfused tissue 
+    CvRa.glu <- CRa.glu / PRab.glu #Concentration leaving rapidly perfused tissue
     
-
+    
     #----Differential equations-----------------------------------------------#
     # Rate of change in amounts in each tissue (umol/h)
     
     ## Zearalenone-------------------- ##
     # Intestinal Lumen
     dAInL <- - ka*AInL - kTIn*AInL + (1-kTIn)*AInL.glu
-    
+    #          toIntest  toFeces     fromGluhydro
     # Intestinal tissue
     dAIn <- ka*AInL + QIn*CBl - QPo*CvIn - VmaxMet.In*CIn/(KmGluc.In+CIn)
-    
+    #       fromLumen fromBlood toLiver    toglucuronide
     # Feces
     dAFe <- kTIn*AInL
-    
+    #       fromIntestine
     # Liver
-    dALi <- QPo*CvIn + QLi*(CBl-CvLi) - VmaxMet.Li*CLi/(KmGluc.Li+CLi) 
-    
+    dALi <- QPo*CvIn + QHa*CBl - QLi*CvLi - VmaxMet.Li*CLi/(KmGluc.Li+CLi) 
+    #       fromIntest fromBlo   toBlood    toglucuronide
     # Kidney
     dAKi <- QKi*(CBl - CvKi) - CL_Re*CKi_free #CL_Re is equal to rat GER
+    #       fromtoblood        toUrine
     dAUr <- CL_Re*CKi_free
-    
+    #       fromKidney
     # Adipose
     dAAd <- QAd*(CBl - CvAd) 
-    
+    #       fromtoblood
     # Slowly Perfused Tissue
     dASl <- QSl*(CBl - CvSl) 
-    
+    #       fromtoslowly
     # Rapidly Perfused Tissue
     dARa <- QRa*(CBl - CvRa) 
-    
+    #       fromtorapidly
     # Blood
     dABl <- QLi*CvLi + QKi*CvKi + QAd*CvAd + QSl*CvSl + QRa*CvRa + 
-      -(QIn + QLi + QKi + QAd + QSl + QRa)*CBl 
-    
+    # from  liver      kidney     adipose    slowly     rapidly
+      -(QIn + QHa + QKi + QAd + QSl + QRa)*CBl 
+    # to int  hepA  kid   adi   slo   rap  
     
     ## Glucuronide---------------------- ##
-    # Intestine
-    dAIn.glu <- VmaxMet.In*CIn/(KmGluc.In+CIn) - VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) + VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu) + QIn*CBl.glu - QPo*CvIn.glu #(umol/h)
-    #          fromIntZen                       toInL                                       fromInL                                       fromblood     toportal
     
     # Intestinal lumen
-    dAInL.glu <- VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) + kTge*CBi.glu - VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu) - (1-kTIn)*AInL.glu - kTIn*AInL.glu #(umol/h) 
-    #           fromIntissue                                  fromBile       toSItissue                                    hydrolysedtoZEN        
+    dAInL.glu <- VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) - VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu) - (1-kTIn)*AInL.glu - kTIn*AInL.glu + kTge*CBi.glu  #(umol/h) 
+    #            fromIntissue                                  toSItissue                                      hydrolysedtoZEN     tofeces        # fromBile          
+    
+    # Intestine
+    dAIn.glu <- VmaxMet.In*CIn/(KmGluc.In+CIn) - VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) + VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu) + QIn*CBl.glu - QPo*CvIn.glu #(umol/h)
+    #           fromIntZen                       toInL                                         fromInL                                         fromblood     toportal
     
     # Feces
     dAFe.glu <- kTIn*AInL.glu
-    #         fromInLumen
+    #           fromInLumen
+    
+    # Blood
+    dABl.glu <- QLi*CvLi.glu + QKi*CvKi.glu + QAd*CvAd.glu + QSl*CvSl.glu + QRa*CvRa.glu +
+      - ((QIn + QHa + QKi + QAd + QSl + QRa) * CBl.glu) 
     
     # Liver
-    dALi.glu <- QPo*CvIn.glu + QHa*CBl -QLi*CvLi.glu + VmaxMet.Li*CLi/(KmGluc.Li+CLi) - CL_Bi*CLi.glu;
-    #          fromPortal     fromToBlood             fromZEN                          toBile
+    dALi.glu <- VmaxMet.Li*CLi/(KmGluc.Li+CLi) + QPo*CvIn.glu - QLi*CvLi.glu + QHa*CBl.glu - CL_Bi*CLi.glu
+    #           fromZen                          fromPortal     toBlood        fromHepaticA  toBile
+    
     # Bile
     dABi.glu <- CL_Bi*CLi.glu - kTge*CBi.glu
-    #          fromLiver       toSmallIntestine
+    #           fromLiver       toIntestLumen
     
     # Kidney
-    dAKi.glu <- QKi*(CBl.glu-CvKi.glu) - CL_Re*CKi.glu; #CL_Re is equal to rat GER
-    #          fromToBlood              toUrine
-    dAUr.glu <- CL_Re*CKi.glu
+    dAKi.glu <- QKi*(CBl.glu-CvKi.glu) - CL_Re*CKi.glu
+    #           fromToBlood              toUrine
     
+    # Urine
+    dAUr.glu <- CL_Re*CKi.glu
+    #           fromKidney
+   
     # Adipose
     dAAd.glu <- QAd*(CBl.glu - CvAd.glu) 
-    # Slowly Perfused Tissue
-    dASl.glu <- QSl*(CBl.glu - CvSl.glu) 
-    # Rapidly Perfused Tissue
-    dARa.glu <- QRa*(CBl.glu - CvRa.glu) 
-    # Blood
-    dABl.glu <- QLi*CvLi + QKi*CvKi.glu + QAd*CvAd.glu + QSl*CvSl.glu + QRa*CvRa.glu + 
-      - (QIn + QLi + QKi + QAd + QSl + QRa)*CBl.glu 
     
+    # Slowly Perfused Tissue
+    dASl.glu <- QSl*(CBl.glu - CvSl.glu)
+    
+    # Rapidly Perfused Tissue
+    dARa.glu <- QRa*(CBl.glu - CvRa.glu)
     
     
     #----Output---------------------------------------------------------------#
     
     return(list(c(dAInL, dAIn, dAFe, dALi, dAKi, dAUr, dAAd, dASl, dARa, dABl,
-                  dAIn.glu, dAInL.glu, dAFe.glu, ALi.glu, dABi.glu, dAKi.glu, 
-                  dAUr.glu, dAAd.glu, dASl.glu, dARa.glu, dABl.glu
+                  dAIn.glu, dAInL.glu, dAFe.glu,
+                  dABl.glu, dALi.glu, dABi.glu, dAKi.glu, dAUr.glu, dAAd.glu,
+                  dASl.glu, dARa.glu
                   )))
   })
 }
