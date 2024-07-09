@@ -9,7 +9,7 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "StepByStep2"
+WhatAmITesting <- "StepByStep12"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
@@ -99,15 +99,15 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
              CL_Re = INPUT$CL_Re,
              CL_Bi = INPUT$CL_Bi, #biliary clearance
              VmaxMet.In = INPUT$VmaxMet.In, #intestinal glucuronidation
-             KmGluc.In = INPUT$KmGluc.In,  #affinity constant zearalenone to UGT
+             KmGluc.In = INPUT$KmGluc.In*1000,  #affinity constant zearalenone to UGT
              VmaxMet.Li = INPUT$VmaxMet.Li, #liver glucuronidation
              KmGluc.Li = INPUT$KmGluc.Li,
              VmaxExc.In.glu = INPUT$VmaxExc.In.glu, #active transPOrt from intestinal tissue to lumen
              KmGluc.Exc = INPUT$KmGluc.Exc, #affinity constant zearalenone glucuronide to efflux transPOrter
              VmaxAbs.In.glu = INPUT$VmaxAbs.In.glu, #active transPOrt from lumen to tissue
-             KmGluc.Abs = INPUT$KmGluc.Abs #affinity constant zearalenone glucuronide to influx transPOrer
+             KmGluc.Abs = INPUT$KmGluc.Abs, #affinity constant zearalenone glucuronide to influx transPOrer
+             kHydro = 1000 # /hhydrolysis constant; assumption as in Veronique
              ) 
-
 
 #Initial state
 INITIALstate=c(
@@ -115,7 +115,7 @@ INITIALstate=c(
   # AInL.f = 0,
   # AInL.s = 0,
   AIn = 0, 
-  AFe = 0 
+  AFe = 0,
   # ALi = 0,
   # #ABi = 0,
   # AKi = 0, 
@@ -124,8 +124,8 @@ INITIALstate=c(
   # ASl = 0, 
   # ARa = 0, 
   # ABl = 0,
-  # AIn.glu = 0, 
-  # AInL.glu = 0, 
+  AIn.glu = 0,
+  AInL.glu = 0
   # AFe.glu = 0, 
   # ABl.glu = 0, 
   # ALi.glu = 0,
@@ -163,7 +163,7 @@ CALCULATED <- c( #!Change accordingly depending on the compartments in the funct
   # "AInL.f",
   # "AInL.s",
   "AIn",
-  "AFe"
+  "AFe",
   # "ALi",
   # "AKi",
   # "AUr",
@@ -171,8 +171,8 @@ CALCULATED <- c( #!Change accordingly depending on the compartments in the funct
   # "ASl",
   # "ARa",
   # "ABl",
-  # "AIn.glu",
-  # "AInL.glu",
+  "AIn.glu",
+  "AInL.glu"
   # "AFe.glu",
   # "ABl.glu", 
   # "ALi.glu",
