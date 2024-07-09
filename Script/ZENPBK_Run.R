@@ -9,7 +9,7 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "Vmax/KmForAbsorption"
+WhatAmITesting <- "StepByStep2"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
@@ -76,7 +76,7 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
              QAd = INPUT$QAd, 
              QSl = INPUT$QSl,  
              QRa = INPUT$QRa,
-             ka = INPUT$ka,
+             ka = INPUT$ka.is,
              ka.is = INPUT$ka.is,
              ka.sl = INPUT$ka.sl, 
              ka.fa = INPUT$ka.fa, 
@@ -115,26 +115,26 @@ INITIALstate=c(
   # AInL.f = 0,
   # AInL.s = 0,
   AIn = 0, 
-  AFe = 0, 
-  ALi = 0,
-  #ABi = 0,
-  AKi = 0, 
-  AUr = 0, 
-  AAd = 0, 
-  ASl = 0, 
-  ARa = 0, 
-  ABl = 0,
-  AIn.glu = 0, 
-  AInL.glu = 0, 
-  AFe.glu = 0, 
-  ABl.glu = 0, 
-  ALi.glu = 0,
-  ABi.glu = 0,
-  AKi.glu = 0, 
-  AUr.glu = 0, 
-  AAd.glu = 0, 
-  ASl.glu = 0, 
-  ARa.glu = 0 
+  AFe = 0 
+  # ALi = 0,
+  # #ABi = 0,
+  # AKi = 0, 
+  # AUr = 0, 
+  # AAd = 0, 
+  # ASl = 0, 
+  # ARa = 0, 
+  # ABl = 0,
+  # AIn.glu = 0, 
+  # AInL.glu = 0, 
+  # AFe.glu = 0, 
+  # ABl.glu = 0, 
+  # ALi.glu = 0,
+  # ABi.glu = 0,
+  # AKi.glu = 0, 
+  # AUr.glu = 0, 
+  # AAd.glu = 0, 
+  # ASl.glu = 0, 
+  # ARa.glu = 0 
   )
 
 
@@ -150,6 +150,8 @@ head(PBK)
 
 #----Results------------------------------------------------------------------#
 plot(PBK)
+ggsave(here(PlotFolderIs, "Overall.png"), dpi = 300)
+
 
 OUTPUT.A <- as.data.frame(PBK) #(umol)
 write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A.csv"), row.names=FALSE)
@@ -161,25 +163,25 @@ CALCULATED <- c( #!Change accordingly depending on the compartments in the funct
   # "AInL.f",
   # "AInL.s",
   "AIn",
-  "AFe",
-  "ALi",
-  "AKi",
-  "AUr",
-  "AAd",
-  "ASl",
-  "ARa",
-  "ABl",
-  "AIn.glu",
-  "AInL.glu",
-  "AFe.glu",
-  "ABl.glu", 
-  "ALi.glu",
-  "ABi.glu",
-  "AKi.glu",
-  "AUr.glu",
-  "AAd.glu",
-  "ASl.glu",
-  "ARa.glu"
+  "AFe"
+  # "ALi",
+  # "AKi",
+  # "AUr",
+  # "AAd",
+  # "ASl",
+  # "ARa",
+  # "ABl",
+  # "AIn.glu",
+  # "AInL.glu",
+  # "AFe.glu",
+  # "ABl.glu", 
+  # "ALi.glu",
+  # "ABi.glu",
+  # "AKi.glu",
+  # "AUr.glu",
+  # "AAd.glu",
+  # "ASl.glu",
+  # "ARa.glu"
   )
 
 # Plotting function
