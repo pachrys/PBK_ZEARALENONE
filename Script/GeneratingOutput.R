@@ -20,7 +20,7 @@ DataInvivo.ZEN <- read.csv(here("InputData/InVivoData.csv"), header=1) %>%
          TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
          AdminType == "PO", #"IV"), #Videmann doesn't have IV, but subcutaneous!!
          Tissue %in% c("Plasma", "Intestine", "Liver", "Adipose", "Kidney", "Urine", "Colon"), 
-         SampleCompound == "ZEN") %>%  #only for ZEN
+         SampleCompound == "ZEN") %>%  #only for ZEN 
   select(c("Gender", "SamplingTime", "Tissue", "Concentration"))%>% 
   rename(Time = SamplingTime) %>% #(h)
   mutate(Concentration = Concentration*ZEN.dat$BP) %>% #(ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
@@ -159,6 +159,11 @@ SimulatedKidney %>% # choose compartment accordingly
        color = "Gender") +
   CP_theme()
 ggsave(here(PlotFolderIs, "KidneySimulatedInvivo.png"), dpi = 300)
+
+
+# Zearalenone glucuronide
+
+
 
 #*****************************************************************************#
 #------------------------------Data analysis----------------------------------#
