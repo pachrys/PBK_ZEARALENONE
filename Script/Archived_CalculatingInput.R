@@ -35,7 +35,7 @@ F_Vo.dat <- F_Vo.dat %>%
   pivot_wider(names_from = F_Vo.names, values_from = F_Vo )
 
 # ZEN physicochemical input                                                       #ZEN as monoprotic acid. It has 2 pKas 8.54 and 10.38. At pH 7.4 ZEN is >90 persent not ionized.
-ZEN.dat <- read.csv(here("InputData/ZearalenoneSpecificInput.csv"), header=1)     #from {Agahi, 2020 #456} and chemicalize, BP from Shin, Hong et al.2009
+ZEN.dat <- read.csv(here("InputData/Zen.input.csv"), header=1)     #from {Agahi, 2020 #456} and chemicalize, BP from Shin, Hong et al.2009
 
 
 #----Calculating-------------------------------------------------------------#

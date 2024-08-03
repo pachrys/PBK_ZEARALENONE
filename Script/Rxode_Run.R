@@ -1,11 +1,11 @@
 
-# library(rxode2)
-# library(tidyverse)
-# library(ggplot2)
-# library(here)
-# library(showtext)
-# font_add(family = "Garamond", regular = "GARA.TTF")
-# showtext_auto()
+library(rxode2)
+library(tidyverse)
+library(ggplot2)
+library(here)
+library(showtext)
+font_add(family = "Garamond", regular = "GARA.TTF")
+showtext_auto()
 
 #*****************************************************************************#
 
@@ -22,10 +22,10 @@ WhatAmITesting <- "DetailedMetabolism"
 
 #----Extracting input---------------------------------------------------------#
 
-source(here("Script/CalculatingInput.R"))                                         #call input script
+source(here("Script/Archived_CalculatingInput.R"))                                         #call input script
 
 # ZEN physicochemical input                                                       #ZEN as monoprotic acid. It has 2 pKas 8.54 and 10.38. At pH 7.4 ZEN is >90 percent not ionized.
-ZEN.dat <- read.csv(here("InputData/ZearalenoneSpecificInput.csv"), header=1)     #from {Agahi, 2020 #456} and chemicalize, BP from Shin, Hong et al.2009
+ZEN.dat <- read.csv(here("InputData/Zen.input.csv"), header=1)     #from {Agahi, 2020 #456} and chemicalize, BP from Shin, Hong et al.2009
 
 # In Vivo study input
 PO.dat <- read.csv(here("InputData/InVivoData.csv"), header=1) %>% 

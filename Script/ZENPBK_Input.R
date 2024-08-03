@@ -232,13 +232,14 @@ logP.glu = ZEN.dat$logP.glu
 BW = BW
 QC = QC
 QIn = QC.dat$QGu #Intestinal blood flow
-QPo = QC.dat$QGu + QC.dat$QSp #Portal blood flow = Σ small intestine, colon, pancreas, stomach, spleen
+#QPo = QC.dat$QGu + QC.dat$QSp #Portal blood flow = Σ small intestine, colon, pancreas, stomach, spleen
 QLi = QC.dat$QLi #Liver blood flow (this includes portal! to be changed later! to add Q hepatic artery only)
+QHa = QC.dat$QLi - QC.dat$QGu + QC.dat$QSp #Hepatic artery blood flow = total liver blood flow - portal vein blood flow (Σ small intestine, colon, pancreas, stomach, spleen)
 QKi = QC.dat$QKi #Kidney blood flow
 QAd = QC.dat$QAd #Adipose blood flow
 QSl = QC.dat$QBo + QC.dat$QBr + QC.dat$QMu + QC.dat$QSk #Slowly perfused blood flow
-QRa = QC - (QIn + QLi + QKi + QAd + QSl) #Rapidly perfused blood flow
-MassBalanceQC = QC - (QIn + QLi + QKi + QAd + QSl + QRa)  #check blood flow mass balance; should be 0
+QRa = QC - (QLi + QKi + QAd + QSl) #Rapidly perfused blood flow
+MassBalanceQC = QC - (QLi + QKi + QAd + QSl + QRa)  #check blood flow mass balance; should be 0
 VIn = Vo.dat$VGu #Intestinal volume
 VLi = Vo.dat$VLi #Liver volume
 VKi = Vo.dat$VKi #Kidney volume
@@ -314,8 +315,8 @@ INPUT.parameters <- cbind(
   BW,
   QC,
   QIn,
-  QPo,
-  QLi,   
+  QLi,
+  QHa,
   QKi, 
   QAd, 
   QSl, 

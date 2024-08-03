@@ -9,7 +9,7 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "CompleteMetabolism"
+WhatAmITesting <- "SimpleJustLiverMetabolism"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
@@ -25,18 +25,20 @@ dir.create(PlotFolderIs, WhatAmITesting,recursive = TRUE)
 INPUT <- read.csv(here("InputData/CALCULATED.INPUT.csv"), header=1) %>%  #The function for calculating input can be called here: source(here("Script/ZENPBK_Input"))                                         #call input script
   pivot_wider(names_from = "Parameter", 
               values_from = "Value")
+ZEN.dat <- read.csv(here("InputData/Zen.input.csv"), header=1)     #from {Agahi, 2020 #456} and chemicalize, BP from Shin, Hong et al.2009
+
 
 #----Set Parameters for the simulation----------------------------------------#
 
 # Tout
 STARTtime <- 0 # start of simulation (h)
 STOPtime <- 24 # end of simmulation (h) (can be from 24h to years)
-Dt <- 1/100 # steps of simulation (now it per minute) (could be 1/100, 1/200 or 1 for simulations over years)
+Dt <- 1 / 100 # steps of simulation (now it per minute) (could be 1/100, 1/200 or 1 for simulations over years)
 times <- seq(STARTtime,STOPtime,by=Dt)
 
 # Exposure
 PO_CONC = 1 #mg/kg day, Videmann
-PO_DOSE = PO_CONC*INPUT$BW/INPUT$MW*1000 #umol
+PO_DOSE = PO_CONC*INPUT$BW / INPUT$MW * 1000 #umol
 
 
 # Model parameters 
@@ -90,48 +92,32 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
              # KmAbs = INPUT$KmAbs, 
              # VmaxSec = INPUT$VmaxSec, 
              # KmSec = INPUT$KmSec, 
-             kTIn = INPUT$kTIn,
-             kTge = INPUT$kTge, #gastric emptying rate, assumed to mimic bile secretion rate
+             # kTIn = INPUT$kTIn,#total intestinal transit time
+             kTsi = 1 / ZEN.dat$kTsi, 
+             kTco = 1 / ZEN.dat$kTco,
+             kTge = INPUT$kTge, #gastric emptying rate, "Assumed to mimic bile secretion rate
              CL_Re = INPUT$CL_Re,
-             CL_Bi = INPUT$CL_Bi, #biliary clearance
-             VmaxMet.In = INPUT$VmaxMet.In, #intestinal glucuronidation
-             KmGluc.In = INPUT$KmGluc.In,  #affinity constant zearalenone to UGT
+             # CL_Bi = INPUT$CL_Bi, #biliary clearance
+             # VmaxMet.In = INPUT$VmaxMet.In, #intestinal glucuronidation
+             # KmGluc.In = INPUT$KmGluc.In,  #affinity constant zearalenone to UGT
              VmaxMet.Li = INPUT$VmaxMet.Li, #liver glucuronidation
-             KmGluc.Li = INPUT$KmGluc.Li,
+             KmGluc.Li = INPUT$KmGluc.Li
              # VmaxExc.In.glu = INPUT$VmaxExc.In.glu, #active transPOrt from intestinal tissue to lumen
              # KmGluc.Exc = INPUT$KmGluc.Exc, #affinity constant zearalenone glucuronide to efflux transPOrter
              # VmaxAbs.In.glu = INPUT$VmaxAbs.In.glu, #active transPOrt from lumen to tissue
              # KmGluc.Abs = INPUT$KmGluc.Abs, #affinity constant zearalenone glucuronide to influx transPOrer
-             kHydro = 1000 # /hhydrolysis constant; assumption as in Veronique
+             # kHydro = 1000 # /hhydrolysis constant; assumption as in Veronique
 ) 
+
+PARAMETERS
 
 # Initial state
 INITIALstate = c(
-  AInL = PO_DOSE, 
-  # AInL.f = 0,
-  # AInL.s = 0,
-  AIn = 0, 
-  AFe = 0,
-  ALi = 0,
-  # ABi = 0,
-  AKi = 0,
-  AUr = 0,
-  AAd = 0,
-  ASl = 0,
-  ARa = 0,
-  ABl = 0,
-  AIn.glu = 0,
-  AInL.glu = 0,
-  AFe.glu = 0,
-  ABl.glu = 0,
-  ALi.glu = 0,
-  ABi.glu = 0,
-  AKi.glu = 0,
-  AUr.glu = 0,
-  AAd.glu = 0,
-  ASl.glu = 0,
-  ARa.glu = 0
+  ASt = PO_DOSE, AIn = 0, ACo = 0, AFe = 0, ALi = 0, ALi.glu = 0, AKi = 0, AUr = 0, 
+  AAd = 0, ASl = 0, ARa = 0, ABl = 0
 )
+
+INITIALstate
 
 #----PBK function-------------------------------------------------------------#
 # source(here("Script/ZENPBK_Function.R"))
@@ -142,10 +128,6 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     #----Concentrations-------------------------------------------------------#
     
     # Zearalenone
-    
-    ## Non perfused organ Concentrations (umol/L)
-    CInL <- AInL / VInL #intestinal lumen
-    # CBi <- ABi / VBi #bile
     
     ## Tissue cellular Concentrations (umol/L)                                    #Abbreviation (C for Concentration and then 2 first letters of tissue name)
     CIn <- AIn / VIn #intestine                                                             
@@ -169,141 +151,44 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     CLi_free <- CvLi*fub
     
     
-    # Zearalenone glucuronide
-    
-    ## Non perfused organ concentrations (umol/L)
-    CInL.glu <- AInL.glu / VInL #intestinal lumen glucuronide
-    CBi.glu <- ABi.glu / VBi #bile
-    
-    ## Tissue cellular Concentrations (umol/L)                                    #Abbreviation (C for Concentration and then 2 first letters of tissue name)
-    CIn.glu <- AIn.glu / VIn #intestinal tissue
-    CLi.glu <- ALi.glu / VLi #liver
-    CKi.glu <- AKi.glu / VKi #kidney
-    CAd.glu <- AAd.glu / VAd #adipose tissue
-    CSl.glu <- ASl.glu / VSl #slowly perfused tissue
-    CRa.glu <- ARa.glu / VRa #rapidly perfused tissue
-    CBl.glu <- ABl.glu / VBl #blood
-    
-    ## Tissue venous Concentrations (umol/L)                                      #Only for perfused organs Equals tissue Concentration/tissue:blood partition LInefficient
-    CvIn.glu <- CIn.glu / PInb.glu #Concentration leaving intestinal tissue
-    CvLi.glu <- CLi.glu / PLib.glu #Concentration leaving liver
-    CvKi.glu <- CKi.glu / PKib.glu #Concentration leaving kidney
-    CvAd.glu <- CAd.glu / PAdb.glu #Concentration leaving adipose
-    CvSl.glu <- CSl.glu / PSlb.glu #Concentration leaving slowly perfused tissue
-    CvRa.glu <- CRa.glu / PRab.glu #Concentration leaving rapidly perfused tissue
-    
-    
     #----Differential equations-----------------------------------------------#
     # Rate of change in amounts in each tissue (umol/h)
     
     # Zearalenone-------------------- ##
-    # Intestinal Lumen
-    dAInL <- - ka*AInL - kTIn*AInL + kHydro*AInL.glu #- VmaxAbs*CInL/(KmAbs+CInL) + VmaxSec*CIn/(KmSec+CIn) 
-    #          toInt              
+    dASt <- -(kTge*ASt)                                                      #(umol/h) rate of change of amount reaching the intestine (correcting for gastric emptying time)
     
-    # Intestinal tissue
-    dAIn <-  + ka*AInL - VmaxMet.In*CIn/(KmGluc.In+CIn) - QPo*CvIn + QIn*CBl   #+ VmaxAbs*CInL/(KmAbs+CInL) - VmaxSec*CIn/(KmSec+CIn) 
-    #        fromLumenActive      toglucuronide                     fromBlood toLiver             toLumen                   fromLum                         
+    dAIn <- (kTge*ASt) - (ka*AIn) - (kTsi*AIn)                               #(umol/h) rate of change in amount of ZEN in the intestine: the dose + the amount of zen formed after microbial hydrolysis of zen-gluc - fecal excretion
+    dACo <- (kTsi*AIn) - (kTco*ACo)                                          #(umol/h) rate of change in amount of ZEN in colon
+    dAFe <- kTco*ACo                                                         #(umol/h) rate of change in amount of ZEN eliminated in the feces
     
-    # # Feces
-    dAFe <- kTIn*AInL
-    #       fromIntestine
+    #Differential equations perfused tissues
+    dALi <- (ka*AIn) + QLi*(CBl - CvLi) +
+      - ((VmaxMet.Li * CLi_free) / (KmGluc.Li + CLi_free))                            #(umol/h) rate of change in amount of ZEN in the liver: what is absorbed from the intestine + what is absorbed and leaves from/to the blood - rate of metabolism (umol/h) is metabolised to glucuronides
+    dALi.glu <- ((VmaxMet.Li * CLi_free) / (KmGluc.Li + CLi_free))                                                           #(umol/h) rate of change in amount in ZEN glucuronides the liver: what is formed after glucuronidation minus what is secreted to the bile 
     
-    # Liver
-    dALi <- QPo*CvIn + QHa*CBl - QLi*CvLi - VmaxMet.Li*CLi/(KmGluc.Li+CLi)
-    #       fromIntest fromBlo   toBlood    toglucuronide
-    # Kidney
-    dAKi <- QKi*(CBl - CvKi) - CL_Re*CKi_free #CL_Re is equal to rat GER
-    #       fromtoblood        toUrine
+    dAKi <- QKi*(CBl - CvKi) - (CL_Re*CKi_free)                               #(umol/h) rate of change in amount in the kidney
+    dAUr <- CL_Re*CKi_free                                                                #(umol/h) rate of change in amount ZEN eliminated in urine
     
-    dAUr <- CL_Re*CKi_free
-    #       fromKidney
-    # Adipose
-    dAAd <- QAd*(CBl - CvAd)
-    #       fromtoblood
+    dAAd <- QAd*(CBl - CvAd)                                                 #(umol/h) rate of change in amount in the adipose tissue
+    dASl <- QSl*(CBl - CvSl)                                                 #(umol/h) rate of change in amount in the slowly perfused
+    dARa <- QRa*(CBl - CvRa)                                                 #(umol/h) rate of change in amount in the rapidly perfused
     
-    # Slowly Perfused Tissue
-    dASl <- QSl*(CBl - CvSl)
-    #       fromtoslowly
-    
-    # Rapidly Perfused Tissue
-    dARa <- QRa*(CBl - CvRa)
-    #       fromtorapidly
-    
-    dABl <- QLi*CvLi + QKi*CvKi + QAd*CvAd + QSl*CvSl + QRa*CvRa +
-      # from  liver      kidney     adipose    slowly     rapidly
-      - (QIn + QHa + QKi + QAd + QSl + QRa)*CBl
-    # to int  hepA  kid   adi   slo   rap
-    
-    # ## Glucuronide---------------------- ##
-    
-    # Intestinal lumen
-    dAInL.glu <- AIn.glu - kHydro*AInL.glu - kTIn*AInL.glu + kTge*CBi.glu #+ VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) - VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu)  #(umol/h)
-    #            fromInTis toZen             toFeces         fromBile
-    # Intestine
-    dAIn.glu <- VmaxMet.In*CIn/(KmGluc.In+CIn) - AIn.glu + QIn*CBl.glu - QPo*CvIn.glu # -VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) + VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu)  #(umol/h)
-    #           fromIntZen                       toInL     fromblood     toportal                                        fromInL                                         
-    
-    # Feces
-    dAFe.glu <- kTIn*AInL.glu
-    #           fromInLumen
-    
-    # Blood
-    dABl.glu <- QLi*CvLi.glu + QKi*CvKi.glu + QAd*CvAd.glu + QSl*CvSl.glu + QRa*CvRa.glu +
-      - ((QIn + QHa + QKi + QAd + QSl + QRa) * CBl.glu)
-    
-    # Liver
-    dALi.glu <- VmaxMet.Li*CLi/(KmGluc.Li+CLi) + QPo*CvIn.glu - QLi*CvLi.glu + QHa*CBl.glu - CL_Bi*CLi.glu
-    #           fromZen                          fromPortal     toBlood        fromHepaticA  toBile
-    
-    # Bile
-    dABi.glu <- CL_Bi*CLi.glu - kTge*CBi.glu
-    #           fromLiver       toIntestLumen
-    
-    # Kidney
-    dAKi.glu <- QKi*(CBl.glu-CvKi.glu) - CL_Re*CKi.glu
-    #           fromToBlood              toUrine
-    
-    # Urine
-    dAUr.glu <- CL_Re*CKi.glu
-    #           fromKidney
-    
-    # Adipose
-    dAAd.glu <- QAd*(CBl.glu - CvAd.glu)
-    
-    # Slowly Perfused Tissue
-    dASl.glu <- QSl*(CBl.glu - CvSl.glu)
-    
-    # Rapidly Perfused Tissue
-    dARa.glu <- QRa*(CBl.glu - CvRa.glu)
-    
+    dABl <- (QLi*CvLi) + (QKi*CvKi) +
+      (QAd*CvAd) + (QSl*CvSl) + (QRa*CvRa) +
+      -(QLi + QKi + QAd + QSl + QRa)*(CBl)                                       #(umol/h) rate of change in amount in the blood
     
     
     #----Output---------------------------------------------------------------#
     
-    return(list(c(dAInL, dAIn, dAFe, 
-                  dALi, dAKi, dAUr, dAAd, dASl, dARa, dABl,
-                  dAIn.glu, dAInL.glu, 
-                  dAFe.glu,
-                  dABl.glu, dALi.glu, dABi.glu, dAKi.glu, dAUr.glu, dAAd.glu,
-                  dASl.glu, dARa.glu
-    ),  CInL, #22, 
-    CIn, #23, 
-    CLi, #24
-    CKi, #25
-    CAd, #26
-    CSl, #27
-    CRa, #28
-    CBl, #29
-    CInL.glu, #30
-    CBi.glu, #31
-    CIn.glu, #32
-    CLi.glu, #33
-    CKi.glu, #34
-    CAd.glu, #35
-    CSl.glu, #36
-    CRa.glu, #37
-    CBl.glu #38
+    return(list(c(dASt, dAIn, dACo, dAFe, dALi, dALi.glu, dAKi, dAUr, 
+                  dAAd, dASl, dARa, dABl),   
+    CIn, #22, 
+    CLi, #23
+    CKi, #24
+    CAd, #25
+    CSl, #26
+    CRa, #27
+    CBl #28
     ))
   })
 }
@@ -329,29 +214,8 @@ write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A.csv"), row.names=FALSE)
 
 # Mass Balance
 CALCULATED <- c( #!Change accordingly depending on the compartments in the function#
-  "AInL",
-  # "AInL.f",
-  # "AInL.s",
-  "AIn",
-  "AFe",
-  "ALi",
-  "AKi",
-  "AUr",
-  "AAd",
-  "ASl",
-  "ARa",
-  "ABl",
-  "AIn.glu",
-  "AInL.glu",
-  "AFe.glu",
-  "ABl.glu",
-  "ALi.glu",
-  "ABi.glu",
-  "AKi.glu",
-  "AUr.glu",
-  "AAd.glu",
-  "ASl.glu",
-  "ARa.glu"
+  "ASt", "AIn", "ACo", "AFe", "ALi", "ALi.glu", "AKi", "AUr.glu", 
+  "AAd", "ASl", "ARa", "ABl"
   )
 
 # Plotting function
@@ -393,25 +257,15 @@ ggsave(here(TodaysOuput, "MB_ERROR2=.png"), dpi = 300)
 # From amounts to concentrations
 OUTPUT.C <- OUTPUT.A %>% 
   mutate(
-    AInL = AInL/INPUT$VInL, 
     AIn = AIn/INPUT$VIn, 
     ALi = ALi/INPUT$VLi,
     AKi = AKi/INPUT$VKi,
     AAd = AAd/INPUT$VAd, 
     ASl = ASl/INPUT$VSl,
     ARa = ARa/INPUT$VRa,
-    ABl = ABl/INPUT$VBl,
-    AIn.glu = AIn.glu/INPUT$VIn,
-    AInL.glu = AInL.glu/INPUT$VInL,
-    ALi.glu = ALi.glu/INPUT$VLi,
-    ABi.glu = ABi.glu/INPUT$VBi,
-    AKi.glu = AKi.glu/INPUT$VKi,
-    AAd.glu = AAd.glu/INPUT$VAd,
-    ASl.glu = ASl.glu/INPUT$VSl,
-    ARa.glu = ARa.glu/INPUT$VRa,
-    ABl.glu = ABl.glu/INPUT$VBl
+    ABl = ABl/INPUT$VBl
   ) %>% 
-  select(!c("AFe", "AUr", "AFe.glu", "AUr.glu"))
+  select(!c("AFe", "AUr"))
   
 names(OUTPUT.C) <- sub("^A", "C", names(OUTPUT.C))
 
@@ -422,36 +276,26 @@ write.csv(OUTPUT.C, file = here(TodaysOuput, "OUTPUT.C.csv"), row.names=FALSE)
 CONCENTRATIONS <- OUTPUT.C %>% #!change accordingly depending on the compartments in the model
   rename(#!change accordingly depending on the compartments in the model
     "Time" = "time",
-    "Intestinal_lumen" = "CInL",
     "Intestine" = "CIn",
     "Liver" = "CLi",
     "Kidney" = "CKi",
     "Adipose" = "CAd",
     "Slowly_perfused" = "CSl",
     "Rapidly_perfused" = "CRa",
-    "Blood" = "CBl",
-    "Intestine_glucuronide" = "CIn.glu",
-    "Intestinal_lumen_glucuronide" = "CInL.glu",
-    "Blood_glucuronide" = "CBl.glu",
-    "Liver_glucuronide" =  "CLi.glu",
-    "Bile_glucuronide" = "CBi.glu",
-    "Kidney_glucuronide" = "CKi.glu",
-    "Adipose_glucuronide" = "CAd.glu",
-    "Slowly_perfused_glucuronide" = "CSl.glu",
-    "Rapidly_perfused_glucuronide" = "CRa.glu"
+    "Blood" = "CBl"
   ) %>% 
   pivot_longer(names_to = "Tissue",
                values_to = "Concentration",
-               Intestinal_lumen:Rapidly_perfused_glucuronide,
+               Intestine:Blood,
   ) %>%
-  mutate(Concentration = Concentration*INPUT$MW)  #converting umol/L to ng/ml
+  mutate(Concentration = Concentration * INPUT$MW)  #converting umol/L to ng/ml
 
 
 
 # To plot Zearalenone blood concentration
 CONCENTRATIONS %>%
-  filter(str_starts(Tissue, "Blood"),
-         !str_ends(Tissue, "_glucuronide")) %>%
+  filter(str_starts(Tissue, "Blood")) %>% 
+ #        !str_ends(Tissue, "_glucuronide")) %>%
   ggplot(aes(Time, Concentration)) +
   facet_wrap(~Tissue) +
   geom_path(linewidth = 0.5) +
