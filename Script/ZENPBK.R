@@ -5,11 +5,12 @@ library(tidyverse)
 library(ggplot2)
 library(here)
 library(showtext)
+library(FME)
 font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "GettingBackIntoIt"
+WhatAmITesting <- "AddingSensitivity"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
@@ -19,7 +20,7 @@ source(here("Script/Functions/PlottingFunction.R"))                             
 
 
 # -----------------------------------------------------------------------------
-# PBK MODEL FOR ZEARALENONE ####
+# PBK MODEL INITIATION ####
 # -----------------------------------------------------------------------------
 
 ## Extracting input parameters ####
@@ -38,14 +39,15 @@ ZEN.dat <- read.csv(here("InputData/Zen.input.csv"), header=1)     #from {Agahi,
 
 # Tout
 STARTtime <- 0 # start of simulation (h)
-STOPtime <- 24 # end of simmulation (h) (can be from 24h to years)
-Dt <- 1 / 100 # steps of simulation (now it per minute) (could be 1/100, 1/200 or 1 for simulations over years)
-times <- seq(STARTtime,STOPtime,by=Dt)
+STOPtime <- 24 #end of simulation (h) (for repeated pregnancy in Videmann daily exposure time from D7 to D20 (13days)
+
+Dt <- 1/ 100 # steps of simulation (now it per minute) (could be 1/100, 1/200 or 1 for simulations over years)
+Tout <- seq(STARTtime,STOPtime,by=Dt)
 
 # Exposure
 PO_CONC = 1 #mg/kg day, Videmann
 PO_DOSE = PO_CONC*INPUT$BW / INPUT$MW * 1000 #umol
-
+#PO_REGIMEN = seq(0, 13 * 24, by = 24) # (h) dosing regimen
 
 ## Parameters ####
 ## ------------------------------------------------------
@@ -117,7 +119,7 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
 ) 
 
 
-## Initials ####
+## State ####
 ## ------------------------------------------------------
 
 INITIALstate = c(
@@ -143,6 +145,7 @@ INITIALstate = c(
   ARa.glu = 0,
   ABl.glu = 0
   )
+
 
 
 # -----------------------------------------------------------------------------
@@ -300,25 +303,24 @@ PBK_ZENandGLUC <- function(t,state,parameters){
                   dAIn.glu, dAInL.glu, dAFe.glu,
                   dALi.glu, dABi.glu, dAKi.glu, dAUr.glu, 
                   dAAd.glu, dASl.glu, dARa.glu, dABl.glu
-    ),  
-    CInL, #"22" 
-    CIn, #"23" 
-    CLi, #"24" 
-    CKi, #"25" 
-    CAd, #"26" 
-    CSl, #"27" 
-    CRa, #"28" 
-    CBl, #"29" 
-    CIn.glu, #"30" 
-    CInL.glu, #"31" 
-    CLi.glu, #"32"
-    CBi.glu, #"33"
-    CKi.glu, #"34" 
-    CAd.glu, #"35" 
-    CSl.glu, #"36" 
-    CRa.glu, #"37" 
-    CBl.glu #"38"
-    ))
+    ), c(CInL, #"22" 
+         CIn, #"23" 
+         CLi, #"24" 
+         CKi, #"25" 
+         CAd, #"26" 
+         CSl, #"27" 
+         CRa, #"28" 
+         CBl, #"29" 
+         CIn.glu, #"30" 
+         CInL.glu, #"31" 
+         CLi.glu, #"32"
+         CBi.glu, #"33"
+         CKi.glu, #"34" 
+         CAd.glu, #"35" 
+         CSl.glu, #"36"
+         CRa.glu, #"37" 
+         CBl.glu #"38"
+    )))
   })
 }
 
@@ -329,11 +331,11 @@ PBK_ZENandGLUC <- function(t,state,parameters){
 # -----------------------------------------------------------------------------
 
 PBK <- ode(y = INITIALstate, 
-           times = times,  
+           times = Tout,  #used to be times
            func = PBK_ZENandGLUC,
            parms = PARAMETERS, 
            atol = 1e-50,
-           #events = list(data = dosing),
+           #events = list(data = events), #for repeated exposure
            method = "lsoda")
 head(PBK)
 
@@ -675,4 +677,114 @@ SimulatedKidney %>% ggplot() +
        color = "Gender") +
   CP_theme()
 ggsave(here(PlotFolderIs, "GlucKidneySimulatedInvivo.png"), dpi = 300)
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# LOCAL SENSITIVITY ANALYSIS ####
+# -----------------------------------------------------------------------------
+
+pars <- PARAMETERS %>%  as.list()
+
+SENSI_SOLVE <- function(pars) {
+  PBK_ZENandGLUC
+  
+  state   <- INITIALstate
+  tout    <- Tout
+  
+  return(as.data.frame(ode(y = state, times = Tout, func = PBK_ZENandGLUC,
+                           parms = pars)))
+}
+
+SENSI_OUT <- SENSI_SOLVE(pars)
+
+SENSI <- sensFun(
+  func = SENSI_SOLVE, 
+  parms = pars
+)
+
+head(SENSI)
+plot(SENSI)
+summary(SENSI)
+?summary
+plot(summary(SENSI))
+
+# 
+# PARAMETERS4SENSI <- PARAMETERS %>% as.data.frame()
+# 
+# L_SENSI <- function(parms){
+#   ode(y = INITIALstate,
+#     func = PBK_ZENandGLUC, 
+#     parms = PARAMETERS4SENSI, 
+#     Tout = Tout,
+#     cores = 4)
+#   } 
+# 
+# 
+# 
+# L_SENSI_fun <- function(PARAMETERS4SENSI){
+#   pars <- PARAMETERS4SENSI[1,]
+#   names(pars) <- colnames(PARAMETERS4SENSI)
+#   
+#   lsa <- sensFun(L_SENSI,
+#                  parms = PARAMETERS4SENSI,
+#                  sensvar = c("CBl"), 
+#                  senspar = names(pars),
+#                  varscale = NULL,
+#                  parscale = NULL,
+#                  tiny = 0.01 # change parameter by 1%
+#   ) 
+#   
+#   #plot(summary(lsa)[order(summary(lsa)$Mean, decreasing = TRUE),]$Mean)
+#   #max(summary(lsa)$Mean)
+#   
+#   Tmax <- PBK[which.max(PBK$CBl), "time"] #ModelOutput? Should it be as.data.frame(solve.pbk) for my model?
+# 
+#   lsa <- dplyr::filter(lsa, x == Tmax)
+#   lsa <- t(lsa)
+#   lsa <- as.data.frame(lsa[3:nrow(lsa), ])
+#   colnames(lsa) <- c("Values")
+#   lsa[,1] <- as.numeric(lsa[,1])
+# 
+# 
+#   lsa <- filter(lsa, lsa[,1] < -0.1 | lsa[,1] > 0.1) # exclude all small changes #SO SMALL IMPACT OUTPUT, MAKES SENSE
+#   #lsa <- filter(lsa, rownames(lsa) != "TOP") # exclude TOP #EXPLAIN
+# 
+#   lsa <- data.frame("Parameter" <- rownames(lsa),
+#                     "Value" <- lsa[,1]
+#   )
+#   lsaOrder <- order(abs(lsa[,2]), decreasing = TRUE)
+#   labelOrder <- lsa[lsaOrder,1]
+# 
+#   lsa <- lsa[lsaOrder,]
+#   rownames(lsa) <- 1:nrow(lsa)
+#   colnames(lsa) <- c("Parameter", "Value")
+# 
+#   clipr::write_clip(lsa)
+# 
+#   # Install and load ggplot2 if not already installed
+#   # install.packages("ggplot2")
+#   library(ggplot2)
+# 
+#   # Create the ggplot
+#   figure <- ggplot(data = lsa, aes(x = Parameter, y = Value)) +
+#     geom_bar(stat = "identity") +
+#     ggtitle("Local sensitivity analysis") +
+#     theme_classic() +
+#     theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+# 
+#   # Print the ggplot
+#   print(figure)
+#   print("hey")
+#   return(lsa)
+# }
+# 
+# OUTPUT.LSA <- L_SENSI_fun(PARAMETERS4SENSI)
+# print(OUTPUT.LSA)
+# 
+# #install.packages("writexl") 
+# #library(writexl) 
+# #write_xlsx(x = sim_data_Rats, path = "sim_data_Rats.xlsx", col_names = TRUE)
 
