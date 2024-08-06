@@ -10,7 +10,7 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "AddingSensitivity"
+WhatAmITesting <- "AddingLSA"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
@@ -682,6 +682,7 @@ ggsave(here(PlotFolderIs, "GlucKidneySimulatedInvivo.png"), dpi = 300)
 
 
 
+
 # -----------------------------------------------------------------------------
 # LOCAL SENSITIVITY ANALYSIS ####
 # -----------------------------------------------------------------------------
@@ -689,27 +690,199 @@ ggsave(here(PlotFolderIs, "GlucKidneySimulatedInvivo.png"), dpi = 300)
 pars <- PARAMETERS %>%  as.list()
 
 SENSI_SOLVE <- function(pars) {
-  PBK_ZENandGLUC
+  SENSI_PBK_ZENandGLUC <- function(t,state,parameters){
+    with(as.list(c(state,parameters)),{
+      
+      #----Concentrations-------------------------------------------------------#
+      
+      # Zearalenone
+      
+      ## Non perfused organ Concentrations (umol/L)
+      CInL <- AInL / VInL #intestinal lumen
+      # CBi <- ABi / VBi #bile
+      
+      ## Tissue cellular Concentrations (umol/L)                                    #Abbreviation (C for Concentration and then 2 first letters of tissue name)
+      CIn <- AIn / VIn #intestine                                                             
+      CLi <- ALi / VLi #liver
+      CKi <- AKi / VKi #kidney
+      CAd <- AAd / VAd #adipose
+      CSl <- ASl / VSl #slowly perfused
+      CRa <- ARa / VRa #rapidly perfused
+      CBl <- ABl / VBl #blood
+      
+      ## Tissue venous Concentrations (umol/L)                                      #Only for perfused organs Equals tissue Concentration/tissue:blood partition coeefficient
+      CvIn <- CIn / PInb #intestinal tissue
+      CvLi <- CLi / PLib #liver
+      CvKi <- CKi / PKib #kidney
+      CvAd <- CAd / PAdb #adipose
+      CvSl <- CSl / PSlb #slowly perfused
+      CvRa <- CRa / PRab #rapidly perfused
+      
+      ## Tissue free Concentrations (umol/L), used for clearance/transport
+      CKi_free <- CvKi*fub
+      CLi_free <- CvLi*fub
+      
+      
+      # Zearalenone glucuronide
+      
+      ## Non perfused organ concentrations (umol/L)
+      CInL.glu <- AInL.glu / VInL #intestinal lumen glucuronide
+      CBi.glu <- ABi.glu / VBi #bile
+      
+      ## Tissue cellular Concentrations (umol/L)                                    #Abbreviation (C for Concentration and then 2 first letters of tissue name)
+      CIn.glu <- AIn.glu / VIn #intestinal tissue
+      CLi.glu <- ALi.glu / VLi #liver
+      CKi.glu <- AKi.glu / VKi #kidney
+      CAd.glu <- AAd.glu / VAd #adipose tissue
+      CSl.glu <- ASl.glu / VSl #slowly perfused tissue
+      CRa.glu <- ARa.glu / VRa #rapidly perfused tissue
+      CBl.glu <- ABl.glu / VBl #blood
+      
+      ## Tissue venous Concentrations (umol/L)                                      #Only for perfused organs Equals tissue Concentration/tissue:blood partition LInefficient
+      CvIn.glu <- CIn.glu / PInb.glu #Concentration leaving intestinal tissue
+      CvLi.glu <- CLi.glu / PLib.glu #Concentration leaving liver
+      CvKi.glu <- CKi.glu / PKib.glu #Concentration leaving kidney
+      CvAd.glu <- CAd.glu / PAdb.glu #Concentration leaving adipose
+      CvSl.glu <- CSl.glu / PSlb.glu #Concentration leaving slowly perfused tissue
+      CvRa.glu <- CRa.glu / PRab.glu #Concentration leaving rapidly perfused tissue
+      
+      
+      #----Differential equations-----------------------------------------------#
+      # Rate of change in amounts in each tissue (umol/h)
+      
+      # Zearalenone-------------------- ##
+      # Intestinal Lumen
+      dAInL <- - ka*AInL - kTIn*AInL + kHydro*AInL.glu #- VmaxAbs*CInL/(KmAbs+CInL) + VmaxSec*CIn/(KmSec+CIn) 
+      #          toInt              
+      
+      # Intestinal tissue
+      dAIn <-  + ka*AInL - VmaxMet.In*CIn/(KmGluc.In+CIn) + QIn*(CBl - CvIn)   #+ VmaxAbs*CInL/(KmAbs+CInL) - VmaxSec*CIn/(KmSec+CIn) 
+      #        fromLumenActive      toglucuronide           fromBlood toLiver             toLumen                   fromLum                         
+      
+      # # Feces
+      dAFe <- kTIn*AInL
+      #       fromIntestine
+      
+      # Liver
+      dALi <- QIn*CvIn + QHa*CBl - QLi*CvLi - VmaxMet.Li*CLi/(KmGluc.Li+CLi)
+      #       fromIntest fromBlo   toBlood    toglucuronide
+      # Kidney
+      dAKi <- QKi*(CBl - CvKi) - CL_Re*CKi_free #CL_Re is equal to rat GER
+      #       fromtoblood        toUrine
+      
+      dAUr <- CL_Re*CKi_free
+      #       fromKidney
+      # Adipose
+      dAAd <- QAd*(CBl - CvAd)
+      #       fromtoblood
+      
+      # Slowly Perfused Tissue
+      dASl <- QSl*(CBl - CvSl)
+      #       fromtoslowly
+      
+      # Rapidly Perfused Tissue
+      dARa <- QRa*(CBl - CvRa)
+      #       fromtorapidly
+      
+      dABl <- QLi*CvLi + QKi*CvKi + QAd*CvAd + QSl*CvSl + QRa*CvRa +
+        # from  liver      kidney     adipose    slowly     rapidly
+        - (QIn + QHa + QKi + QAd + QSl + QRa)*CBl
+      # to int  hepA  kid   adi   slo   rap
+      
+      # ## Glucuronide---------------------- ##
+      
+      # Intestine
+      dAIn.glu <- VmaxMet.In*CIn/(KmGluc.In+CIn) - AIn.glu + QIn*CBl.glu - QIn*CvIn.glu # -VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) + VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu)  #(umol/h)
+      #           fromIntZen                       toInL     fromblood     toportal                                        fromInL                                         
+      
+      # Intestinal lumen
+      dAInL.glu <- AIn.glu - kHydro*AInL.glu - kTIn*AInL.glu + kTge*ABi.glu #+ VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) - VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu)  #(umol/h)
+      #            fromInTis toZen             toFeces         fromBile
+      
+      # Feces
+      dAFe.glu <- kTIn*AInL.glu
+      #           fromInLumen
+      
+      # Liver
+      dALi.glu <- VmaxMet.Li*CLi/(KmGluc.Li+CLi) + QIn*CvIn.glu + QHa*CBl.glu - QLi*CvLi.glu - CL_Bi*CLi.glu
+      #           fromZen                          fromPortal     fromHepaticA  toBlood        toBile
+      
+      # Bile
+      dABi.glu <- CL_Bi*CLi.glu - kTge*ABi.glu
+      #           fromLiver       toIntestLumen
+      
+      # Kidney
+      dAKi.glu <- QKi*(CBl.glu-CvKi.glu) - CL_Re*CKi.glu
+      #           fromToBlood              toUrine
+      
+      # Urine
+      dAUr.glu <- CL_Re*CKi.glu
+      #           fromKidney
+      
+      # Adipose
+      dAAd.glu <- QAd*(CBl.glu - CvAd.glu)
+      
+      # Slowly Perfused Tissue
+      dASl.glu <- QSl*(CBl.glu - CvSl.glu)
+      
+      # Rapidly Perfused Tissue
+      dARa.glu <- QRa*(CBl.glu - CvRa.glu)
+      
+      # Blood
+      dABl.glu <- QLi*CvLi.glu + QKi*CvKi.glu + QAd*CvAd.glu + QSl*CvSl.glu + QRa*CvRa.glu +
+        - ((QIn + QHa + QKi + QAd + QSl + QRa) * CBl.glu)
+      
+      
+      #----Output---------------------------------------------------------------#
+      
+      return(list(c(dAInL, dAIn, dAFe, 
+                    dALi, dAKi, dAUr, dAAd, dASl, dARa, dABl,
+                    dAIn.glu, dAInL.glu, dAFe.glu,
+                    dALi.glu, dABi.glu, dAKi.glu, dAUr.glu, 
+                    dAAd.glu, dASl.glu, dARa.glu, dABl.glu
+      ), c(CBl #"29" 
+      )))
+    })
+  }
   
   state   <- INITIALstate
   tout    <- Tout
   
-  return(as.data.frame(ode(y = state, times = Tout, func = PBK_ZENandGLUC,
-                           parms = pars)))
+  out <- ode(y = state, parms = pars, times = Tout, func = SENSI_PBK_ZENandGLUC)
+  
+  return(as.data.frame(out))
 }
 
 SENSI_OUT <- SENSI_SOLVE(pars)
 
 SENSI <- sensFun(
   func = SENSI_SOLVE, 
-  parms = pars
+  parms = pars, 
+  sensvar = "CBl", varscale = 1 #sensitivity for the variable CBl
 )
 
 head(SENSI)
 plot(SENSI)
+plot(SENSI, type = "b", pch = 15:19, col = 2:6, 
+     main = "Sensitivity all vars")
 summary(SENSI)
-?summary
 plot(summary(SENSI))
+
+?plot()
+
+# value : the nominal value of the parameter
+# scale : the scale of the parameter
+# L1 : the L1 norm of each parameter's sensitivity function
+# ---> it's the average of the absolute values of the sensitivities; represents the sensitivity of the x parameter in the y timepoint
+# L2 : the L2 norm of each parameter's sensitivity function
+# ---> it's the square root of the average of the squares of the sensitivities; represents the sensitivity of the x parameter at the y timepoint
+# Mean : the mean value of the sensitivity function
+# Min : the minimum value of the sensitivity function
+# Max : the maximum value of the sensitivity function
+# N : the number of points used in the sensitivity analysis
+
+# L1 and L2 norms provide a measure of the overall sensitivity of the model output to changes in each parameter
+
 
 # 
 # PARAMETERS4SENSI <- PARAMETERS %>% as.data.frame()
