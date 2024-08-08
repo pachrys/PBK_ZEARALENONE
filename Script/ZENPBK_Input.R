@@ -1,16 +1,28 @@
+# ## Admin Info ####
+# ## ------------------------------------------------------
+# Script originally written by: Chrysanthi Pachoulide
+# User: Chrysanthi Pachoulide
+# Last updated: August 2024
+
+# ## Aim of the script ####
+# ## ------------------------------------------------------
 # This scipt is made to easily calculate the parameters needed for the PBK.
 # This can be used to add/delete tissues, recalculate partition coefficients
 # organ volumes etc. 
 # Absoprtion, metabolism and transport parameters are also calculated here.
 
+
+# ## Packages needed ####
+# ## ------------------------------------------------------
 library(here)
 library(tidyverse)
 
-#*****************************************************************************#
-#---Script to calculate input-------------------------------------------------#
-#*****************************************************************************#
+# -----------------------------------------------------------------------------
+# PHYSIOLOGY ####
+# -----------------------------------------------------------------------------
 
-#----Physiology---------------------------------------------------------------#
+## VOLUMES AND FLOW RATES ####
+## ------------------------------------------------------
 
 BW <- 0.250 #(kg)
 QC <- 80 * 60 / 1000 #(L/h)
@@ -49,7 +61,9 @@ Vo.dat <- F_Vo.dat %>%
 
 
 
-#----Physicochemical parameters-----------------------------------------------#
+# -----------------------------------------------------------------------------
+# ZEARALENONE - PHYSICOCHEMICAL PARAMETERS ####
+# -----------------------------------------------------------------------------
 
 ZEN.dat <- read.csv(here("InputData/Zen.input.csv"), header=1)     #from {Agahi, 2020 #456} and chemicalize, BP from Shin, Hong et al.2009
 Rat.dat1 <- Rat.input %>% filter(!tissue %in% c("Plasma","Adipose","RBCs")) #df for all tissues except for adipose, RBCs and plasma
@@ -57,7 +71,8 @@ Rat.dat2 <- Rat.input %>% filter(!tissue %in% c("Plasma","RBCs")) #df for all ti
 fup <- 0.156 #Mukherjee
 
 
-## ZEARALENONE ##
+## Tissue:Plasma partitioning ####
+## ------------------------------------------------------
 
 # Tissue partitioning (Poulin and Theil http://jpharmsci.org/article/S0022-3549(16)30889-9/fulltext), as coded by kmutsey: https://github.com/metrumresearchgroup/PBPK_PC/blob/master/script/CalcKp_P%26T.R
 # Assumption that Zearalenone is a monoprotic acid; in reality it's a diprotic acid with pKa2=10.38. Insignificant difference in tissue:plasma partition coefficients was observed when diprotic acid equations were tested. Check.As.Diprotic.RnR.R file.
@@ -102,7 +117,8 @@ Kp <- c(Kpad, Kpt)
 PC.names <- paste0("P", names)
 PC.dat <- data.frame(PC.names, kp = as.numeric(Kp))
 
-## Calculate Tissue:Blood partition coefficient 
+## Tissue:Blood partitioning ####
+## ------------------------------------------------------
 PCB.dat <- PC.dat %>%
   mutate(kp = kp * ZEN.dat$BP) %>% #Tissue:Blood Partition coefficients = BloodPlasma ratio (BP) * Tissue:Plasma Partition coefficient (PTi)
   rename(PValue = kp) %>%
@@ -115,7 +131,12 @@ fub = fup * ZEN.dat$BP
 
 
 
-## ZEARALENONE GLUCURONIDE ##
+# -----------------------------------------------------------------------------
+# ZEARALENONE GLUCURONIDE - PHYSICOCHEMICAL PARAMETERS ####
+# -----------------------------------------------------------------------------
+
+## Tissue:Plasma partitioning ####
+## ------------------------------------------------------
 
 # Calculating fraction unbound in plasma #Reference: Lobell M, Sivarajah V. In silico prediction of aqueous solubility, human plasma protein binding and volume of distribution of compounds from calculated pKa and AlogP98 values. Mol Divers. 2003;7(1):69-87. doi: 10.1023/b:modi.0000006562.93049.36. PMID: 14768905.
 fup.glu <- 1 / (1 + 10^(0.4485 * ZEN.dat$logP.glu - 0.4782))
@@ -142,7 +163,8 @@ PC.names.glu <- paste0("P", names, ".glu")
 PC.dat.glu <- data.frame(PC.names.glu, kp = as.numeric(Kp.glu))
 
 
-## Calculate Tissue:Blood partition coefficient 
+## Tissue:Blood partitioning ####
+## ------------------------------------------------------
 PCB.dat.glu <- PC.dat.glu %>%
   #mutate(kp = kp * ZEN.dat$BP) %>% #assumption that BP is equal to 1
   rename(PValue = kp) %>%
@@ -156,7 +178,9 @@ PCB.dat.glu <- PC.dat.glu %>%
 
 
 
-#----Toxicokinetic parameters------------------------------------------------#
+# -----------------------------------------------------------------------------
+# ZEARALENONE & ZEARALENONE GLUCURONIDE - Toxicokinetic ####
+# -----------------------------------------------------------------------------
 
 # Gastric emptying rate (1/h)
 kTge <- 1 / ZEN.dat$kTge
@@ -220,7 +244,9 @@ VmaxExc.In.glu <- VmaxGluc.Exc.In / 1000000 #umol/h, scaling from pmol/h
 
 
 
-#----Extracting all data-----------------------------------------------------#
+# -----------------------------------------------------------------------------
+# EXTRACT AND SAVE ALL DATA ####
+# -----------------------------------------------------------------------------
 
 F_Vo.dat <- F_Vo.dat %>%
   pivot_wider(names_from = F_Vo.names, values_from = F_Vo)
