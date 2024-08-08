@@ -3,6 +3,9 @@
 # DATE: AUGUST 2024
 # For background on the FME package: https://www.rdocumentation.org/packages/FME/versions/1.3.6.3/topics/sensFun
 
+rm(list=ls()) # to clear out the global environment
+
+
 # Libraries-------------------------------------------------------------------#
 
 library(deSolve)
@@ -58,9 +61,13 @@ PO_DOSE = PO_CONC*INPUT$BW / INPUT$MW * 1000 #umol
 ## ------------------------------------------------------
 
 PARAMETERS=c(PO_DOSE = PO_DOSE, 
-             VInL = INPUT$VInL,
+             VInL1 = INPUT$VInL/3,
+             VInL2 = INPUT$VInL/3,
+             VInL3 = INPUT$VInL/3,
              VBi = INPUT$VBi,
-             VIn = INPUT$VIn,
+             VIn1 = INPUT$VIn/3,
+             VIn2 = INPUT$VIn/3,
+             VIn3 = INPUT$VIn/3,
              VLi = INPUT$VLi, 
              VKi = INPUT$VKi, 
              VAd = INPUT$VAd, 
@@ -107,8 +114,9 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
              # VmaxSec = INPUT$VmaxSec, 
              # KmSec = INPUT$KmSec, 
              kTIn = INPUT$kTIn,#total intestinal transit time
+             kTIn.3 = INPUT$kTIn/3, #intestine is splited in 3
              # kTsi = 1 / ZEN.dat$kTsi, 
-             # kTco = 1 / ZEN.dat$kTco,
+             kTCo = 1 / ZEN.dat$kTco,
              kTge = INPUT$kTge, #gastric emptying rate, "Assumed to mimic bile secretion rate
              CL_Re = INPUT$CL_Re,
              CL_Bi = INPUT$CL_Bi, #biliary clearance
@@ -128,8 +136,12 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
 ## ------------------------------------------------------
 
 INITIALstate = c(
-  AInL = PO_DOSE, 
-  AIn = 0, 
+  AInL1 = PO_DOSE, 
+  AInL2 = 0,
+  AInL3 = 0,
+  AIn1 = 0, 
+  AIn2 = 0,
+  AIn3 = 0,
   AFe = 0,
   ALi = 0,
   AKi = 0,
@@ -138,8 +150,12 @@ INITIALstate = c(
   ASl = 0,
   ARa = 0,
   ABl = 0,
-  AIn.glu = 0,
-  AInL.glu = 0,
+  AIn1.glu = 0,
+  AIn2.glu = 0,
+  AIn3.glu = 0,
+  AInL1.glu = 0,
+  AInL2.glu = 0,
+  AInL3.glu = 0,
   AFe.glu = 0,
   ALi.glu = 0,
   ABi.glu = 0,
@@ -159,176 +175,221 @@ INITIALstate = c(
 # -----------------------------------------------------------------------------
 # source(here("Script/ZENPBK_Function.R"))
 
+
 PBK_ZENandGLUC <- function(t,state,parameters){
   with(as.list(c(state,parameters)),{
-
+    
     #----Concentrations-------------------------------------------------------#
-
+    
     # Zearalenone
-
+    
     ## Non perfused organ Concentrations (umol/L)
-    CInL <- AInL / VInL #intestinal lumen
+    CInL1 <- AInL1 / VInL1 #intestinal lumen
+    CInL2 <- AInL2 / VInL2 #intestinal lumen
+    CInL3 <- AInL3 / VInL3 #intestinal lumen
     # CBi <- ABi / VBi #bile
-
+    
     ## Tissue cellular Concentrations (umol/L)                                    #Abbreviation (C for Concentration and then 2 first letters of tissue name)
-    CIn <- AIn / VIn #intestine
+    CIn1 <- AIn1 / VIn1 #intestine
+    CIn2 <- AIn2 / VIn2 #intestine
+    CIn3 <- AIn3 / VIn3 #intestine
     CLi <- ALi / VLi #liver
     CKi <- AKi / VKi #kidney
     CAd <- AAd / VAd #adipose
     CSl <- ASl / VSl #slowly perfused
     CRa <- ARa / VRa #rapidly perfused
     CBl <- ABl / VBl #blood
-
+    
     ## Tissue venous Concentrations (umol/L)                                      #Only for perfused organs Equals tissue Concentration/tissue:blood partition coeefficient
-    CvIn <- CIn / PInb #intestinal tissue
+    CvIn1 <- CIn1 / PInb #intestinal tissue
+    CvIn2 <- CIn2 / PInb #intestinal tissue
+    CvIn3 <- CIn3 / PInb #intestinal tissue
     CvLi <- CLi / PLib #liver
     CvKi <- CKi / PKib #kidney
     CvAd <- CAd / PAdb #adipose
     CvSl <- CSl / PSlb #slowly perfused
     CvRa <- CRa / PRab #rapidly perfused
-
+    
     ## Tissue free Concentrations (umol/L), used for clearance/transport
     CKi_free <- CvKi*fub
     CLi_free <- CvLi*fub
-
-
+    
+    
     # Zearalenone glucuronide
-
+    
     ## Non perfused organ concentrations (umol/L)
-    CInL.glu <- AInL.glu / VInL #intestinal lumen glucuronide
+    CInL1.glu <- AInL1.glu / VInL1 #intestinal lumen glucuronide
+    CInL2.glu <- AInL2.glu / VInL2 #intestinal lumen glucuronide
+    CInL3.glu <- AInL3.glu / VInL3 #intestinal lumen glucuronide
     CBi.glu <- ABi.glu / VBi #bile
-
+    
     ## Tissue cellular Concentrations (umol/L)                                    #Abbreviation (C for Concentration and then 2 first letters of tissue name)
-    CIn.glu <- AIn.glu / VIn #intestinal tissue
+    CIn1.glu <- AIn1.glu / VIn1 #intestinal tissue
+    CIn2.glu <- AIn2.glu / VIn2 #intestinal tissue
+    CIn3.glu <- AIn3.glu / VIn3 #intestinal tissue
     CLi.glu <- ALi.glu / VLi #liver
     CKi.glu <- AKi.glu / VKi #kidney
     CAd.glu <- AAd.glu / VAd #adipose tissue
     CSl.glu <- ASl.glu / VSl #slowly perfused tissue
     CRa.glu <- ARa.glu / VRa #rapidly perfused tissue
     CBl.glu <- ABl.glu / VBl #blood
-
+    
     ## Tissue venous Concentrations (umol/L)                                      #Only for perfused organs Equals tissue Concentration/tissue:blood partition LInefficient
-    CvIn.glu <- CIn.glu / PInb.glu #Concentration leaving intestinal tissue
+    CvIn1.glu <- CIn1.glu / PInb.glu #Concentration leaving intestinal tissue
+    CvIn2.glu <- CIn2.glu / PInb.glu #Concentration leaving intestinal tissue
+    CvIn3.glu <- CIn3.glu / PInb.glu
     CvLi.glu <- CLi.glu / PLib.glu #Concentration leaving liver
     CvKi.glu <- CKi.glu / PKib.glu #Concentration leaving kidney
     CvAd.glu <- CAd.glu / PAdb.glu #Concentration leaving adipose
     CvSl.glu <- CSl.glu / PSlb.glu #Concentration leaving slowly perfused tissue
     CvRa.glu <- CRa.glu / PRab.glu #Concentration leaving rapidly perfused tissue
-
-
+    
+    
     #----Differential equations-----------------------------------------------#
     # Rate of change in amounts in each tissue (umol/h)
-
+    
     # Zearalenone-------------------- ##
     # Intestinal Lumen
-    dAInL <- - ka*AInL - kTIn*AInL + kHydro*AInL.glu #- VmaxAbs*CInL/(KmAbs+CInL) + VmaxSec*CIn/(KmSec+CIn)
-    #          toInt
-
+    dAInL1 <- - ka*AInL1 + kHydro*AInL1.glu - kTIn.3*AInL1 # Intestinal lumen 1
+    dAInL2 <- - ka*AInL2 + kHydro*AInL2.glu + kTIn.3*AInL1 - kTIn.3*AInL2 #+ kHydro*AInL1.glu    # Intestinal lumen 2
+    dAInL3 <- - ka*AInL3 + kHydro*AInL3.glu + kTIn.3*AInL2 - kTCo*AInL3 #+ kHydro*AInL.glu3  # Intestinal lumen 3
+    
+    # Feces
+    dAFe <- kTCo*AInL3
+    
     # Intestinal tissue
-    dAIn <-  + ka*AInL - VmaxMet.In*CIn/(KmGluc.In+CIn) + QIn*(CBl - CvIn)   #+ VmaxAbs*CInL/(KmAbs+CInL) - VmaxSec*CIn/(KmSec+CIn)
-    #        fromLumenActive      toglucuronide           fromBlood toLiver             toLumen                   fromLum
-
-    # # Feces
-    dAFe <- kTIn*AInL
-    #       fromIntestine
-
+    dAIn1 <-  + ka*AInL1 - VmaxMet.In*CIn1/(KmGluc.In+CIn1) + QIn*(CBl - CvIn1) - kTIn.3*AIn1  # Intestine 1
+    dAIn2 <-  + ka*AInL2 - VmaxMet.In*CIn2/(KmGluc.In+CIn2) + QIn*(CBl - CvIn2) + kTIn.3*AIn1 - kTIn.3*AIn2     # Intestine 2
+    dAIn3 <-  + ka*AInL3 - VmaxMet.In*CIn3/(KmGluc.In+CIn3) + QIn*(CBl - CvIn3) + kTIn.3*AIn2    # Intestine 3    
+    
     # Liver
-    dALi <- QIn*CvIn + QHa*CBl - QLi*CvLi - VmaxMet.Li*CLi/(KmGluc.Li+CLi)
+    dALi <- QIn*(CvIn1 + CvIn2 + CvIn3) + QHa*CBl - QLi*CvLi - VmaxMet.Li*CLi/(KmGluc.Li+CLi)
     #       fromIntest fromBlo   toBlood    toglucuronide
     # Kidney
     dAKi <- QKi*(CBl - CvKi) - CL_Re*CKi_free #CL_Re is equal to rat GER
     #       fromtoblood        toUrine
-
+    
     dAUr <- CL_Re*CKi_free
     #       fromKidney
     # Adipose
     dAAd <- QAd*(CBl - CvAd)
     #       fromtoblood
-
+    
     # Slowly Perfused Tissue
     dASl <- QSl*(CBl - CvSl)
     #       fromtoslowly
-
+    
     # Rapidly Perfused Tissue
     dARa <- QRa*(CBl - CvRa)
     #       fromtorapidly
-
+    
     dABl <- QLi*CvLi + QKi*CvKi + QAd*CvAd + QSl*CvSl + QRa*CvRa +
       # from  liver      kidney     adipose    slowly     rapidly
-      - (QIn + QHa + QKi + QAd + QSl + QRa)*CBl
+      - ((3*QIn) + QHa + QKi + QAd + QSl + QRa)*CBl
     # to int  hepA  kid   adi   slo   rap
-
+    
     # ## Glucuronide---------------------- ##
-
-    # Intestine
-    dAIn.glu <- VmaxMet.In*CIn/(KmGluc.In+CIn) - AIn.glu + QIn*CBl.glu - QIn*CvIn.glu # -VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) + VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu)  #(umol/h)
-    #           fromIntZen                       toInL     fromblood     toportal                                        fromInL
-
+    
+    # Intestinal tissue
+    dAIn1.glu <- VmaxMet.In*CIn1/(KmGluc.In+CIn1) - AIn1.glu + QIn*(CBl.glu - CvIn1.glu) - kTIn.3*AIn1.glu # Intestinal tissue 1
+    dAIn2.glu <- VmaxMet.In*CIn2/(KmGluc.In+CIn2) - AIn2.glu + QIn*(CBl.glu - CvIn2.glu) + kTIn.3*AIn1.glu - kTIn.3*AIn2.glu# Intestinal tissue 2
+    dAIn3.glu <- VmaxMet.In*CIn3/(KmGluc.In+CIn3) - AIn3.glu + QIn*(CBl.glu - CvIn3.glu) + kTIn.3*AIn2.glu# Intestinal tissue 2
+    
     # Intestinal lumen
-    dAInL.glu <- AIn.glu - kHydro*AInL.glu - kTIn*AInL.glu + kTge*ABi.glu #+ VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) - VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu)  #(umol/h)
-    #            fromInTis toZen             toFeces         fromBile
-
+    dAInL1.glu <- AIn1.glu + kTge*ABi.glu - kTIn.3*AInL1.glu - kHydro*AInL1.glu # Intestinal Lumen 1
+    dAInL2.glu <- AIn2.glu + kTIn.3*AInL1.glu - kTIn.3*AInL2.glu - kHydro*AInL2.glu # Intestinal Lumen 2
+    dAInL3.glu <- AIn3.glu + kTIn.3*AInL2.glu - kTCo*AInL3.glu - kHydro*AInL3.glu # Intestinal Lumen 2
+    
+    
     # Feces
-    dAFe.glu <- kTIn*AInL.glu
-    #           fromInLumen
-
+    dAFe.glu <- kTCo*AInL3.glu
+    
     # Liver
-    dALi.glu <- VmaxMet.Li*CLi/(KmGluc.Li+CLi) + QIn*CvIn.glu + QHa*CBl.glu - QLi*CvLi.glu - CL_Bi*CLi.glu
-    #           fromZen                          fromPortal     fromHepaticA  toBlood        toBile
-
+    dALi.glu <- VmaxMet.Li*CLi/(KmGluc.Li+CLi) + QIn*(CvIn1.glu+CvIn2.glu+CvIn3.glu) + QHa*CBl.glu - QLi*CvLi.glu - CL_Bi*CLi.glu
+    
     # Bile
     dABi.glu <- CL_Bi*CLi.glu - kTge*ABi.glu
-    #           fromLiver       toIntestLumen
-
+    
     # Kidney
     dAKi.glu <- QKi*(CBl.glu-CvKi.glu) - CL_Re*CKi.glu
-    #           fromToBlood              toUrine
-
+    
     # Urine
     dAUr.glu <- CL_Re*CKi.glu
-    #           fromKidney
-
+    
     # Adipose
     dAAd.glu <- QAd*(CBl.glu - CvAd.glu)
-
+    
     # Slowly Perfused Tissue
     dASl.glu <- QSl*(CBl.glu - CvSl.glu)
-
+    
     # Rapidly Perfused Tissue
     dARa.glu <- QRa*(CBl.glu - CvRa.glu)
-
+    
     # Blood
     dABl.glu <- QLi*CvLi.glu + QKi*CvKi.glu + QAd*CvAd.glu + QSl*CvSl.glu + QRa*CvRa.glu +
-      - ((QIn + QHa + QKi + QAd + QSl + QRa) * CBl.glu)
-
-
+      - (((3*QIn) + QHa + QKi + QAd + QSl + QRa) * CBl.glu)
+    
+    
     #----Output---------------------------------------------------------------#
-
-    return(list(c(dAInL, dAIn, dAFe,
-                  dALi, dAKi, dAUr, dAAd, dASl, dARa, dABl,
-                  dAIn.glu, dAInL.glu, dAFe.glu,
-                  dALi.glu, dABi.glu, dAKi.glu, dAUr.glu,
-                  dAAd.glu, dASl.glu, dARa.glu, dABl.glu
-    ), c(CInL, #"22"
-         CIn, #"23"
-         CLi, #"24"
-         CKi, #"25"
-         CAd, #"26"
-         CSl, #"27"
-         CRa, #"28"
-         CBl, #"29"
-         CIn.glu, #"30"
-         CInL.glu, #"31"
-         CLi.glu, #"32"
-         CBi.glu, #"33"
-         CKi.glu, #"34"
-         CAd.glu, #"35"
-         CSl.glu, #"36"
-         CRa.glu, #"37"
-         CBl.glu #"38"
-    )))
+    
+    return(list(c(dAInL1 = dAInL1, 
+                  dAInL2 = dAInL2, 
+                  dAInL3 = dAInL3,
+                  dAIn1 = dAIn1, 
+                  dAIn2 = dAIn2, 
+                  dAIn3 = dAIn3, 
+                  dAFe = dAFe,
+                  dALi = dALi, 
+                  dAKi = dAKi, 
+                  dAUr = dAUr, 
+                  dAAd = dAAd, 
+                  dASl = dASl, 
+                  dARa = dARa, 
+                  dABl = dABl,
+                  dAIn1.glu = dAIn1.glu,
+                  dAIn2.glu = dAIn2.glu,
+                  dAIn3.glu = dAIn3.glu,
+                  dAInL1.glu = dAInL1.glu, 
+                  dAInL2.glu = dAInL2.glu,
+                  dAInL3.glu = dAInL3.glu,
+                  dAFe.glu = dAFe.glu,
+                  dALi.glu = dALi.glu, 
+                  dABi.glu = dABi.glu, 
+                  dAKi.glu = dAKi.glu, 
+                  dAUr.glu = dAUr.glu,
+                  dAAd.glu = dAAd.glu, 
+                  dASl.glu = dASl.glu, 
+                  dARa.glu = dARa.glu, 
+                  dABl.glu = dABl.glu),
+                list(c(CInL1 = CInL1, 
+                       CInL2 = CInL2, 
+                       CInL3 = CInL3,
+                       CIn1 = CIn1, 
+                       CIn2 = CIn2,
+                       CIn3 = CIn3,
+                       CLi = CLi ,
+                       CKi = CKi, 
+                       CAd = CAd, 
+                       CSl = CSl, 
+                       CRa = CRa, 
+                       CBl = CBl, 
+                       CIn1.glu = CIn1.glu,
+                       CIn2.glu = CIn2.glu,
+                       CIn3.glu = CIn3.glu,
+                       CInL1.glu = CInL1.glu, 
+                       CInL2.glu = CInL2.glu, 
+                       CInL3.glu = CInL3.glu,
+                       CLi.glu = CLi.glu, 
+                       CBi.glu = CBi.glu, 
+                       CKi.glu = CKi.glu, 
+                       CAd.glu = CAd.glu, 
+                       CSl.glu = CSl.glu, 
+                       CRa.glu = CRa.glu, 
+                       CBl.glu = CBl.glu 
+                ))))
   })
 }
+
 
 # -----------------------------------------------------------------------------
 # LOCAL SENSITIVITY ANALYSIS ####
@@ -375,54 +436,57 @@ summary(SENSI_all)
 
 # L1 and L2 norms provide a measure of the overall sensitivity of the model output to changes in each parameter
 
-DF_summary_SENSI_all <- summary(SENSI_all) %>% as.data.frame()
-Plot_DF_summary_SENSI_all <- DF_summary_SENSI_all %>% select(Mean) %>%
-  mutate(Parameter = rownames(DF_summary_SENSI_all)) %>%
+DF_summary_SENSI_all <- summary(SENSI_all) %>% as.data.frame() %>% 
+  select(Mean) %>%
+  mutate(Parameter = rownames(DF_summary_SENSI_all))
+  
+DF_summary_SENSI_all %>% 
   ggplot(aes(x = Mean, y = Parameter)) +
   geom_bar(stat = "identity") +
   coord_flip() + # Flip coordinates for better readability if there are many parameters
   labs(x = "Mean Sensitivity coefficient", y = "Parameter") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate x-axis text 45 degrees
   )
-
-Plot_DF_summary_SENSI_all
+ggsave(here(TodaysOuput, "SENSI_all.png"), dpi = 300)
 
 
 ## Analysing the sensitivity on only the Blood concentration of Zearalenone ####
 ## ------------------------------------------------------
 
-SENSI_CBl <- SENSI_all %>% filter(var == "29")
+SENSI_CBl <- SENSI_all %>% filter(var == "CBl")
 summary(SENSI_CBl)
 
-DF_summary_SENSI_CBl <- summary(SENSI_CBl) %>% as.data.frame()
-Plot_DF_summary_SENSI_CBl <- DF_summary_SENSI_CBl %>% select(Mean) %>%
-  mutate(Parameter = rownames(DF_summary_SENSI_CBl)) %>%
+DF_summary_SENSI_CBl <- summary(SENSI_CBl) %>% as.data.frame() %>% 
+  select(Mean) %>%
+  mutate(Parameter = rownames(DF_summary_SENSI_CBl))
+
+DF_summary_SENSI_CBl %>% 
   ggplot(aes(x = Mean, y = Parameter)) +
   geom_bar(stat = "identity") +
   coord_flip() + # Flip coordinates for better readability if there are many parameters
   labs(x = "Mean Sensitivity coefficient", y = "Parameter") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate x-axis text 45 degrees
-  )
-
-Plot_DF_summary_SENSI_CBl
+  ) 
+ggsave(here(TodaysOuput, "SENSI_CBl.png"), dpi = 300)
 
 
 
 ## Analysing the sensitivity on only the Blood concentration of Zearalenone glucuronide ####
 ## ------------------------------------------------------
 
-SENSI_CBl.glu <- SENSI_all %>% filter(var == "38")
+SENSI_CBl.glu <- SENSI_all %>% filter(var == "CBl.glu")
 summary(SENSI_CBl.glu)
 
-DF_summary_SENSI_CBl.glu <- summary(SENSI_CBl.glu) %>% as.data.frame()
-Plot_DF_summary_SENSI_CBl.glu <- DF_summary_SENSI_CBl.glu %>% select(Mean) %>%
-  mutate(Parameter = rownames(DF_summary_SENSI_CBl.glu)) %>%
+DF_summary_SENSI_CBl.glu <- summary(SENSI_CBl.glu) %>% as.data.frame() %>% 
+  select(Mean) %>%
+  mutate(Parameter = rownames(DF_summary_SENSI_CBl.glu))
+
+DF_summary_SENSI_CBl.glu %>% 
   ggplot(aes(x = Mean, y = Parameter)) +
   geom_bar(stat = "identity") +
   coord_flip() + # Flip coordinates for better readability if there are many parameters
   labs(x = "Mean Sensitivity coefficient", y = "Parameter") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate x-axis text 45 degrees
   )
-
-Plot_DF_summary_SENSI_CBl.glu
+ggsave(here(TodaysOuput, "SENSI_CBl.gluc.png"), dpi = 300)
 

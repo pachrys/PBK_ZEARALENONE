@@ -1,3 +1,7 @@
+# Working Document
+rm(list=ls()) # to clear out the global environment
+
+
 # Libraries-------------------------------------------------------------------#
 
 library(deSolve)
@@ -10,7 +14,7 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "Dividingto3Intestines"
+WhatAmITesting <- "SavingForToday"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
@@ -39,7 +43,7 @@ ZEN.dat <- read.csv(here("InputData/Zen.input.csv"), header=1)     #from {Agahi,
 
 # Tout
 STARTtime <- 0 # start of simulation (h)
-STOPtime <- 24 #end of simulation (h) (for repeated pregnancy in Videmann daily exposure time from D7 to D20 (13days)
+STOPtime <- 24 # end of simulation (h) (for repeated pregnancy in Videmann daily exposure time from D7 to D20 (13days)
 
 Dt <- 1/ 100 # steps of simulation (now it per minute) (could be 1/100, 1/200 or 1 for simulations over years)
 Tout <- seq(STARTtime,STOPtime,by=Dt)
@@ -105,7 +109,8 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
              # KmAbs = INPUT$KmAbs, 
              # VmaxSec = INPUT$VmaxSec, 
              # KmSec = INPUT$KmSec, 
-             kTIn.3 = INPUT$kTIn/3, #total intestinal transit time
+             kTIn = INPUT$kTIn,#total intestinal transit time
+             kTIn.3 = INPUT$kTIn/3, #intestine is splited in 3
              # kTsi = 1 / ZEN.dat$kTsi, 
              kTCo = 1 / ZEN.dat$kTco,
              kTge = INPUT$kTge, #gastric emptying rate, "Assumed to mimic bile secretion rate
@@ -127,11 +132,11 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
 ## ------------------------------------------------------
 
 INITIALstate = c(
-  AInL1 = PO_DOSE,
-  AInL2 = 0, 
-  AInL3 = 0, 
-  AIn1 = 0,
-  AIn2 = 0, 
+  AInL1 = PO_DOSE, 
+  AInL2 = 0,
+  AInL3 = 0,
+  AIn1 = 0, 
+  AIn2 = 0,
   AIn3 = 0,
   AFe = 0,
   ALi = 0,
@@ -141,12 +146,12 @@ INITIALstate = c(
   ASl = 0,
   ARa = 0,
   ABl = 0,
-  AIn.glu1 = 0,
-  AIn.glu2 = 0,
-  AIn.glu3 = 0,
-  AInL.glu1 = 0,
-  AInL.glu2 = 0,
-  AInL.glu3 = 0,
+  AIn1.glu = 0,
+  AIn2.glu = 0,
+  AIn3.glu = 0,
+  AInL1.glu = 0,
+  AInL2.glu = 0,
+  AInL3.glu = 0,
   AFe.glu = 0,
   ALi.glu = 0,
   ABi.glu = 0,
@@ -156,7 +161,7 @@ INITIALstate = c(
   ASl.glu = 0,
   ARa.glu = 0,
   ABl.glu = 0
-  )
+)
 
 
 
@@ -168,7 +173,7 @@ INITIALstate = c(
 
 PBK_ZENandGLUC <- function(t,state,parameters){
   with(as.list(c(state,parameters)),{
-
+    
     #----Concentrations-------------------------------------------------------#
     
     # Zearalenone
@@ -177,14 +182,12 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     CInL1 <- AInL1 / VInL1 #intestinal lumen
     CInL2 <- AInL2 / VInL2 #intestinal lumen
     CInL3 <- AInL3 / VInL3 #intestinal lumen
-    
     # CBi <- ABi / VBi #bile
     
     ## Tissue cellular Concentrations (umol/L)                                    #Abbreviation (C for Concentration and then 2 first letters of tissue name)
     CIn1 <- AIn1 / VIn1 #intestine
     CIn2 <- AIn2 / VIn2 #intestine
     CIn3 <- AIn3 / VIn3 #intestine
-    
     CLi <- ALi / VLi #liver
     CKi <- AKi / VKi #kidney
     CAd <- AAd / VAd #adipose
@@ -196,28 +199,29 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     CvIn1 <- CIn1 / PInb #intestinal tissue
     CvIn2 <- CIn2 / PInb #intestinal tissue
     CvIn3 <- CIn3 / PInb #intestinal tissue
-    
     CvLi <- CLi / PLib #liver
     CvKi <- CKi / PKib #kidney
     CvAd <- CAd / PAdb #adipose
     CvSl <- CSl / PSlb #slowly perfused
     CvRa <- CRa / PRab #rapidly perfused
     
+    ## Tissue free Concentrations (umol/L), used for clearance/transport
+    CKi_free <- CvKi*fub
+    CLi_free <- CvLi*fub
+    
     
     # Zearalenone glucuronide
     
     ## Non perfused organ concentrations (umol/L)
-    CInL.glu1 <- AInL.glu1 / VInL1 #intestinal lumen glucuronide
-    CInL.glu2 <- AInL.glu2 / VInL2 #intestinal lumen glucuronide
-    CInL.glu3 <- AInL.glu3 / VInL3 #intestinal lumen glucuronide
-    
+    CInL1.glu <- AInL1.glu / VInL1 #intestinal lumen glucuronide
+    CInL2.glu <- AInL2.glu / VInL2 #intestinal lumen glucuronide
+    CInL3.glu <- AInL3.glu / VInL3 #intestinal lumen glucuronide
     CBi.glu <- ABi.glu / VBi #bile
     
     ## Tissue cellular Concentrations (umol/L)                                    #Abbreviation (C for Concentration and then 2 first letters of tissue name)
-    CIn.glu1 <- AIn.glu1 / VIn1 #intestinal tissue
-    CIn.glu2 <- AIn.glu2 / VIn2 #intestinal tissue
-    CIn.glu3 <- AIn.glu3 / VIn3 #intestinal tissue
-    
+    CIn1.glu <- AIn1.glu / VIn1 #intestinal tissue
+    CIn2.glu <- AIn2.glu / VIn2 #intestinal tissue
+    CIn3.glu <- AIn3.glu / VIn3 #intestinal tissue
     CLi.glu <- ALi.glu / VLi #liver
     CKi.glu <- AKi.glu / VKi #kidney
     CAd.glu <- AAd.glu / VAd #adipose tissue
@@ -226,10 +230,9 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     CBl.glu <- ABl.glu / VBl #blood
     
     ## Tissue venous Concentrations (umol/L)                                      #Only for perfused organs Equals tissue Concentration/tissue:blood partition LInefficient
-    CvIn.glu1 <- CIn.glu1 / PInb.glu #Concentration leaving intestinal tissue
-    CvIn.glu2 <- CIn.glu2 / PInb.glu #Concentration leaving intestinal tissue
-    CvIn.glu3 <- CIn.glu3 / PInb.glu #Concentration leaving intestinal tissue
-    
+    CvIn1.glu <- CIn1.glu / PInb.glu #Concentration leaving intestinal tissue
+    CvIn2.glu <- CIn2.glu / PInb.glu #Concentration leaving intestinal tissue
+    CvIn3.glu <- CIn3.glu / PInb.glu
     CvLi.glu <- CLi.glu / PLib.glu #Concentration leaving liver
     CvKi.glu <- CKi.glu / PKib.glu #Concentration leaving kidney
     CvAd.glu <- CAd.glu / PAdb.glu #Concentration leaving adipose
@@ -241,72 +244,72 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     # Rate of change in amounts in each tissue (umol/h)
     
     # Zearalenone-------------------- ##
-    # Intestinal Lumen 
-    dAInL1 <- - ka*AInL1 + kHydro*AInL.glu1 - kTIn.3*AInL1 # Intestinal lumen 1
-    dAInL2 <- - ka*AInL2 + kHydro*AInL.glu2 + kTIn.3*AInL1 - kTIn.3*AInL2   # Intestinal lumen 2
-    dAInL3 <- - ka*AInL3 + kHydro*AInL.glu3 + kTIn.3*AInL2 - kTCo*AInL3   # Intestinal lumen 3
-    
-    # Intestinal tissue
-    dAIn1 <-  + ka*AInL1 + QIn*(CBl-CvIn1) - VmaxMet.In*CIn1/(KmGluc.In+CIn1) - kTIn.3*AIn1   # Intestinal tissue 1
-    dAIn2 <-  + ka*AInL2 + QIn*(CBl-CvIn2) - VmaxMet.In*CIn2/(KmGluc.In+CIn2) + kTIn.3*AIn1 - kTIn.3*AIn2 # Intestinal tissue 2
-    dAIn3 <-  + ka*AInL3 + QIn*(CBl-CvIn3) - VmaxMet.In*CIn3/(KmGluc.In+CIn3) + kTIn.3*AIn2  # Intestinal tissue 3
+    # Intestinal Lumen
+    dAInL1 <- - ka*AInL1 + kHydro*AInL1.glu - kTIn.3*AInL1 # Intestinal lumen 1
+    dAInL2 <- - ka*AInL2 + kHydro*AInL2.glu + kTIn.3*AInL1 - kTIn.3*AInL2 #+ kHydro*AInL1.glu    # Intestinal lumen 2
+    dAInL3 <- - ka*AInL3 + kHydro*AInL3.glu + kTIn.3*AInL2 - kTCo*AInL3 #+ kHydro*AInL.glu3  # Intestinal lumen 3
     
     # Feces
     dAFe <- kTCo*AInL3
     
+    # Intestinal tissue
+    dAIn1 <-  + ka*AInL1 - VmaxMet.In*CIn1/(KmGluc.In+CIn1) + QIn*(CBl - CvIn1) - kTIn.3*AIn1  # Intestine 1
+    dAIn2 <-  + ka*AInL2 - VmaxMet.In*CIn2/(KmGluc.In+CIn2) + QIn*(CBl - CvIn2) + kTIn.3*AIn1 - kTIn.3*AIn2     # Intestine 2
+    dAIn3 <-  + ka*AInL3 - VmaxMet.In*CIn3/(KmGluc.In+CIn3) + QIn*(CBl - CvIn3) + kTIn.3*AIn2    # Intestine 3    
+    
     # Liver
     dALi <- QIn*(CvIn1 + CvIn2 + CvIn3) + QHa*CBl - QLi*CvLi - VmaxMet.Li*CLi/(KmGluc.Li+CLi)
-    
+    #       fromIntest fromBlo   toBlood    toglucuronide
     # Kidney
-    dAKi <- QKi*(CBl - CvKi) - CL_Re*CvKi*fub 
+    dAKi <- QKi*(CBl - CvKi) - CL_Re*CKi_free #CL_Re is equal to rat GER
+    #       fromtoblood        toUrine
     
-    # Urine 
-    dAUr <- CL_Re*CvKi*fub 
-    
+    dAUr <- CL_Re*CKi_free
+    #       fromKidney
     # Adipose
     dAAd <- QAd*(CBl - CvAd)
+    #       fromtoblood
     
     # Slowly Perfused Tissue
     dASl <- QSl*(CBl - CvSl)
+    #       fromtoslowly
     
     # Rapidly Perfused Tissue
     dARa <- QRa*(CBl - CvRa)
+    #       fromtorapidly
     
-    dABl <- QLi*CvLi + QKi*CvKi + QAd*CvAd + QSl*CvSl + QRa*CvRa - (QIn + QHa + QKi + QAd + QSl + QRa)*CBl
+    dABl <- QLi*CvLi + QKi*CvKi + QAd*CvAd + QSl*CvSl + QRa*CvRa +
+      # from  liver      kidney     adipose    slowly     rapidly
+      - ((3*QIn) + QHa + QKi + QAd + QSl + QRa)*CBl
+    # to int  hepA  kid   adi   slo   rap
     
+    # ## Glucuronide---------------------- ##
     
-    ## Glucuronide---------------------- ##
+    # Intestinal tissue
+    dAIn1.glu <- VmaxMet.In*CIn1/(KmGluc.In+CIn1) - AIn1.glu + QIn*(CBl.glu - CvIn1.glu) - kTIn.3*AIn1.glu # Intestinal tissue 1
+    dAIn2.glu <- VmaxMet.In*CIn2/(KmGluc.In+CIn2) - AIn2.glu + QIn*(CBl.glu - CvIn2.glu) + kTIn.3*AIn1.glu - kTIn.3*AIn2.glu# Intestinal tissue 2
+    dAIn3.glu <- VmaxMet.In*CIn3/(KmGluc.In+CIn3) - AIn3.glu + QIn*(CBl.glu - CvIn3.glu) + kTIn.3*AIn2.glu# Intestinal tissue 2
     
-    # Intestinal tissue 1
-    dAIn.glu1 <- VmaxMet.In*CIn1/(KmGluc.In+CIn1) + QIn*(CBl.glu-CvIn.glu1) - AIn.glu1  - kTIn.3*AIn.glu1 # Intestinal tissue 1
-    dAIn.glu2 <- VmaxMet.In*CIn2/(KmGluc.In+CIn2) + QIn*(CBl.glu-CvIn.glu2) - AIn.glu2  + kTIn.3*AIn.glu1 - kTIn.3*AIn.glu2 # Intestinal tissue 2
-    dAIn.glu3 <- VmaxMet.In*CIn3/(KmGluc.In+CIn3) + QIn*(CBl.glu-CvIn.glu3) - AIn.glu3  + kTIn.3*AIn.glu2 # Intestinal tissue 3
+    # Intestinal lumen
+    dAInL1.glu <- AIn1.glu + kTge*ABi.glu - kTIn.3*AInL1.glu - kHydro*AInL1.glu # Intestinal Lumen 1
+    dAInL2.glu <- AIn2.glu + kTIn.3*AInL1.glu - kTIn.3*AInL2.glu - kHydro*AInL2.glu # Intestinal Lumen 2
+    dAInL3.glu <- AIn3.glu + kTIn.3*AInL2.glu - kTCo*AInL3.glu - kHydro*AInL3.glu # Intestinal Lumen 2
     
-    
-    # Intestinal lumen 1
-    dAInL.glu1 <- AIn.glu1 - kHydro*AInL.glu1 - kTIn.3*AInL.glu1 + kTge*ABi.glu # Intestinal Lumen 1
-    dAInL.glu2 <- AIn.glu2 - kHydro*AInL.glu2 + kTIn.3*AInL.glu1 - kTIn.3*AInL.glu2 # Intestinal Lumen 2
-    dAInL.glu3 <- AIn.glu3 - kHydro*AInL.glu3 + kTIn.3*AInL.glu2 - kTCo*AInL.glu3  # Intestinal Lumen 3
     
     # Feces
-    dAFe.glu <- kTCo*AInL.glu3
-    #           fromInLumen
+    dAFe.glu <- kTCo*AInL3.glu
     
     # Liver
-    dALi.glu <- VmaxMet.Li*CLi/(KmGluc.Li+CLi) + QIn*(CvIn.glu1 + CvIn.glu2 + CvIn.glu3)  + QHa*CBl.glu - QLi*CvLi.glu - CL_Bi*CLi.glu
-    #           fromZen                          fromPortal                                 fromHepaticA  toBlood        toBile
+    dALi.glu <- VmaxMet.Li*CLi/(KmGluc.Li+CLi) + QIn*(CvIn1.glu+CvIn2.glu+CvIn3.glu) + QHa*CBl.glu - QLi*CvLi.glu - CL_Bi*CLi.glu
     
     # Bile
     dABi.glu <- CL_Bi*CLi.glu - kTge*ABi.glu
-    #           fromLiver       toIntestLumen
     
     # Kidney
     dAKi.glu <- QKi*(CBl.glu-CvKi.glu) - CL_Re*CKi.glu
-    #           fromToBlood              toUrine
     
     # Urine
     dAUr.glu <- CL_Re*CKi.glu
-    #           fromKidney
     
     # Adipose
     dAAd.glu <- QAd*(CBl.glu - CvAd.glu)
@@ -319,44 +322,68 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     
     # Blood
     dABl.glu <- QLi*CvLi.glu + QKi*CvKi.glu + QAd*CvAd.glu + QSl*CvSl.glu + QRa*CvRa.glu +
-      - ((QIn + QHa + QKi + QAd + QSl + QRa) * CBl.glu)
+      - (((3*QIn) + QHa + QKi + QAd + QSl + QRa) * CBl.glu)
+    
     
     #----Output---------------------------------------------------------------#
     
-    return(list(c(dAInL1, dAInL2, dAInL3, dAIn1, dAIn2, dAIn3, dAFe,
-                  dALi, dAKi, dAUr, dAAd, dASl, dARa, dABl,
-                  dAIn.glu1, dAIn.glu2, dAIn.glu3, 
-                  dAInL.glu1, dAInL.glu2, dAInL.glu3, dAFe.glu,
-                  dALi.glu, dABi.glu, dAKi.glu, dAUr.glu,
-                  dAAd.glu, dASl.glu, dARa.glu, dABl.glu
-    ), c(CInL1, #"30"
-         CInL2, #"31"
-         CInL3, #"32"
-         CIn1, #"33"
-         CIn2, #"34"
-         CIn3, #"35"
-         CLi, #"36"
-         CKi, #"37"
-         CAd, #"38"
-         CSl, #"39"
-         CRa, #"40"
-         CBl, #"41"
-         CIn.glu1, #"42"
-         CIn.glu2, #"43"
-         CIn.glu3, #"44"
-         CInL.glu1, #"45"
-         CInL.glu2, #"46"
-         CInL.glu3, #"47"
-         CLi.glu, #"48"
-         CBi.glu, #"49"
-         CKi.glu, #"50"
-         CAd.glu, #"51"
-         CSl.glu, #"52"
-         CRa.glu, #"53"
-         CBl.glu #"54"
-    )))
+    return(list(c(dAInL1 = dAInL1, 
+                  dAInL2 = dAInL2, 
+                  dAInL3 = dAInL3,
+                  dAIn1 = dAIn1, 
+                  dAIn2 = dAIn2, 
+                  dAIn3 = dAIn3, 
+                  dAFe = dAFe,
+                  dALi = dALi, 
+                  dAKi = dAKi, 
+                  dAUr = dAUr, 
+                  dAAd = dAAd, 
+                  dASl = dASl, 
+                  dARa = dARa, 
+                  dABl = dABl,
+                  dAIn1.glu = dAIn1.glu,
+                  dAIn2.glu = dAIn2.glu,
+                  dAIn3.glu = dAIn3.glu,
+                  dAInL1.glu = dAInL1.glu, 
+                  dAInL2.glu = dAInL2.glu,
+                  dAInL3.glu = dAInL3.glu,
+                  dAFe.glu = dAFe.glu,
+                  dALi.glu = dALi.glu, 
+                  dABi.glu = dABi.glu, 
+                  dAKi.glu = dAKi.glu, 
+                  dAUr.glu = dAUr.glu,
+                  dAAd.glu = dAAd.glu, 
+                  dASl.glu = dASl.glu, 
+                  dARa.glu = dARa.glu, 
+                  dABl.glu = dABl.glu),
+                list(c(CInL1 = CInL1, 
+                       CInL2 = CInL2, 
+                       CInL3 = CInL3,
+                       CIn1 = CIn1, 
+                       CIn2 = CIn2,
+                       CIn3 = CIn3,
+                       CLi = CLi ,
+                       CKi = CKi, 
+                       CAd = CAd, 
+                       CSl = CSl, 
+                       CRa = CRa, 
+                       CBl = CBl, 
+                       CIn1.glu = CIn1.glu,
+                       CIn2.glu = CIn2.glu,
+                       CIn3.glu = CIn3.glu,
+                       CInL1.glu = CInL1.glu, 
+                       CInL2.glu = CInL2.glu, 
+                       CInL3.glu = CInL3.glu,
+                       CLi.glu = CLi.glu, 
+                       CBi.glu = CBi.glu, 
+                       CKi.glu = CKi.glu, 
+                       CAd.glu = CAd.glu, 
+                       CSl.glu = CSl.glu, 
+                       CRa.glu = CRa.glu, 
+                       CBl.glu = CBl.glu 
+                       ))))
   })
-}
+  }
 
 
 
@@ -392,11 +419,10 @@ write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A.csv"), row.names=FALSE)
 CALCULATED <- c( #!Change accordingly depending on the compartments in the function#
   "AInL1", "AInL2", "AInL3", "AIn1", "AIn2", "AIn3", "AFe",
   "ALi", "AKi", "AUr", "AAd", "ASl", "ARa", "ABl",
-  "AIn.glu1", "AIn.glu2", "AIn.glu3", 
-  "AInL.glu1", "AInL.glu2", "AInL.glu3", "AFe.glu",
+  "AIn1.glu", "AIn2.glu", "AIn3.glu", "AInL1.glu", "AInL2.glu", "AInL3.glu","AFe.glu",
   "ALi.glu", "ABi.glu", "AKi.glu", "AUr.glu",
   "AAd.glu", "ASl.glu", "ARa.glu", "ABl.glu"
-  )
+)
 
 CALCULATED <- rowSums(OUTPUT.A[ ,CALCULATED])
 TOTAL <- PO_DOSE
@@ -424,62 +450,68 @@ ggsave(here(TodaysOuput, "MB_ERROR2=.png"), dpi = 300)
 ## ------------------------------------------------------
 
 # Concentrations
-OUTPUT.C <- as.data.frame(PBK) %>% select(!c("AInL1" : "ABl.glu")) %>%
-  rename(
-    "Time" = "time",
-    "Intestinal_Lumen1" = "30",
-    "Intestinal_Lumen2" = "31",
-    "Intestinal_Lumen3" = "32",
-    "Intestinal_Tissue1" = "33",
-    "Intestinal_Tissue2" = "34",
-    "Intestinal_Tissue3" = "35",
-    "Liver" = "36",
-    "Kidney" = "37",
-    "Adipose" = "38",
-    "Slowly_perfused" = "39",
-    "Rapidly_perfused" = "40",
-    "Blood" = "41",
-    "Intestinal_Tissue_glucuronide1" = "42",
-    "Intestinal_Tissue_glucuronide2" = "43",
-    "Intestinal_Tissue_glucuronide3" = "44",
-    "Intestinal_Lumen_glucuronide1" = "45",
-    "Intestinal_Lumen_glucuronide2" = "46",
-    "Intestinal_Lumen_glucuronide3" = "47",
-    "Liver_glucuronide" = "48",
-    "Bile_glucuronide" = "49",
-    "Kidney_glucuronide" = "50",
-    "Adipose_glucuronide" = "51",
-    "Slowly_perfused_glucuronide" = "52",
-    "Rapidly_perfused_glucuronide" = "53",
-    "Blood_glucuronide" = "54"
-  )
+OUTPUT.C <- as.data.frame(PBK) %>% select(!c("AInL1" : "ABl.glu")) 
 
 write.csv(OUTPUT.C, file = here(TodaysOuput, "OUTPUT.C.csv"), row.names=FALSE)
 
 
 # To create df of simulated data for plotting
 CONCENTRATIONS <- OUTPUT.C %>% #!change accordingly depending on the compartments in the model
-  # rename(#!change accordingly depending on the compartments in the model
-  #   "Time" = "time",
-  #   "Intestine" = "CIn",
-  #   "Liver" = "CLi",
-  #   "Kidney" = "CKi",
-  #   "Adipose" = "CAd",
-  #   "Slowly_perfused" = "CSl",
-  #   "Rapidly_perfused" = "CRa",
-  #   "Blood" = "CBl"
-  # ) %>%
-  pivot_longer(names_to = "Tissue",
+  rename(#!change accordingly depending on the compartments in the model
+    "Time" = "time", 
+    "Intestine_Lumen1" = "CInL1",
+    "Intestine_Lumen2" = "CInL2",
+    "Intestine_Lumen3" = "CInL3",
+    "Intestine1" = "CIn1",
+    "Intestine2" = "CIn2",
+    "Intestine3" = "CIn3",
+    "Liver" = "CLi",
+    "Kidney" = "CKi",
+    "Adipose" = "CAd",
+    "Slowly_perfused" = "CSl",
+    "Rapidly_perfused" = "CRa",
+    "Blood" = "CBl", 
+    "Intestine1_glucuronide" = "CIn1.glu",
+    "Intestine2_glucuronide" = "CIn2.glu",
+    "Intestine3_glucuronide" = "CIn3.glu",
+    "Intestine_Lumen1_glucuronide" = "CInL1.glu",
+    "Intestine_Lumen2_glucuronide" = "CInL2.glu",
+    "Intestine_Lumen3_glucuronide" = "CInL3.glu",
+    "Liver_glucuronide" = "CLi.glu",
+    "Bile_glucuronide" = "CBi.glu",
+    "Kidney_glucuronide" = "CKi.glu",
+    "Adipose_glucuronide" = "CAd.glu",
+    "Slowly_perfused_glucuronide" = "CSl.glu",
+    "Rapidly_perfused_glucuronide" = "CRa.glu",
+    "Blood_glucuronide" = "CBl.glu" 
+  ) %>% pivot_longer(names_to = "Tissue",
                values_to = "Concentration",
-               Intestinal_Lumen1:Blood_glucuronide,
-  ) %>%
-  mutate(Concentration = Concentration * INPUT$MW)  #converting umol/L to ng/ml
+               Intestine_Lumen1:Blood_glucuronide) 
+
+# Simulated data for Zearalenone
+CONCENTRATIONS.ZEN <- CONCENTRATIONS %>%
+  filter(!str_ends(Tissue, "_glucuronide")) %>% 
+  mutate(Concentration = Concentration * INPUT$MW) %>%  #converting umol/L to ng/ml
+  pivot_wider(names_from = Tissue, values_from = Concentration) %>% 
+  mutate(Intestine = Intestine_Lumen1 + Intestine_Lumen2 + Intestine_Lumen3 + Intestine1 + Intestine2 + Intestine3) %>% 
+  select(!c("Intestine_Lumen1", "Intestine_Lumen2", "Intestine_Lumen3", "Intestine1", "Intestine2", "Intestine3"))%>%
+  pivot_longer(names_to = "Tissue", values_to = "Concentration", Liver:Intestine)
+
+# Simulated data for Zearalenone glucuronide
+CONCENTRATIONS.ZENGluc <- CONCENTRATIONS %>%
+  filter(str_ends(Tissue, "_glucuronide")) %>%
+  mutate(Concentration = Concentration * INPUT$MW.glu) %>% #converting umol/L to ng/ml 
+  mutate(Tissue = str_replace(Tissue, "_glucuronide$", "")) %>% 
+  pivot_wider(names_from = Tissue, values_from = Concentration) %>% 
+  mutate(Intestine = Intestine_Lumen1 + Intestine_Lumen2 + Intestine_Lumen3 + Intestine1 + Intestine2 + Intestine3) %>% 
+  select(!c("Intestine_Lumen1", "Intestine_Lumen2", "Intestine_Lumen3", "Intestine1", "Intestine2", "Intestine3")) %>%
+  pivot_longer(names_to = "Tissue", values_to = "Concentration", Liver:Intestine)
+
 
 
 # To plot Zearalenone blood concentration
-CONCENTRATIONS %>%
-  filter(str_starts(Tissue, "Blood")) %>%
- #        !str_ends(Tissue, "_glucuronide")) %>%
+CONCENTRATIONS.ZEN %>%
+  filter(Tissue == "Blood") %>%
   ggplot(aes(Time, Concentration)) +
   facet_wrap(~Tissue) +
   geom_path(linewidth = 0.5) +
@@ -490,25 +522,9 @@ CONCENTRATIONS %>%
 ggsave(here(PlotFolderIs, "ZEN.blood.simulated.png"), dpi = 300)
 
 
-# To plot Zearalenone and Zearalenone glucuronide blood concentrations
-CONCENTRATIONS %>%
-  filter(str_starts(Tissue, "Blood")) %>%
-  ggplot(aes(Time, Concentration, colour = Tissue)) +
-  facet_wrap(~Tissue) +
-  geom_path(linewidth = 0.5) +
-  labs(title = "Zearalenone and glucuronide tissue concentrations",
-       x = "Time (h)",
-       y = "Concentration (ng/ml)") +
-  CP_theme()
-ggsave(here(PlotFolderIs, "ZEN&Gluc.blood.simulated.png"), dpi = 300)
-
-
 # To plot Zearalenone tissue concentrations
-CONCENTRATIONS %>%
-  filter(!str_ends(Tissue, "_glucuronide"),
-         Tissue != "Intestinal_lumen",
-         Tissue != "Intestinal_tissue"
-         ) %>%
+CONCENTRATIONS.ZEN %>%
+ # filter(Tissue != "Intestine") %>% 
   ggplot(aes(Time, Concentration, colour = Tissue)) +
   facet_wrap(~Tissue) +
   geom_path(linewidth = 0.5) +
@@ -518,12 +534,25 @@ CONCENTRATIONS %>%
   CP_theme()
 ggsave(here(PlotFolderIs, "ZEN.simulated.png"), dpi = 300)
 
+
+
+# To plot Zearalenone and Zearalenone glucuronide blood concentrations
+BLOOD_CONCENTRATIONS.ZEN <- CONCENTRATIONS.ZEN %>% filter(Tissue == "Blood") %>% mutate(Compound = "Zearalenone") 
+BLOOD_CONCENTRATIONS.ZENGluc <- CONCENTRATIONS.ZENGluc %>% filter(Tissue == "Blood") %>% mutate(Compound = "Z.Glucuronide")
+BLOOD_CONCENTRATIONS <- rbind(BLOOD_CONCENTRATIONS.ZEN, BLOOD_CONCENTRATIONS.ZENGluc)
+
+BLOOD_CONCENTRATIONS %>%
+  ggplot(aes(Time, Concentration, colour = Compound)) +
+  geom_path(linewidth = 0.5) +
+  labs(title = "Zearalenone and glucuronide blood concentrations",
+       x = "Time (h)",
+       y = "Concentration (ng/ml)") +
+  CP_theme()
+ggsave(here(PlotFolderIs, "ZEN&Gluc.blood.simulated.png"), dpi = 300)
+
+
 # To plot Zearalenone glucuronide tissue concentrations
-CONCENTRATIONS %>%
-  filter(str_ends(Tissue, "_glucuronide"),
-         Tissue != "Intestinal_lumen_glucuronide",
-         Tissue != "Intestinal_tissue_glucuronide"
-  ) %>%
+CONCENTRATIONS.ZENGluc %>%
   ggplot(aes(Time, Concentration, colour = Tissue)) +
   geom_path(linewidth = 0.5) +
   facet_wrap(~Tissue) +
@@ -539,7 +568,7 @@ ggsave(here(PlotFolderIs, "ZEN_gluc.simulated.png"), dpi = 300)
 ## ------------------------------------------------------
 
 # Input in vivo data
-DataInvivo <- read.csv(here("InputData/InVivoData.csv"), header=1) %>%  
+DataInvivo <- read.csv(here("InputData/InVivoData.csv"), header=1) %>%
   filter(Author == "Videmann", #I chose Videmann as it had the best recoveries, also Videmann separates Zearalenone from it's metabolites
          Gender != "Pregnant.F", #pregnancy not included yet
          TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
@@ -557,19 +586,13 @@ DataInvivo <- read.csv(here("InputData/InVivoData.csv"), header=1) %>%
 POData.ZEN <- DataInvivo %>%
   filter(SampleCompound == "ZEN")
 
-# Simulated data for Zearalenone
-CONCENTRATIONS.ZEN <- CONCENTRATIONS %>%
-  filter(!str_ends(Tissue, "_glucuronide"))
-
 # Blood
 InvivoBlood <- POData.ZEN %>% filter(Tissue == "Plasma") %>%
   mutate(Concentration = Concentration*ZEN.dat$BP) %>% #(ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
   mutate(Tissue = recode(Tissue, "Plasma" = "Blood")) #renaming plasma to blood
 
 
-SimulatedBlood <- CONCENTRATIONS.ZEN %>% filter(Tissue =="Blood")
-
-SimulatedBlood %>% ggplot() +
+BLOOD_CONCENTRATIONS.ZEN %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
   geom_point(data = InvivoBlood, aes(Time, Concentration, color = Gender)) +
   geom_line(data = InvivoBlood, aes(Time, Concentration, color = Gender),
@@ -583,7 +606,8 @@ ggsave(here(PlotFolderIs, "BloodSimulatedInvivoVidemann.png"), dpi = 300)
 
 # Intestine
 InvivoIntestine <- POData.ZEN %>% filter(Tissue =="Intestine")
-SimulatedIntestine <- CONCENTRATIONS.ZEN %>% filter(Tissue =="Intestine")
+SimulatedIntestine <- CONCENTRATIONS.ZEN %>% filter(Tissue == "Intestine") %>% 
+  filter(Time>=0.1)
 
 SimulatedIntestine %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
@@ -638,30 +662,13 @@ ggsave(here(PlotFolderIs, "KidneySimulatedInvivo.png"), dpi = 300)
 POData.ZENGluc <- DataInvivo %>%
   filter(SampleCompound == "ZEN_glu")
 
-# Simulated data for Zearalenone glucuronide
-CONCENTRATIONS.ZENGluc <- CONCENTRATIONS %>%
-  filter(str_ends(Tissue, "_glucuronide")) %>%
-  pivot_wider(names_from = Tissue, values_from = Concentration) %>%
-  rename("Intestine" = "Intestine_glucuronide",
-         "Intestinal-lumen" = "Intestinal_lumen_glucuronide",
-         "Liver" = "Liver_glucuronide",
-         "Bile" = "Bile_glucuronide",
-         "Kidney" = "Kidney_glucuronide",
-         "Adipose" = "Adipose_glucuronide",
-         "Slowly-Perfused" = "Slowly_perfused_glucuronide",
-         "Rapidly-Perfused" = "Rapidly_perfused_glucuronide",
-         "Blood" = "Blood_glucuronide") %>%
-  pivot_longer(names_to = "Tissue", values_to = "Concentration", Intestine:Blood)
-
 # Blood
 InvivoBlood <- POData.ZENGluc %>% filter(Tissue == "Plasma") %>%
   #mutate(Concentration = Concentration*ZEN.dat$BP) %>% # assuming it's one as I don't have an experimental value
   mutate(Tissue = recode(Tissue, "Plasma" = "Blood")) #renaming plasma to blood
 
 
-SimulatedBlood <- CONCENTRATIONS.ZENGluc %>% filter(Tissue =="Blood")
-
-SimulatedBlood %>% ggplot() +
+BLOOD_CONCENTRATIONS.ZENGluc %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
   geom_point(data = InvivoBlood, aes(Time, Concentration, color = Gender)) +
   geom_line(data = InvivoBlood, aes(Time, Concentration, color = Gender),
@@ -720,9 +727,3 @@ SimulatedKidney %>% ggplot() +
        color = "Gender") +
   CP_theme()
 ggsave(here(PlotFolderIs, "GlucKidneySimulatedInvivo.png"), dpi = 300)
-
-
-
-
-
-
