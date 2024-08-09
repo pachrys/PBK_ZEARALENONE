@@ -14,7 +14,7 @@ showtext_auto()
 rm(list=ls()) # to clear out the global environment
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "ParameterOptimisation"
+WhatAmITesting <- "ChangingUptakeToLiver"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
@@ -55,8 +55,6 @@ PO_DOSE = PO_CONC*INPUT$BW / INPUT$MW * 1000 #umol
 
 ## Parameters ####
 ## ------------------------------------------------------
-
-ka_values <- seq(INPUT$ka*1000, INPUT$ka/1000, length.out = 5)  # Adjust the number of points as needed
 
 PARAMETERS=c(PO_DOSE = PO_DOSE, 
              VInL = INPUT$VInL,
@@ -222,72 +220,58 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     
     # Zearalenone-------------------- ##
     # Intestinal Lumen
-    dAInL <- - ka*AInL - kTIn*AInL + kHydro*AInL.glu #- VmaxAbs*CInL/(KmAbs+CInL) + VmaxSec*CIn/(KmSec+CIn)
-    #          toInt
+    dAInL <- - AInL - kTIn*AInL + kHydro*AInL.glu # Assuming everything gets passively absorbed to the tissue; -ka*AInL 
     
     # Intestinal tissue
-    dAIn <-  + ka*AInL - VmaxMet.In*CIn/(KmGluc.In+CIn) + QIn*(CBl - CvIn)   #+ VmaxAbs*CInL/(KmAbs+CInL) - VmaxSec*CIn/(KmSec+CIn)
-    #        fromLumenActive      toglucuronide           fromBlood toLiver             toLumen                   fromLum
+    dAIn <-  - ka*AIn + AInL - VmaxMet.In*CIn/(KmGluc.In+CIn) + QIn*(CBl - CvIn)   # Assuming ZEN also leaves from the intestine to the Liver via Papp
     
     # # Feces
     dAFe <- kTIn*AInL
     #       fromIntestine
     
     # Liver
-    dALi <- QIn*CvIn + QHa*CBl - QLi*CvLi - VmaxMet.Li*CLi/(KmGluc.Li+CLi)
-    #       fromIntest fromBlo   toBlood    toglucuronide
+    dALi <- + ka*AIn + QIn*CvIn + QHa*CBl - QLi*CvLi - VmaxMet.Li*CLi/(KmGluc.Li+CLi)
+    
     # Kidney
     dAKi <- QKi*(CBl - CvKi) - CL_Re*CKi_free #CL_Re is equal to rat GER
     #       fromtoblood        toUrine
     
     dAUr <- CL_Re*CKi_free
-    #       fromKidney
+    
     # Adipose
     dAAd <- QAd*(CBl - CvAd)
-    #       fromtoblood
     
     # Slowly Perfused Tissue
     dASl <- QSl*(CBl - CvSl)
-    #       fromtoslowly
     
     # Rapidly Perfused Tissue
     dARa <- QRa*(CBl - CvRa)
-    #       fromtorapidly
     
     dABl <- QLi*CvLi + QKi*CvKi + QAd*CvAd + QSl*CvSl + QRa*CvRa +
-      # from  liver      kidney     adipose    slowly     rapidly
       - (QIn + QHa + QKi + QAd + QSl + QRa)*CBl
-    # to int  hepA  kid   adi   slo   rap
     
     # ## Glucuronide---------------------- ##
     
     # Intestine
-    dAIn.glu <- VmaxMet.In*CIn/(KmGluc.In+CIn) - AIn.glu + QIn*CBl.glu - QIn*CvIn.glu # -VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) + VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu)  #(umol/h)
-    #           fromIntZen                       toInL     fromblood     toportal                                        fromInL
+    dAIn.glu <- VmaxMet.In*CIn/(KmGluc.In+CIn) - AIn.glu + QIn*CBl.glu - QIn*CvIn.glu 
     
     # Intestinal lumen
-    dAInL.glu <- AIn.glu - kHydro*AInL.glu - kTIn*AInL.glu + kTge*ABi.glu #+ VmaxExc.In.glu*CIn.glu/(KmGluc.Exc+CIn.glu) - VmaxAbs.In.glu*CInL.glu/(KmGluc.Abs+CInL.glu)  #(umol/h)
-    #            fromInTis toZen             toFeces         fromBile
+    dAInL.glu <- AIn.glu - kHydro*AInL.glu - kTIn*AInL.glu + kTge*ABi.glu 
     
     # Feces
     dAFe.glu <- kTIn*AInL.glu
-    #           fromInLumen
     
     # Liver
     dALi.glu <- VmaxMet.Li*CLi/(KmGluc.Li+CLi) + QIn*CvIn.glu + QHa*CBl.glu - QLi*CvLi.glu - CL_Bi*CLi.glu
-    #           fromZen                          fromPortal     fromHepaticA  toBlood        toBile
     
     # Bile
     dABi.glu <- CL_Bi*CLi.glu - kTge*ABi.glu
-    #           fromLiver       toIntestLumen
     
     # Kidney
     dAKi.glu <- QKi*(CBl.glu-CvKi.glu) - CL_Re*CKi.glu
-    #           fromToBlood              toUrine
     
     # Urine
     dAUr.glu <- CL_Re*CKi.glu
-    #           fromKidney
     
     # Adipose
     dAAd.glu <- QAd*(CBl.glu - CvAd.glu)
@@ -358,7 +342,7 @@ PBK_ZENandGLUC <- function(t,state,parameters){
 # Initialize an empty list to store results
 results_list <- list()
 
-# Loop over each kTge value
+# Loop over each ka value
 for (ka_val in ka_values) {
   
   # Update the ka parameter in the PARAMETERS list
@@ -379,7 +363,7 @@ head(PBK)
 # Convert output to data frame
 PBK_df <- as.data.frame(PBK)
 
-# Add kTge value to the data frame for reference
+# Add ka value to the data frame for reference
 PBK_df$ka <- ka_val
 
 # Store the result in the list
@@ -390,7 +374,7 @@ results_list[[as.character(ka_val)]] <- PBK_df
 final_results <- do.call(rbind, results_list)
 
 # Save the combined results to a CSV file
-write.csv(final_results, file = here(TodaysOuput, "OUTPUT_kTge_range.csv"), row.names=FALSE)
+write.csv(final_results, file = here(TodaysOuput, "OUTPUT_ka_range.csv"), row.names=FALSE)
 
 
 # -----------------------------------------------------------------------------

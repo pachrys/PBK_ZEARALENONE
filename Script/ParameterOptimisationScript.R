@@ -14,7 +14,7 @@ showtext_auto()
 rm(list=ls()) # to clear out the global environment
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "ParameterOptimisation"
+WhatAmITesting <- ""
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
