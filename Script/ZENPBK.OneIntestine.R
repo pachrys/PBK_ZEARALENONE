@@ -339,16 +339,6 @@ PBK_ZENandGLUC <- function(t,state,parameters){
 # RUN THE MODEL ####
 # -----------------------------------------------------------------------------
 
-# Initialize an empty list to store results
-results_list <- list()
-
-# Loop over each ka value
-for (ka_val in ka_values) {
-  
-  # Update the ka parameter in the PARAMETERS list
-  PARAMETERS["ka"] <- ka_val
-
-
 
 PBK <- ode(y = INITIALstate,
            times = Tout,  #used to be times
@@ -358,24 +348,6 @@ PBK <- ode(y = INITIALstate,
            #events = list(data = events), #for repeated exposure
            method = "lsoda")
 head(PBK)
-
-
-# Convert output to data frame
-PBK_df <- as.data.frame(PBK)
-
-# Add ka value to the data frame for reference
-PBK_df$ka <- ka_val
-
-# Store the result in the list
-results_list[[as.character(ka_val)]] <- PBK_df
-}
-
-# Combine all results into a single data frame
-final_results <- do.call(rbind, results_list)
-
-# Save the combined results to a CSV file
-write.csv(final_results, file = here(TodaysOuput, "OUTPUT_ka_range.csv"), row.names=FALSE)
-
 
 # -----------------------------------------------------------------------------
 # RESULTS ####
@@ -425,8 +397,7 @@ ggsave(here(TodaysOuput, "MB_ERROR2=.png"), dpi = 300)
 ## ------------------------------------------------------
 
 # Concentrations
-#OUTPUT.C <- as.data.frame(PBK) %>% select(!c("AInL" : "ABl.glu"))
-OUTPUT.C <- as.data.frame(final_results) %>% select(!c("AInL" : "ABl.glu"))
+OUTPUT.C <- as.data.frame(PBK) %>% select(!c("AInL" : "ABl.glu"))
 
 write.csv(OUTPUT.C, file = here(TodaysOuput, "OUTPUT.C.csv"), row.names=FALSE)
 
@@ -480,21 +451,19 @@ CONCENTRATIONS.ZENGluc <- CONCENTRATIONS %>%
 # To plot Zearalenone blood concentration
 CONCENTRATIONS.ZEN %>%
   filter(Tissue == "Blood") %>%
-  ggplot(aes(Time, Concentration, colour = ka)) +
-  facet_wrap(~ka) +
+  ggplot(aes(Time, Concentration)) +
   geom_path(linewidth = 0.5) +
   labs(title = "Zearalenone blood concentration",
        x = "Time (h)",
        y = "Concentration (ng/ml)") +
   CP_theme()
-ggsave(here(PlotFolderIs, "ZEN.blood.simulateddependingonkTIn.png"), dpi = 300)
+ggsave(here(PlotFolderIs, "ZEN.blood.simulated.png"), dpi = 300)
 
 
 # To plot Zearalenone tissue concentrations
 CONCENTRATIONS.ZEN %>%
   filter(Tissue != "Intestine") %>%
   ggplot(aes(Time, Concentration, colour = Tissue)) +
-  facet_wrap(~ka) +
   geom_path(linewidth = 0.5) +
   labs(title = "Zearalenone tissue concentrations",
        x = "Time (h)",
@@ -525,7 +494,6 @@ CONCENTRATIONS.ZENGluc %>%
   filter(Tissue != "Bile") %>%
   ggplot(aes(Time, Concentration, colour = Tissue)) +
   geom_path(linewidth = 0.5) +
-  facet_wrap(~ka) +
   labs(title = "ZENGlucuronide concentrations",
        x = "Time (h)",
        y = "Concentration (ng/ml)") +
@@ -563,7 +531,6 @@ InvivoBlood <- POData.ZEN %>% filter(Tissue == "Plasma") %>%
 
 BLOOD_CONCENTRATIONS.ZEN %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  facet_wrap(~ka) +
   geom_point(data = InvivoBlood, aes(Time, Concentration, color = Gender)) +
   geom_line(data = InvivoBlood, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
@@ -581,7 +548,6 @@ SimulatedIntestine <- CONCENTRATIONS.ZEN %>% filter(Tissue == "Intestine") %>%
 
 SimulatedIntestine %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  facet_wrap(~ka) +
   geom_point(data = InvivoIntestine, aes(Time, Concentration, color = Gender)) +
   geom_line(data = InvivoIntestine, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
