@@ -14,7 +14,7 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "SavingForToday"
+WhatAmITesting <- "BackIntoIt"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
@@ -23,12 +23,12 @@ dir.create(PlotFolderIs, WhatAmITesting,recursive = TRUE)
 source(here("Script/Functions/PlottingFunction.R"))                               #call plotting function
 
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------- #
 # PBK MODEL INITIATION ####
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------- #
 
 ## Extracting input parameters ####
-## ------------------------------------------------------
+## ------------------------------------------------------ #
 
 # Script for CALCULATED input
 INPUT <- read.csv(here("InputData/CALCULATED.INPUT.csv"), header=1) %>%  #The function for calculating input can be called here: source(here("Script/ZENPBK_Input"))                                         #call input script
@@ -39,7 +39,7 @@ ZEN.dat <- read.csv(here("InputData/Zen.input.csv"), header=1)     #from {Agahi,
 
 
 ## Settings ####
-## ------------------------------------------------------
+## ------------------------------------------------------ #
 
 # Tout
 STARTtime <- 0 # start of simulation (h)
@@ -54,7 +54,7 @@ PO_DOSE = PO_CONC*INPUT$BW / INPUT$MW * 1000 #umol
 #PO_REGIMEN = seq(0, 13 * 24, by = 24) # (h) dosing regimen
 
 ## Parameters ####
-## ------------------------------------------------------
+## ------------------------------------------------------ #
 
 PARAMETERS=c(PO_DOSE = PO_DOSE, 
              VInL1 = INPUT$VInL/3,
@@ -129,7 +129,7 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
 
 
 ## State ####
-## ------------------------------------------------------
+## ------------------------------------------------------ #
 
 INITIALstate = c(
   AInL1 = PO_DOSE, 
@@ -166,10 +166,14 @@ INITIALstate = c(
 
 
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------- #
 # PBPK MODEL ####
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------- #
 # source(here("Script/ZENPBK_Function.R"))
+
+
+## Model Function ####
+## ------------------------------------------------------ #
 
 PBK_ZENandGLUC <- function(t,state,parameters){
   with(as.list(c(state,parameters)),{
@@ -386,10 +390,8 @@ PBK_ZENandGLUC <- function(t,state,parameters){
   }
 
 
-
-# -----------------------------------------------------------------------------
-# RUN THE MODEL ####
-# -----------------------------------------------------------------------------
+## RUN THE MODEL ####
+## ------------------------------------------------------ #
 
 PBK <- ode(y = INITIALstate,
            times = Tout,  #used to be times
@@ -402,9 +404,9 @@ head(PBK)
 
 
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------- #
 # RESULTS ####
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------- #
 # plot(PBK)
 # ggsave(here(PlotFolderIs, "Overall.png"), dpi = 300)
 
@@ -414,16 +416,17 @@ write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A.csv"), row.names=FALSE)
 
 
 ## Mass Balance / Error ####
-## ------------------------------------------------------
+## ------------------------------------------------------ #
 
-CALCULATED <- c( #!Change accordingly depending on the compartments in the function#
-  "AInL1", "AInL2", "AInL3", "AIn1", "AIn2", "AIn3", "AFe",
-  "ALi", "AKi", "AUr", "AAd", "ASl", "ARa", "ABl",
-  "AIn1.glu", "AIn2.glu", "AIn3.glu", "AInL1.glu", "AInL2.glu", "AInL3.glu","AFe.glu",
-  "ALi.glu", "ABi.glu", "AKi.glu", "AUr.glu",
-  "AAd.glu", "ASl.glu", "ARa.glu", "ABl.glu"
-)
+# CALCULATED <- c( #!Change accordingly depending on the compartments in the function#
+#   "AInL1", "AInL2", "AInL3", "AIn1", "AIn2", "AIn3", "AFe",
+#   "ALi", "AKi", "AUr", "AAd", "ASl", "ARa", "ABl",
+#   "AIn1.glu", "AIn2.glu", "AIn3.glu", "AInL1.glu", "AInL2.glu", "AInL3.glu","AFe.glu",
+#   "ALi.glu", "ABi.glu", "AKi.glu", "AUr.glu",
+#   "AAd.glu", "ASl.glu", "ARa.glu", "ABl.glu"
+# )
 
+CALCULATED <- names(OUTPUT.A)[-1]
 CALCULATED <- rowSums(OUTPUT.A[ ,CALCULATED])
 TOTAL <- PO_DOSE
 
@@ -447,7 +450,7 @@ ggsave(here(TodaysOuput, "MB_ERROR2=.png"), dpi = 300)
 
 
 ## Plotting Simulated Output ####
-## ------------------------------------------------------
+## ------------------------------------------------------ #
 
 # Concentrations
 OUTPUT.C <- as.data.frame(PBK) %>% select(!c("AInL1" : "ABl.glu")) 
@@ -489,7 +492,7 @@ CONCENTRATIONS <- OUTPUT.C %>% #!change accordingly depending on the compartment
                Intestine_Lumen1:Blood_glucuronide) 
 
 # Simulated data for Zearalenone
-CONCENTRATIONS.ZEN <- CONCENTRATIONS %>%
+SIM_CONC.ZEN <- CONCENTRATIONS %>%
   filter(!str_ends(Tissue, "_glucuronide")) %>% 
   mutate(Concentration = Concentration * INPUT$MW) %>%  #converting umol/L to ng/ml
   pivot_wider(names_from = Tissue, values_from = Concentration) %>% 
@@ -498,7 +501,7 @@ CONCENTRATIONS.ZEN <- CONCENTRATIONS %>%
   pivot_longer(names_to = "Tissue", values_to = "Concentration", Liver:Intestine)
 
 # Simulated data for Zearalenone glucuronide
-CONCENTRATIONS.ZENGluc <- CONCENTRATIONS %>%
+SIM_CONC.ZENGluc <- CONCENTRATIONS %>%
   filter(str_ends(Tissue, "_glucuronide")) %>%
   mutate(Concentration = Concentration * INPUT$MW.glu) %>% #converting umol/L to ng/ml 
   mutate(Tissue = str_replace(Tissue, "_glucuronide$", "")) %>% 
@@ -510,7 +513,7 @@ CONCENTRATIONS.ZENGluc <- CONCENTRATIONS %>%
 
 
 # To plot Zearalenone blood concentration
-CONCENTRATIONS.ZEN %>%
+SIM_CONC.ZEN %>%
   filter(Tissue == "Blood") %>%
   ggplot(aes(Time, Concentration)) +
   facet_wrap(~Tissue) +
@@ -523,7 +526,7 @@ ggsave(here(PlotFolderIs, "ZEN.blood.simulated.png"), dpi = 300)
 
 
 # To plot Zearalenone tissue concentrations
-CONCENTRATIONS.ZEN %>%
+SIM_CONC.ZEN %>%
  # filter(Tissue != "Intestine") %>% 
   ggplot(aes(Time, Concentration, colour = Tissue)) +
   facet_wrap(~Tissue) +
@@ -537,11 +540,11 @@ ggsave(here(PlotFolderIs, "ZEN.simulated.png"), dpi = 300)
 
 
 # To plot Zearalenone and Zearalenone glucuronide blood concentrations
-BLOOD_CONCENTRATIONS.ZEN <- CONCENTRATIONS.ZEN %>% filter(Tissue == "Blood") %>% mutate(Compound = "Zearalenone") 
-BLOOD_CONCENTRATIONS.ZENGluc <- CONCENTRATIONS.ZENGluc %>% filter(Tissue == "Blood") %>% mutate(Compound = "Z.Glucuronide")
-BLOOD_CONCENTRATIONS <- rbind(BLOOD_CONCENTRATIONS.ZEN, BLOOD_CONCENTRATIONS.ZENGluc)
+SIM_BLOOD.ZEN <- SIM_CONC.ZEN %>% filter(Tissue == "Blood") %>% mutate(Compound = "Zearalenone") 
+SIM_BLOOD.ZENGluc <- SIM_CONC.ZENGluc %>% filter(Tissue == "Blood") %>% mutate(Compound = "Z.Glucuronide")
+SIM_BLOOD <- rbind(SIM_BLOOD.ZEN, SIM_BLOOD.ZENGluc)
 
-BLOOD_CONCENTRATIONS %>%
+SIM_BLOOD %>%
   ggplot(aes(Time, Concentration, colour = Compound)) +
   geom_path(linewidth = 0.5) +
   labs(title = "Zearalenone and glucuronide blood concentrations",
@@ -552,7 +555,7 @@ ggsave(here(PlotFolderIs, "ZEN&Gluc.blood.simulated.png"), dpi = 300)
 
 
 # To plot Zearalenone glucuronide tissue concentrations
-CONCENTRATIONS.ZENGluc %>%
+SIM_CONC.ZENGluc %>%
   ggplot(aes(Time, Concentration, colour = Tissue)) +
   geom_path(linewidth = 0.5) +
   facet_wrap(~Tissue) +
@@ -565,10 +568,10 @@ ggsave(here(PlotFolderIs, "ZEN_gluc.simulated.png"), dpi = 300)
 
 
 ## Plotting Experimental data ####
-## ------------------------------------------------------
+## ------------------------------------------------------ #
 
 # Input in vivo data
-DataInvivo <- read.csv(here("InputData/InVivoData.csv"), header=1) %>%
+EXPERIMENTAL <- read.csv(here("InputData/InVivoData.csv"), header=1) %>%
   filter(Author == "Videmann", #I chose Videmann as it had the best recoveries, also Videmann separates Zearalenone from it's metabolites
          Gender != "Pregnant.F", #pregnancy not included yet
          TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
@@ -580,22 +583,22 @@ DataInvivo <- read.csv(here("InputData/InVivoData.csv"), header=1) %>%
 
 
 ## Plotting Simulated Vs Experimental data for Zearalenone ####
-## ------------------------------------------------------
+## ------------------------------------------------------ #
 
 # Experimental data for only Zearalenone
-POData.ZEN <- DataInvivo %>%
+EXP.PO_CONC.ZEN <- EXPERIMENTAL %>%
   filter(SampleCompound == "ZEN")
 
 # Blood
-InvivoBlood <- POData.ZEN %>% filter(Tissue == "Plasma") %>%
+EXP_BLOOD.ZEN <- EXP.PO_CONC.ZEN %>% filter(Tissue == "Plasma") %>%
   mutate(Concentration = Concentration*ZEN.dat$BP) %>% #(ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
   mutate(Tissue = recode(Tissue, "Plasma" = "Blood")) #renaming plasma to blood
 
 
-BLOOD_CONCENTRATIONS.ZEN %>% ggplot() +
+SIM_BLOOD.ZEN %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  geom_point(data = InvivoBlood, aes(Time, Concentration, color = Gender)) +
-  geom_line(data = InvivoBlood, aes(Time, Concentration, color = Gender),
+  geom_point(data = EXP_BLOOD.ZEN, aes(Time, Concentration, color = Gender)) +
+  geom_line(data = EXP_BLOOD.ZEN, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
   labs(title = "Zearalenone blood concentrations",
        x = "Time (h)",
@@ -605,14 +608,14 @@ BLOOD_CONCENTRATIONS.ZEN %>% ggplot() +
 ggsave(here(PlotFolderIs, "BloodSimulatedInvivoVidemann.png"), dpi = 300)
 
 # Intestine
-InvivoIntestine <- POData.ZEN %>% filter(Tissue =="Intestine")
-SimulatedIntestine <- CONCENTRATIONS.ZEN %>% filter(Tissue == "Intestine") %>% 
+EXP_INTESTINE <- EXP.PO_CONC.ZEN %>% filter(Tissue =="Intestine")
+SIM_INTESTINE <- SIM_CONC.ZEN %>% filter(Tissue == "Intestine") %>% 
   filter(Time>=0.1)
 
-SimulatedIntestine %>% ggplot() +
+SIM_INTESTINE %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  geom_point(data = InvivoIntestine, aes(Time, Concentration, color = Gender)) +
-  geom_line(data = InvivoIntestine, aes(Time, Concentration, color = Gender),
+  geom_point(data = EXP_INTESTINE, aes(Time, Concentration, color = Gender)) +
+  geom_line(data = EXP_INTESTINE, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
   labs(title = "Zearalenone Intestine concentrations",
        x = "Time (h)",
@@ -622,13 +625,13 @@ SimulatedIntestine %>% ggplot() +
 ggsave(here(PlotFolderIs, "IntestineSimulatedInvivo.png"), dpi = 300)
 
 # Liver
-InvivoLiver <- POData.ZEN %>% filter(Tissue =="Liver")
-SimulatedLiver <- CONCENTRATIONS.ZEN %>% filter(Tissue =="Liver")
+EXP_LIVER <- EXP.PO_CONC.ZEN %>% filter(Tissue =="Liver")
+SIM_LIVER <- SIM_CONC.ZEN %>% filter(Tissue =="Liver")
 
-SimulatedLiver %>% ggplot() +
+SIM_LIVER %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  geom_point(data = InvivoLiver, aes(Time, Concentration, color = Gender)) +
-  geom_line(data = InvivoLiver, aes(Time, Concentration, color = Gender),
+  geom_point(data = EXP_LIVER, aes(Time, Concentration, color = Gender)) +
+  geom_line(data = EXP_LIVER, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
   labs(title = "Zearalenone Liver concentrations",
        x = "Time (h)",
@@ -638,13 +641,13 @@ SimulatedLiver %>% ggplot() +
 ggsave(here(PlotFolderIs, "LiverSimulatedInvivo.png"), dpi = 300)
 
 # Kidney
-InvivoKidney <- POData.ZEN %>% filter(Tissue =="Kidney")
-SimulatedKidney <- CONCENTRATIONS.ZEN %>% filter(Tissue =="Kidney")
+EXP_KIDNEY <- EXP.PO_CONC.ZEN %>% filter(Tissue =="Kidney")
+SIM_KIDNEY <- SIM_CONC.ZEN %>% filter(Tissue =="Kidney")
 
-SimulatedKidney %>% ggplot() +
+EXP_KIDNEY %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  geom_point(data = InvivoKidney, aes(Time, Concentration, color = Gender)) +
-  geom_line(data = InvivoKidney, aes(Time, Concentration, color = Gender),
+  geom_point(data = EXP_KIDNEY, aes(Time, Concentration, color = Gender)) +
+  geom_line(data = EXP_KIDNEY, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
   labs(title = "Zearalenone Kidney concentrations",
        x = "Time (h)",
@@ -659,19 +662,19 @@ ggsave(here(PlotFolderIs, "KidneySimulatedInvivo.png"), dpi = 300)
 ## ------------------------------------------------------
 
 # Experimental data for only Zearalenone glucuronide
-POData.ZENGluc <- DataInvivo %>%
+EXP.PO_CONC.ZENGluc <- EXPERIMENTAL %>%
   filter(SampleCompound == "ZEN_glu")
 
 # Blood
-InvivoBlood <- POData.ZENGluc %>% filter(Tissue == "Plasma") %>%
+EXP_BLOOD.ZEN <- EXP.PO_CONC.ZENGluc %>% filter(Tissue == "Plasma") %>%
   #mutate(Concentration = Concentration*ZEN.dat$BP) %>% # assuming it's one as I don't have an experimental value
   mutate(Tissue = recode(Tissue, "Plasma" = "Blood")) #renaming plasma to blood
 
 
-BLOOD_CONCENTRATIONS.ZENGluc %>% ggplot() +
+SIM_BLOOD.ZENGluc %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  geom_point(data = InvivoBlood, aes(Time, Concentration, color = Gender)) +
-  geom_line(data = InvivoBlood, aes(Time, Concentration, color = Gender),
+  geom_point(data = EXP_BLOOD.ZEN, aes(Time, Concentration, color = Gender)) +
+  geom_line(data = EXP_BLOOD.ZEN, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
   labs(title = "Zearalenone glucuronide blood concentrations",
        x = "Time (h)",
@@ -681,13 +684,13 @@ BLOOD_CONCENTRATIONS.ZENGluc %>% ggplot() +
 ggsave(here(PlotFolderIs, "GlucBloodSimulatedInvivo.png"), dpi = 300)
 
 # Intestine
-InvivoIntestine <- POData.ZENGluc %>% filter(Tissue =="Intestine")
-SimulatedIntestine <- CONCENTRATIONS.ZENGluc %>% filter(Tissue =="Intestine")
+EXP_INTESTINE <- EXP.PO_CONC.ZENGluc %>% filter(Tissue =="Intestine")
+SIM_INTESTINE <- SIM_CONC.ZENGluc %>% filter(Tissue =="Intestine")
 
-SimulatedIntestine %>% ggplot() +
+SIM_INTESTINE %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  geom_point(data = InvivoIntestine, aes(Time, Concentration, color = Gender)) +
-  geom_line(data = InvivoIntestine, aes(Time, Concentration, color = Gender),
+  geom_point(data = EXP_INTESTINE, aes(Time, Concentration, color = Gender)) +
+  geom_line(data = EXP_INTESTINE, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
   labs(title = "Zearalenone glucuronide Intestine concentrations",
        x = "Time (h)",
@@ -697,13 +700,13 @@ SimulatedIntestine %>% ggplot() +
 ggsave(here(PlotFolderIs, "GlucIntestineSimulatedInvivo.png"), dpi = 300)
 
 # Liver
-InvivoLiver <- POData.ZENGluc %>% filter(Tissue =="Liver")
-SimulatedLiver <- CONCENTRATIONS.ZENGluc %>% filter(Tissue =="Liver")
+EXP_LIVER <- EXP.PO_CONC.ZENGluc %>% filter(Tissue =="Liver")
+SIM_LIVER <- SIM_CONC.ZENGluc %>% filter(Tissue =="Liver")
 
-SimulatedLiver %>% ggplot() +
+SIM_LIVER %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  geom_point(data = InvivoLiver, aes(Time, Concentration, color = Gender)) +
-  geom_line(data = InvivoLiver, aes(Time, Concentration, color = Gender),
+  geom_point(data = EXP_LIVER, aes(Time, Concentration, color = Gender)) +
+  geom_line(data = EXP_LIVER, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
   labs(title = "Zearalenone glucuronide Liver concentrations",
        x = "Time (h)",
@@ -713,13 +716,13 @@ SimulatedLiver %>% ggplot() +
 ggsave(here(PlotFolderIs, "GlucLiverSimulatedInvivo.png"), dpi = 300)
 
 # Kidney
-InvivoKidney <- POData.ZENGluc %>% filter(Tissue =="Kidney")
-SimulatedKidney <- CONCENTRATIONS.ZENGluc %>% filter(Tissue =="Kidney")
+EXP_KIDNEY <- EXP.PO_CONC.ZENGluc %>% filter(Tissue =="Kidney")
+SIM_KIDNEY <- SIM_CONC.ZENGluc %>% filter(Tissue =="Kidney")
 
-SimulatedKidney %>% ggplot() +
+SIM_KIDNEY %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  geom_point(data = InvivoKidney, aes(Time, Concentration, color = Gender)) +
-  geom_line(data = InvivoKidney, aes(Time, Concentration, color = Gender),
+  geom_point(data = EXP_KIDNEY, aes(Time, Concentration, color = Gender)) +
+  geom_line(data = EXP_KIDNEY, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
   labs(title = "Zearalenone glucuronide Kidney concentrations",
        x = "Time (h)",
@@ -727,3 +730,83 @@ SimulatedKidney %>% ggplot() +
        color = "Gender") +
   CP_theme()
 ggsave(here(PlotFolderIs, "GlucKidneySimulatedInvivo.png"), dpi = 300)
+
+
+
+
+#*****************************************************************************#
+#------------------------------Data analysis----------------------------------#
+# 
+# Rearranging the data--------------------------------------------------------#
+
+# Videmann
+VidemannSimple.F.data <- EXP_BLOOD.ZEN %>% #female
+  filter(Gender == "Female") %>% 
+  select(Time, Concentration) 
+
+VidemannSimple.M.data <- EXP_BLOOD.ZEN %>% #male
+  filter(Gender == "Male") %>%
+  select(Time, Concentration) 
+
+Videmann.TimeP <- VidemannSimple.F.data$Time
+
+closest_times <- sapply(Videmann.TimeP, function(x) {
+  SIM_BLOOD.ZEN$Time[which.min(abs(SIM_BLOOD.ZEN$Time - x))]
+})
+
+#%>% filter(Time != 0.705)#time points are the same for both male and female
+SimVidemann.data <- SIM_BLOOD.ZEN %>% 
+  select(c(Time, Concentration)) %>% 
+  filter(Time %in% closest_times) #simulated data is the same for both genders as gender differences are not included
+
+#Calculating AUCs------------------------------------------------------------#
+
+gender <- "female" #choose gender "female" | "male" 
+
+if(gender == "female"){ #selecting gender specific data from the invivo dataframe
+  VidemannSimple.data <- VidemannSimple.F.data
+} else if(gender == "male"){
+  VidemannSimple.data <- VidemannSimple.M.data
+}
+
+Videmann.AUC <- 0 #creating empty vector for AUC values from experimental data; unit: ng.h/ml
+for (i in 2:nrow(VidemannSimple.data)) {
+  Videmann.AUC <- Videmann.AUC +
+    ((VidemannSimple.data$Concentration[i-1] + VidemannSimple.data$Concentration[i]) / 2) *
+    (VidemannSimple.data$Time[i] - VidemannSimple.data$Time[i-1])
+}
+
+SimVidemann.AUC <- 0 #creating empty vector for AUC values from simulated data; unit: ng.h/ml
+for (i in 2:nrow(SimVidemann.data)) {
+  SimVidemann.AUC <- SimVidemann.AUC +
+    ((SimVidemann.data$Concentration[i-1] + SimVidemann.data$Concentration[i]) / 2) *
+    (SimVidemann.data$Time[i] - SimVidemann.data$Time[i-1])
+} 
+
+if(gender == "female"){ #renaming depending on gender
+  Videmann.F.AUC <- Videmann.AUC
+} else if(gender == "male"){
+  Videmann.M.AUC <- Videmann.AUC
+}
+
+Combined.df <- bind_cols( #creating df with combined data
+  VidemannSimple.F.data, SimVidemann.data$Concentration) %>%
+  rename(Experimental = Concentration, ,
+         Simulated = ...3)
+
+
+# Simulated/Experimental linear regression------------------------------------#
+Regression <- lm(Experimental~Simulated, data=Combined.df)
+summary(Regression)
+
+Regression %>%
+  ggplot(aes(Simulated, Experimental)) +
+  geom_point(aes(Simulated, Experimental)) +
+  geom_smooth(method='lm', color = "black") +
+  CP_theme() +
+  theme(legend.position = "bottom")
+ggsave(here(PlotFolderIs, "ExpVsSimRegression.png"), dpi = 300)
+
+
+#---End-----------------------------------------------------------------------#
+#*****************************************************************************#
