@@ -1,7 +1,7 @@
 #*****************************************************************************#
 #------------------------------Ploting Function-------------------------------#
 
-CP_theme <- function() {
+theme_CP <- function() {
   theme_bw()+
     theme(
       text = element_text(size = 20, lineheight = unit(0.5, "lines")), # lineheight is adjusting the space between lines
@@ -13,7 +13,7 @@ CP_theme <- function() {
       panel.background = element_blank(),
       panel.grid = element_line(linewidth = 0.1), 
       strip.background = element_blank(),
-      legend.position = "right",
+      legend.position = "bottom",
       legend.box.margin = margin(0, 0, 0, 0, "cm"),
       legend.key.width = unit(0.2, "cm"),  # Make legend key width span the whole plot
       legend.key.height = unit(0.2, "cm"),  # Adjust legend key height
