@@ -13,11 +13,12 @@ library(ggplot2)
 library(here)
 library(showtext)
 library(FME)
+library(purrr)
 font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "ChangingAllParameters"
+WhatAmITesting <- "58_PT_fub"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
@@ -54,19 +55,10 @@ Tout <- seq(STARTtime,STOPtime,by=Dt)
 # Exposure
 PO_CONC = 1 #mg/kg day, Videmann
 PO_DOSE = PO_CONC*INPUT$BW / INPUT$MW * 1000 #umol
-#PO_REGIMEN = seq(0, 13 * 24, by = 24) # (h) dosing regimen
 
 ## Parameters ####
 ## ------------------------------------------------------ #
 
-#Adding range for ka 
-# ka_range <- round(INPUT$ka * 10^(0:3), digits = 3)  # Sequence where each value is 10 times higher than before Adjust the number of points as needed
-# VmaxMet.In_range <- round(INPUT$VmaxMet.In * 10^(0:3), digits = 3) 
-# 
-# ### Custom labels for when plotting based on the changed parameter value ###
-# ka_labels <- setNames(
-#   c("ka: 1x", "ka: 10x", "ka: 100x", "ka: 1000x"), 
-#   ka_range)
 
 PARAMETERS=c(PO_DOSE = PO_DOSE, 
              VInL1 = INPUT$VInL/3,
@@ -104,23 +96,6 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
              QSl = INPUT$QSl,  
              QRa = INPUT$QRa,
              ka = INPUT$ka.is,
-             # ka.is = INPUT$ka.is,
-             # ka.sl = INPUT$ka.sl, 
-             # ka.fa = INPUT$ka.fa, 
-             # ka.fit = INPUT$ka.fit, 
-             # kex = INPUT$kex, 
-             # kfil = INPUT$kfil, 
-             # kbil = INPUT$kbil, 
-             # ka.sl.glu = INPUT$ka.sl.glu, 
-             # ka.fa.glu = INPUT$ka.fa.glu, 
-             # ka.fit.glu = INPUT$ka.fit.glu, 
-             # kex.glu = INPUT$kex.glu, 
-             # kfil.glu = INPUT$kfil.glu, 
-             # kbil.glu = INPUT$kbil.glu, 
-             # VmaxAbs = INPUT$VmaxAbs, 
-             # KmAbs = INPUT$KmAbs, 
-             # VmaxSec = INPUT$VmaxSec, 
-             # KmSec = INPUT$KmSec, 
              kTIn = INPUT$kTIn,#total intestinal transit time
              kTIn.3 = INPUT$kTIn/3, #intestine is splited in 3
              # kTsi = 1 / ZEN.dat$kTsi, 
@@ -132,26 +107,8 @@ PARAMETERS=c(PO_DOSE = PO_DOSE,
              KmGluc.In = INPUT$KmGluc.In,  #affinity constant zearalenone to UGT
              VmaxMet.Li = INPUT$VmaxMet.Li, #liver glucuronidation
              KmGluc.Li = INPUT$KmGluc.Li,
-             # VmaxExc.In.glu = INPUT$VmaxExc.In.glu, #active transPOrt from intestinal tissue to lumen
-             # KmGluc.Exc = INPUT$KmGluc.Exc, #affinity constant zearalenone glucuronide to efflux transPOrter
-             # VmaxAbs.In.glu = INPUT$VmaxAbs.In.glu, #active transPOrt from lumen to tissue
-             # KmGluc.Abs = INPUT$KmGluc.Abs, #affinity constant zearalenone glucuronide to influx transPOrer
              kHydro = 1000 # /hydrolysis constant; assumption as in Veronique
 ) 
-
-### FOR PARAMETER OPTIMISATION ####
-
-# DF for parameters to change
-Parameter <- c("PInb", "PLib", "PKib", "PAdb", "PSlb", "PRab", "fub", "ka", "kTge", "CL_Bi", "VmaxMet.In", "KmGluc.In", "VmaxMet.Li", "KmGluc.Li", "kHydro")
-Original <- c(INPUT$PIn, INPUT$PLi, INPUT$PKi, INPUT$PAd, INPUT$PSl, INPUT$PRa, INPUT$fub, INPUT$ka, INPUT$kTge, INPUT$CL_Bi, INPUT$VmaxMet.In, INPUT$KmGluc.In, INPUT$VmaxMet.Li, INPUT$KmGluc.Li, 1000)
-Test1 <- c(INPUT$PIn*10, INPUT$PLi*10, INPUT$PKi*10, INPUT$PAd*10, INPUT$PSl*10, INPUT$PRa*10, INPUT$fub*10, INPUT$ka*10, INPUT$kTge*10, 1, INPUT$VmaxMet.In/10, INPUT$KmGluc.In, INPUT$VmaxMet.Li/10, INPUT$KmGluc.Li, 1000*10)
-Test2 <- c(INPUT$PIn*100, INPUT$PLi*100, INPUT$PKi*100, INPUT$PAd*100, INPUT$PSl*100, INPUT$PRa*100, INPUT$fub*100, INPUT$ka*100, INPUT$kTge*100, 1, INPUT$VmaxMet.In/100, INPUT$KmGluc.In, INPUT$VmaxMet.Li/100, INPUT$KmGluc.Li, 1000*100)
-Test3 <- c(INPUT$PIn*1000, INPUT$PLi*1000, INPUT$PKi*1000, INPUT$PAd*1000, INPUT$PSl*1000, INPUT$PRa*1000, INPUT$fub*1000, INPUT$ka*1000, INPUT$kTge*1000, 1, INPUT$VmaxMet.In/1000, INPUT$KmGluc.In, INPUT$VmaxMet.Li/1000, INPUT$KmGluc.Li, 1000*1000)
-
-VARYING.PARAMETERS <- rbind(Original, Test1, Test2, Test3) %>%  as.data.frame() 
-colnames(VARYING.PARAMETERS) <- c("PInb", "PLib", "PKib", "PAdb", "PSlb", "PRab", "fub", "ka", "kTge", "CL_Bi", "VmaxMet.In", "KmGluc.In", "VmaxMet.Li", "KmGluc.Li", "kHydro")
-
-
 
 
 ## State ####
@@ -195,7 +152,6 @@ INITIALstate = c(
 # ---------------------------------------------------------------------------- #
 # PBPK MODEL ####
 # ---------------------------------------------------------------------------- #
-# source(here("Script/ZENPBK_Function.R"))
 
 
 ## Model Function ####
@@ -284,9 +240,9 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     dAFe <- kTCo*AInL3
     
     # Intestinal tissue
-    dAIn1 <-  + ka*AInL1 - VmaxMet.In*CIn1/(KmGluc.In+CIn1) + QIn*(CBl - CvIn1) - kTIn.3*AIn1  # Intestine 1
-    dAIn2 <-  + ka*AInL2 - VmaxMet.In*CIn2/(KmGluc.In+CIn2) + QIn*(CBl - CvIn2) + kTIn.3*AIn1 - kTIn.3*AIn2     # Intestine 2
-    dAIn3 <-  + ka*AInL3 - VmaxMet.In*CIn3/(KmGluc.In+CIn3) + QIn*(CBl - CvIn3) + kTIn.3*AIn2    # Intestine 3    
+    dAIn1 <-  + ka*AInL1 + QIn*(CBl - CvIn1) - kTIn.3*AIn1  # Intestine 1 - VmaxMet.In*CIn1/(KmGluc.In+CIn1)
+    dAIn2 <-  + ka*AInL2 + QIn*(CBl - CvIn2) + kTIn.3*AIn1 - kTIn.3*AIn2     # Intestine 2 - VmaxMet.In*CIn2/(KmGluc.In+CIn2)
+    dAIn3 <-  + ka*AInL3 - VmaxMet.In*CIn3/(KmGluc.In+CIn3) + QIn*(CBl - CvIn3) + kTIn.3*AIn2    # Intestine 3  # Intestine 3
     
     # Liver
     dALi <- QIn*(CvIn1 + CvIn2 + CvIn3) + QHa*CBl - QLi*CvLi - VmaxMet.Li*CLi/(KmGluc.Li+CLi)
@@ -317,9 +273,9 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     # ## Glucuronide---------------------- ##
     
     # Intestinal tissue
-    dAIn1.glu <- VmaxMet.In*CIn1/(KmGluc.In+CIn1) - AIn1.glu + QIn*(CBl.glu - CvIn1.glu) - kTIn.3*AIn1.glu # Intestinal tissue 1
-    dAIn2.glu <- VmaxMet.In*CIn2/(KmGluc.In+CIn2) - AIn2.glu + QIn*(CBl.glu - CvIn2.glu) + kTIn.3*AIn1.glu - kTIn.3*AIn2.glu# Intestinal tissue 2
-    dAIn3.glu <- VmaxMet.In*CIn3/(KmGluc.In+CIn3) - AIn3.glu + QIn*(CBl.glu - CvIn3.glu) + kTIn.3*AIn2.glu# Intestinal tissue 2
+    dAIn1.glu <- - AIn1.glu + QIn*(CBl.glu - CvIn1.glu) - kTIn.3*AIn1.glu # Intestinal tissue 1 VmaxMet.In*CIn1/(KmGluc.In+CIn1)
+    dAIn2.glu <- - AIn2.glu + QIn*(CBl.glu - CvIn2.glu) + kTIn.3*AIn1.glu - kTIn.3*AIn2.glu# Intestinal tissue 2 VmaxMet.In*CIn2/(KmGluc.In+CIn2)
+    dAIn3.glu <- VmaxMet.In*CIn3/(KmGluc.In+CIn3) - AIn3.glu + QIn*(CBl.glu - CvIn3.glu) + kTIn.3*AIn2.glu# Intestinal tissue 2  
     
     # Intestinal lumen
     dAInL1.glu <- AIn1.glu + kTge*ABi.glu - kTIn.3*AInL1.glu - kHydro*AInL1.glu # Intestinal Lumen 1
@@ -417,82 +373,105 @@ PBK_ZENandGLUC <- function(t,state,parameters){
   }
 
 
-## RUN THE MODEL ####
+## SOLVE THE MODEL ####
 ## ------------------------------------------------------ #
 
-
-# # for (ka_val in ka_range) {
-# #   for (VmaxMet.In_val in VmaxMet.In_range) {
-#   
-#   # Update the CHOOSEPARAMETER parameter in the PARAMETERS list
-#   PARAMETERS["ka"] <- ka_val
-#   PARAMETERS["VmaxMet.In"] <- VmaxMet.In_val
-
-PBK <- ode(y = INITIALstate,
-             times = Tout,  #used to be times
-             func = PBK_ZENandGLUC,
-             parms = PARAMETERS,
-             atol = 1e-50,
-             #events = list(data = events), #for repeated exposure
-             method = "lsoda")
-
-head(PBK)
+# PBK <- ode(y = INITIALstate,
+#              times = Tout,  #used to be times
+#              func = PBK_ZENandGLUC,
+#              parms = PARAMETERS,
+#              atol = 1e-50,
+#              #events = list(data = events), #for repeated exposure
+#              method = "lsoda")
+# head(PBK)
 
 
-# PBK_df <- as.data.frame(PBK)
-# 
-# 
-# # Add the CHOOSEPARAMETER value to the data frame for reference
-# PBK_df$ka <- ka_val
-# PBK_df$VmaxMet.In <- VmaxMet.In_val
-
-### FOR PARAMETER OPTIMISATION ####
+### RUN THE MODEL FOR DIFFERENT SETS OF PARAMETER CHANGES / OPTIMISATION ####
+## ------------------------------------------------------ #
 
 DEFAULT_PARAMS <- as.list(PARAMETERS)
 
+VARYING.PARAMETERS <- tibble(
+  PInb = c(INPUT$PIn, INPUT$PIn/10, INPUT$PIn/10, INPUT$PIn/10),
+  PLib = c(INPUT$PLi, INPUT$PLi/10, INPUT$PLi/10, INPUT$PLi/10),
+  PKib = c(INPUT$PKi, INPUT$PKi/10, INPUT$PKi/10, INPUT$PKi/10),
+  PAdb = c(INPUT$PAd, INPUT$PAd/10, INPUT$PAd/10, INPUT$PAd/10),
+  PSlb = c(INPUT$PSl, INPUT$PSl/10, INPUT$PSl/10, INPUT$PSl/10),
+  PRab = c(INPUT$PRa, INPUT$PRa/10, INPUT$PRa/10, INPUT$PRa/10),
+  PInb.glu = c(INPUT$PIn.glu , INPUT$PIn.glu*10, INPUT$PIn.glu*10, INPUT$PIn.glu), #increasing the partition coeffs only doesn't help as it decreases ZEN's coeffs; increasing them while decreasing ZENs doesn't actually do anything
+  PLib.glu = c(INPUT$PLi.glu, INPUT$PLi.glu*10, INPUT$PLi.glu*10, INPUT$PLi.glu),
+  PKib.glu = c(INPUT$PKi.glu, INPUT$PKi.glu*10, INPUT$PKi.glu*10, INPUT$PKi.glu),
+  PAdb.glu = c(INPUT$PAd.glu, INPUT$PAd.glu*10, INPUT$PAd.glu*10, INPUT$PAd.glu),
+  PSlb.glu = c(INPUT$PSl.glu, INPUT$PSl.glu*10, INPUT$PSl.glu*10, INPUT$PSl.glu),
+  PRab.glu = c(INPUT$PRa.glu, INPUT$PRa.glu*10, INPUT$PRa.glu*10, INPUT$PRa.glu),
+  fub = c(INPUT$fub, INPUT$fub, INPUT$fub/10, INPUT$fub),
+  ka = c(INPUT$ka, INPUT$ka, INPUT$ka, INPUT$ka), #same ka gives closer concentrations to the in vivo compared to increasing it
+  kTge = c(INPUT$kTge, INPUT$kTge, INPUT$kTge, INPUT$kTge),
+  CL_Bi = c(INPUT$CL_Bi, INPUT$CL_Bi/10, INPUT$CL_Bi/10, INPUT$CL_Bi/10), #shouldn't be increased as the concentration in the bile is increased
+  KmGluc.In = c(INPUT$KmGluc.In, INPUT$KmGluc.In, INPUT$KmGluc.In, INPUT$KmGluc.In), #changing KmGluc.In doesn't make any significant difference
+  VmaxMet.In = c(INPUT$VmaxMet.In, INPUT$VmaxMet.In, INPUT$VmaxMet.In, INPUT$VmaxMet.In), #changing VmaxMet.In doesn't make any significant difference
+  KmGluc.Li = c(INPUT$KmGluc.Li, INPUT$KmGluc.Li, INPUT$KmGluc.Li, INPUT$KmGluc.Li), #decreasing doesn't help as it decreases the blood concentration too much; increasing it doesn't help as it brings the blood concentration to0 high for sure shouldn't be to increased
+  VmaxMet.Li = c(INPUT$VmaxMet.Li, INPUT$VmaxMet.Li, INPUT$VmaxMet.Li, INPUT$VmaxMet.Li), #increasing it doesn't help as it decreases the blood concentration; decreasing it doesn't help as it brings the blood concentration to0 high
+  kHydro = c(1000, 1000, 1000, 1000) #changing it doesn't do anything actually
+)
+
+combine_parameters <- function(varying_row) {
+  modifyList(DEFAULT_PARAMS, as.list(varying_row))
+}
+
+# Create a list of parameter sets
+parameter_sets <- VARYING.PARAMETERS %>%
+  mutate(version = c("Original", "Test1", "Test2", "Test3")) %>%
+  split(.$version) %>%
+  map(~combine_parameters(.x %>% select(-version)))
+
+print(parameter_sets)
+
 # Function to run the model
-RUN_model <- function(varying_params) {
-  # Combine default parameters with varying parameters
-  parameters <- modifyList(DEFAULT_PARAMS, as.list(varying_params))
-  
-  # Define initial state (replace with your actual initial state)
-  initial_state <- INITIALstate  # Replace with your initial values
-  
-  # Define the time sequence for the simulation
-  times <- Tout  # Adjust as needed
-  
-  # Run the ODE solver
-  out <- ode(y = INITIALstate, times = Tout, func = PBK_ZENandGLUC, parms = parameters)
-  
-  # Return the output
-  return(out)
+run_model_for_parameters <- function(params) {
+  PBK <- ode(y = INITIALstate, 
+             times = Tout, 
+             func = PBK_ZENandGLUC, 
+             parms = params)
+  return(PBK)
 }
 
-# Initialize an empty list to store results
-CHANGING.PARAMS <- list()
+# Run the model for each set of parameters
+model_results <- map(parameter_sets, run_model_for_parameters)
+str(model_results)
 
-# Loop over each parameter value
-for (i in 1:nrow(VARYING.PARAMETERS)) {
-  varying_params <- VARYING.PARAMETERS[i, , drop = FALSE]
-  varying_params <- as.list(varying_params)
-  
-  RESULTS_model <- RUN_model(varying_params)
-  CHANGING.PARAMS[[i]] <- RESULTS_model
+print(model_results)
+
+extract_results <- function(ode_result) {
+  if (inherits(ode_result, "deSolve")) {
+    # Convert the matrix to a data frame
+    result_matrix <- ode_result
+    result_df <- as.data.frame(result_matrix)
+    
+    # Check for column names in the attributes
+    col_names <- attr(ode_result, "dimnames")[[2]]
+    if (!is.null(col_names)) {
+      colnames(result_df) <- col_names
+    }
+    
+    return(result_df)
+  } else {
+    return(NULL)
+  }
 }
 
+# Apply the function to extract results from all model results
+extracted_resultsT <- map(model_results, extract_results)
+str(extracted_resultsT)
+Original.df <- extracted_resultsT[["Original"]] %>% mutate(Version = "Original")
+Test1.df <- extracted_resultsT[["Test1"]] %>% mutate(Version = "Test1")
+Test2.df <- extracted_resultsT[["Test2"]] %>% mutate(Version = "Test2")
+Test3.df <- extracted_resultsT[["Test3"]] %>% mutate(Version = "Test3")
 
-print(CHANGING.PARAMS)
-
-
-# # Store the result in the list
-# results_list[[as.character(ka_val, VmaxMet.In_val)]] <- PBK_df
-# 
-# 
-# # Combine all results into a single data frame
-# final_results <- do.call(rbind, results_list)
+model_results_df <- rbind(Original.df, Test1.df, Test2.df, Test3.df)
 
 # Save the combined results to a CSV file
-write.csv(final_results, file = here(TodaysOuput, "OUTPUT_PARAMETERRANGE.csv"), row.names=FALSE)
+write.csv(model_results_df, file = here(TodaysOuput, "OUTPUT_PARAMETERRANGE.csv"), row.names=FALSE)
 
 
 # ---------------------------------------------------------------------------- #
@@ -502,38 +481,49 @@ write.csv(final_results, file = here(TodaysOuput, "OUTPUT_PARAMETERRANGE.csv"), 
 # ggsave(here(PlotFolderIs, "Overall.png"), dpi = 300)
 
 ### Output in amounts (umol) ####
-OUTPUT.A <- as.data.frame(PBK) %>% select("time", "AInL1" : "ABl.glu")
+# OUTPUT.A <- as.data.frame(PBK) %>% select("time", "AInL1" : "ABl.glu")
+# write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A.csv"), row.names=FALSE)
+
+OUTPUT.A <- model_results_df %>% select("time", "AInL1" : "ABl.glu", "Version")
 write.csv(OUTPUT.A, file = here(TodaysOuput, "OUTPUT.A.csv"), row.names=FALSE)
 
 
 ## Mass Balance / Error ####
 ## ------------------------------------------------------ #
 
-# CALCULATED <- c( #!Change accordingly depending on the compartments in the function#
-#   "AInL1", "AInL2", "AInL3", "AIn1", "AIn2", "AIn3", "AFe",
-#   "ALi", "AKi", "AUr", "AAd", "ASl", "ARa", "ABl",
-#   "AIn1.glu", "AIn2.glu", "AIn3.glu", "AInL1.glu", "AInL2.glu", "AInL3.glu","AFe.glu",
-#   "ALi.glu", "ABi.glu", "AKi.glu", "AUr.glu",
-#   "AAd.glu", "ASl.glu", "ARa.glu", "ABl.glu"
-# )
-
-CALCULATED <- names(OUTPUT.A)[-1]
-CALCULATED <- rowSums(OUTPUT.A[ ,CALCULATED])
+#CALCULATED <- rowSums(OUTPUT.A[ ,CALCULATED])
+CALCULATEDnames <- names(OUTPUT.A)[-c(1, ncol(OUTPUT.A))]
 TOTAL <- PO_DOSE
+MB_ER <- OUTPUT.A %>%
+  group_by(Version) %>%
+  rowwise() %>%
+  mutate(CALCULATED_SUM = sum(c_across(all_of(CALCULATEDnames)), na.rm = TRUE)) %>%
+  mutate(MB = TOTAL - CALCULATED_SUM + 1) %>% 
+  mutate(ER = (TOTAL-CALCULATED_SUM)/(TOTAL*100)) %>% 
+  ungroup()
 
-MASSBALANCE <- TOTAL - CALCULATED + 1 #better be 1
-ERROR <- (TOTAL - CALCULATED) / (TOTAL) * 100 #better be 0
-
-MASSBALANCE_Error <- cbind("time" = OUTPUT.A[, "time"],
-                           MASSBALANCE, ERROR) %>%
-  as.data.frame()
+#MASSBALANCE <- TOTAL - CALCULATED + 1 #better be 1
+#ERROR <- (TOTAL - CALCULATED) / (TOTAL) * 100 #better be 0
+# MASSBALANCE_Error <- cbind("time" = OUTPUT.A[, "time"],
+#                            MASSBALANCE, ERROR) %>%
+#   as.data.frame()
 
 # Mass Balance and Error plot
-MASSBALANCE_Error %>%
+# MASSBALANCE_Error %>%
+#   filter(time >= 0.01) %>% #as PO administration time is 0,01h
+#   ggplot(aes(time, MASSBALANCE)) +
+#   geom_line(color = "grey") +
+#   geom_line(aes(time, ERROR), color = "grey6") +
+#   labs(x = "Time (h)", y = "Value",
+#        caption = "Mass balance in grey, Error in black") +
+#   theme_CP()
+
+MB_ER %>%
   filter(time >= 0.01) %>% #as PO administration time is 0,01h
-  ggplot(aes(time, MASSBALANCE)) +
+  ggplot(aes(time, MB)) +
   geom_line(color = "grey") +
-  geom_line(aes(time, ERROR), color = "grey6") +
+  geom_line(aes(time, ER), color = "grey6") +
+  facet_wrap(~Version) +
   labs(x = "Time (h)", y = "Value",
        caption = "Mass balance in grey, Error in black") +
   theme_CP()
@@ -544,7 +534,7 @@ ggsave(here(TodaysOuput, "MB_ERROR2=.png"), dpi = 300)
 ## ------------------------------------------------------ #
 
 # OUTPUT.C <- as.data.frame(PBK) %>% select(!c("AInL1" : "ABl.glu")) 
-OUTPUT.C <- final_results %>% select(!c("AInL1" : "ABl.glu")) 
+OUTPUT.C <- model_results_df %>% select(!c("AInL1" : "ABl.glu")) 
 
 write.csv(OUTPUT.C, file = here(TodaysOuput, "OUTPUT.C.csv"), row.names=FALSE)
 
@@ -612,7 +602,7 @@ SIM_BLOOD <- rbind(SIM_BLOOD.ZEN, SIM_BLOOD.ZENGluc)
 
 SIM_BLOOD %>%
   ggplot(aes(Time, Concentration, colour = Compound)) +
-  facet_wrap(~ka, labeller = as_labeller(ka_labels)) +
+  facet_wrap(~Version) +
   geom_path(linewidth = 0.5) +
   labs(title = "Zearalenone and glucuronide blood concentrations",
        x = "Time (h)",
@@ -624,7 +614,7 @@ ggsave(here(PlotFolderIs, "ZEN&Gluc.blood.simulated.png"), dpi = 300)
 # To plot Zearalenone blood concentration
 SIM_BLOOD.ZEN %>%
   ggplot(aes(Time, Concentration)) +
-  facet_wrap(~ka, labeller = as_labeller(ka_labels)) +
+  facet_wrap(~Version) +
   geom_path(linewidth = 0.5) +
   labs(title = "Zearalenone blood concentration",
        x = "Time (h)",
@@ -637,7 +627,7 @@ ggsave(here(PlotFolderIs, "ZEN.blood.simulated.png"), dpi = 300)
 SIM_CONC.ZEN %>%
   # filter(Tissue != "Intestine") %>% 
   ggplot(aes(Time, Concentration, colour = Tissue)) +
-  facet_wrap(~ka, labeller = as_labeller(ka_labels)) +
+  facet_wrap(~Version) +
   geom_path(linewidth = 0.5) +
   labs(title = "Zearalenone tissue concentrations",
        x = "Time (h)",
@@ -654,7 +644,7 @@ ggsave(here(PlotFolderIs, "ZEN.simulated.png"), dpi = 300)
 SIM_CONC.ZENGluc %>%
   ggplot(aes(Time, Concentration, colour = Tissue)) +
   geom_path(linewidth = 0.5) +
-  facet_wrap(~ka, labeller = as_labeller(ka_labels)) +
+  facet_wrap(~Version) +
   labs(title = "Zearalenone glucuronide tissue concentrations",
        x = "Time (h)",
        y = "Concentration (ng/ml)") +
@@ -693,7 +683,7 @@ EXP_BLOOD.ZEN <- EXP.PO_CONC.ZEN %>% filter(Tissue == "Plasma") %>%
 
 SIM_BLOOD.ZEN %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  facet_wrap(~ka, labeller = as_labeller(ka_labels)) +
+  facet_wrap(~Version) +
   geom_point(data = EXP_BLOOD.ZEN, aes(Time, Concentration, color = Gender)) +
   geom_line(data = EXP_BLOOD.ZEN, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
@@ -707,11 +697,11 @@ ggsave(here(PlotFolderIs, "BloodSimulatedInvivoVidemann.png"), dpi = 300)
 # Intestine
 EXP_INTESTINE <- EXP.PO_CONC.ZEN %>% filter(Tissue =="Intestine")
 SIM_INTESTINE <- SIM_CONC.ZEN %>% filter(Tissue == "Intestine") %>% 
-  filter(Time>=0.1)
+  filter(Time>=0.1) #%>% filter(Version != "Original")
 
 SIM_INTESTINE %>% ggplot() +
   geom_line(aes(Time, Concentration)) +  
-  facet_wrap(~ka, labeller = as_labeller(ka_labels)) +
+  facet_wrap(~Version) +
   geom_point(data = EXP_INTESTINE, aes(Time, Concentration, color = Gender)) +
   geom_line(data = EXP_INTESTINE, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
@@ -728,7 +718,7 @@ SIM_LIVER <- SIM_CONC.ZEN %>% filter(Tissue =="Liver")
 
 SIM_LIVER %>% ggplot() +
   geom_line(aes(Time, Concentration)) + 
-  facet_wrap(~ka, labeller = as_labeller(ka_labels)) +
+  facet_wrap(~Version) +
   geom_point(data = EXP_LIVER, aes(Time, Concentration, color = Gender)) +
   geom_line(data = EXP_LIVER, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
@@ -745,7 +735,7 @@ SIM_KIDNEY <- SIM_CONC.ZEN %>% filter(Tissue =="Kidney")
 
 SIM_KIDNEY %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  facet_wrap(~ka, labeller = as_labeller(ka_labels)) +
+  facet_wrap(~Version) +
   geom_point(data = EXP_KIDNEY, aes(Time, Concentration, color = Gender)) +
   geom_line(data = EXP_KIDNEY, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
@@ -772,7 +762,7 @@ EXP_BLOOD.ZENGluc <- EXP.PO_CONC.ZENGluc %>% filter(Tissue == "Plasma") %>%
 
 SIM_BLOOD.ZENGluc %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  facet_wrap(~ka, labeller = as_labeller(ka_labels)) +
+  facet_wrap(~Version) +
   geom_point(data = EXP_BLOOD.ZENGluc, aes(Time, Concentration, color = Gender)) +
   geom_line(data = EXP_BLOOD.ZENGluc, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
@@ -789,7 +779,7 @@ SIM_INTESTINE.ZENGluc <- SIM_CONC.ZENGluc %>% filter(Tissue =="Intestine")
 
 SIM_INTESTINE.ZENGluc %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  facet_wrap(~ka, labeller = as_labeller(ka_labels)) +
+  facet_wrap(~Version) +
   geom_point(data = EXP_INTESTINE.ZENGluc, aes(Time, Concentration, color = Gender)) +
   geom_line(data = EXP_INTESTINE.ZENGluc, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
@@ -806,7 +796,7 @@ SIM_LIVER.ZENGluc <- SIM_CONC.ZENGluc %>% filter(Tissue =="Liver")
 
 SIM_LIVER.ZENGluc %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  facet_wrap(~ka, labeller = as_labeller(ka_labels)) +
+  facet_wrap(~Version) +
   geom_point(data = EXP_LIVER.ZENGluc, aes(Time, Concentration, color = Gender)) +
   geom_line(data = EXP_LIVER.ZENGluc, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
@@ -823,7 +813,7 @@ SIM_KIDNEY.ZENGluc <- SIM_CONC.ZENGluc %>% filter(Tissue =="Kidney")
 
 SIM_KIDNEY.ZENGluc %>% ggplot() +
   geom_line(aes(Time, Concentration)) +
-  facet_wrap(~ka, labeller = as_labeller(ka_labels)) +
+  facet_wrap(~Version) +
   geom_point(data = EXP_KIDNEY.ZENGluc, aes(Time, Concentration, color = Gender)) +
   geom_line(data = EXP_KIDNEY.ZENGluc, aes(Time, Concentration, color = Gender),
             linewidth = 0.1) +
@@ -839,6 +829,7 @@ ggsave(here(PlotFolderIs, "GlucKidneySimulatedInvivo.png"), dpi = 300)
 ## Predicted vs Observed Regression ####
 
 # Rearranging the data--------------------------------------------------------#
+Version_range <- unique(OUTPUT.A$Version)  # Sequence where each value is 10 times higher than before Adjust the number of points as needed
 
 # Videmann
 VidemannSimple.F.data <- EXP_BLOOD.ZEN %>% #female
@@ -853,11 +844,11 @@ Videmann.TimeP <- VidemannSimple.F.data$Time
 
 closest_times <- sapply(Videmann.TimeP, function(x) {
   SIM_BLOOD.ZEN$Time[which.min(abs(SIM_BLOOD.ZEN$Time - x))]
-}) %>% as.numeric() %>% 
+}) %>% as.numeric()
 
 SimVidemann.data <- SIM_BLOOD.ZEN %>% 
   filter(Time %in% closest_times) %>%  #simulated data is the same for both genders as gender differences are not included
-  select(c(Time, Concentration, ka)) %>% 
+  select(c(Time, Concentration, Version)) %>% 
   mutate(Time = as.numeric(Time), 
          Time = round(Time, 1))
 
@@ -867,28 +858,28 @@ ExpVidemann.data <- bind_rows(
   mutate(Time = as.numeric(Time), 
          Time = round(Time, 1))
 
-# A dataframe with all the possible combinations for Timepoints, gender and ka
+# A dataframe with all the possible combinations for Timepoints, gender and Version
 Expanded.df <- expand.grid(
   Time = closest_times, 
   Gender = c("Female", "Male"), 
-  ka = ka_range
+  Version = Version_range
 ) %>% mutate(Time = as.numeric(Time), Time = round(Time, 1))
 
 Combined.df <- Expanded.df %>%
   left_join(ExpVidemann.data, by = c("Time", "Gender")) %>%
-  left_join(SimVidemann.data, by = c("Time", "ka")) %>% 
+  left_join(SimVidemann.data, by = c("Time", "Version")) %>% 
   rename(Experimental = Concentration.x,
          Simulated = Concentration.y) %>% 
-  arrange(ka, Gender, Time)
+  arrange(Version, Gender, Time)
 
 
 Results <- Combined.df %>%
-  group_by(ka, Gender) %>%
+  group_by(Version, Gender) %>%
   mutate(Time_Diff = c(NA, diff(Time))) %>%  # To calculate AUC; difference between consecutive "Time" values representing the width of each trapezoid, the sum sums up all the trapezoidal areas
   summarise(
     Videmann.AUC = sum((lead(Experimental) + Experimental) / 2 * Time_Diff, na.rm = TRUE), # To calculate AUC; lead() shifts the values forward by one time step every time; allowing to pair each value with the next one for the trapezoidal calculation
     SimVidemann.AUC = sum((lead(Simulated) + Simulated) / 2 * Time_Diff, na.rm = TRUE), # To calculate AUC; lead() shifts the values forward by one time step every time; allowing to pair each value with the next one for the trapezoidal calculation
-    Regression = list(lm(Experimental ~ Simulated)) # To model experimental vs simulated regression for each ka
+    Regression = list(lm(Experimental ~ Simulated)) # To model experimental vs simulated regression for each Version
   )
 
 # To view the results
@@ -904,7 +895,11 @@ Results %>%
 ggplot(Combined.df, aes(x = Simulated, y = Experimental, colour = Gender)) +
   geom_point() +
   geom_smooth(method = 'lm', color = "black") +
-  facet_wrap(~ ka, scales = "free", labeller = as_labeller(ka_labels)) +
+  facet_wrap(~ Version, scales = "free") +
   theme_CP()
   ggsave(here(PlotFolderIs, "ExpVsSimRegression.png"), dpi = 300)
 
+write.csv(VARYING.PARAMETERS, file = here(TodaysOuput, "VARYING.PARAMETERS.csv"), row.names=FALSE)
+
+# END ####
+  
