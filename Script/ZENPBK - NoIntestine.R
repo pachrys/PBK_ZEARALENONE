@@ -18,7 +18,7 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "SlowlyChangingParameters"
+WhatAmITesting <- "7.1"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
@@ -47,7 +47,7 @@ ZEN.dat <- read.csv(here("InputData/Zen.input.csv"), header=1)     #from {Agahi,
 
 # Tout
 STARTtime <- 0 # start of simulation (h)
-STOPtime <- 2 # end of simulation (h) (for repeated pregnancy in Videmann daily exposure time from D7 to D20 (13days)
+STOPtime <- 24 # end of simulation (h) (for repeated pregnancy in Videmann daily exposure time from D7 to D20 (13days)
 
 Dt <- 1/ 100 # steps of simulation (now it per minute) (could be 1/100, 1/200 or 1 for simulations over years)
 Tout <- seq(STARTtime,STOPtime,by=Dt)
@@ -424,16 +424,16 @@ VARYING.PARAMETERS <- tibble(
   PAdb.glu = c(INPUT$PAd.glu, INPUT$PAd.glu, INPUT$PAd.glu, INPUT$PAd.glu),
   PSlb.glu = c(INPUT$PSl.glu, INPUT$PSl.glu, INPUT$PSl.glu, INPUT$PSl.glu),
   PRab.glu = c(INPUT$PRa.glu, INPUT$PRa.glu, INPUT$PRa.glu, INPUT$PRa.glu),
-  fub = c(INPUT$fub, INPUT$fub, INPUT$fub/10, INPUT$fub/10),
-  ka = c(INPUT$ka.is, 100, 100, 100), #same ka gives closer concentrations to the in vivo compared to increasing it
+  fub = c(INPUT$fub, INPUT$fub, INPUT$fub, INPUT$fub),
+  ka = c(100, 100, 100, 100), #same ka gives closer concentrations to the in vivo compared to increasing it
   kTge = c(INPUT$kTge, INPUT$kTge, INPUT$kTge, INPUT$kTge),
-  CL_Bi = c(INPUT$CL_Bi, INPUT$CL_Bi, INPUT$CL_Bi, INPUT$CL_Bi*10), #shouldn't be increased as the concentration in the bile is increased
+  CL_Bi = c(INPUT$CL_Bi, INPUT$CL_Bi*100, INPUT$CL_Bi*100, INPUT$CL_Bi), #shouldn't be increased as the concentration in the bile is increased
   KmGluc.In = c(INPUT$KmGluc.In, INPUT$KmGluc.In, INPUT$KmGluc.In, INPUT$KmGluc.In), #changing KmGluc.In doesn't make any significant difference
   VmaxMet.In = c(INPUT$VmaxMet.In, INPUT$VmaxMet.In, INPUT$VmaxMet.In, INPUT$VmaxMet.In), #changing VmaxMet.In doesn't make any significant difference
-  KmGluc.Li = c(INPUT$KmGluc.Li, INPUT$KmGluc.Li, INPUT$KmGluc.Li, INPUT$KmGluc.Li), #decreasing doesn't help as it decreases the blood concentration too much; increasing it doesn't help as it brings the blood concentration to0 high for sure shouldn't be to increased
+  KmGluc.Li = c(INPUT$KmGluc.Li, INPUT$KmGluc.Li/2, INPUT$KmGluc.Li, INPUT$KmGluc.Li/2), #decreasing doesn't help as it decreases the blood concentration too much; increasing it doesn't help as it brings the blood concentration to0 high for sure shouldn't be to increased
   VmaxMet.Li = c(INPUT$VmaxMet.Li, INPUT$VmaxMet.Li, INPUT$VmaxMet.Li, INPUT$VmaxMet.Li), #increasing it doesn't help as it decreases the blood concentration; decreasing it doesn't help as it brings the blood concentration to0 high
   VmaxHydro = c(50, 50, 50, 50), #fitted
-  KmHydro = c(5, 5, 5, 5), #fitted
+  KmHydro = c(5/20, 5/20, 5/20, 5/20), #fitted
   # kHydro = c(1000, 1000, 1000, 0.001), #changing it doesn't do anything actually
   CL_Re = c(INPUT$CL_Re, INPUT$CL_Re, INPUT$CL_Re, INPUT$CL_Re)
 )
@@ -444,7 +444,7 @@ combine_parameters <- function(varying_row) {
 
 # Create a list of parameter sets
 parameter_sets <- VARYING.PARAMETERS %>%
-  mutate(version = c("Original", "Test1", "Test2", "Test3")) %>%
+  mutate(version = c("Test1", "Test2", "Test3", "Test4")) %>%
   split(.$version) %>%
   map(~combine_parameters(.x %>% select(-version)))
 
@@ -486,12 +486,12 @@ extract_results <- function(ode_result) {
 # Apply the function to extract results from all model results
 extracted_resultsT <- map(model_results, extract_results)
 str(extracted_resultsT)
-Original.df <- extracted_resultsT[["Original"]] %>% mutate(Version = "Original")
 Test1.df <- extracted_resultsT[["Test1"]] %>% mutate(Version = "Test1")
 Test2.df <- extracted_resultsT[["Test2"]] %>% mutate(Version = "Test2")
 Test3.df <- extracted_resultsT[["Test3"]] %>% mutate(Version = "Test3")
+Test4.df <- extracted_resultsT[["Test4"]] %>% mutate(Version = "Test4")
 
-model_results_df <- rbind(Original.df, Test1.df, Test2.df, Test3.df)
+model_results_df <- rbind(Test1.df, Test2.df, Test3.df, Test4.df)
 
 # Save the combined results to a CSV file
 write.csv(model_results_df, file = here(TodaysOuput, "OUTPUT_PARAMETERRANGE.csv"), row.names=FALSE)
@@ -638,7 +638,7 @@ SIM_BLOOD.ZEN <- SIM_CONC.ZEN %>% filter(Tissue == "Blood") %>% mutate(Compound 
 
 # To plot Zearalenone blood concentration
 SIM_BLOOD.ZEN %>% 
-  #filter(Version == "Original") %>%
+  #filter(Version == "Test1") %>%
   ggplot(aes(Time, Concentration)) +
   facet_wrap(~Version) +
   geom_path(linewidth = 0.5) +
@@ -649,18 +649,18 @@ SIM_BLOOD.ZEN %>%
 ggsave(here(PlotFolderIs, "ZEN.blood.simulated.png"), dpi = 300)
 
 
-# To plot Zearalenone tissue concentrations
-SIM_CONC.ZEN %>%
-  # filter(Tissue != "Intestine") %>% 
-  ggplot(aes(Time, Concentration, colour = Tissue)) +
-  facet_wrap(~Version) +
-  geom_path(linewidth = 0.5) +
-  labs(title = "Zearalenone tissue concentrations",
-       x = "Time (h)",
-       y = "Concentration (ng/ml)") +
-  theme_CP()
-ggsave(here(PlotFolderIs, "ZEN.simulated.png"), dpi = 300)
-
+# # To plot Zearalenone tissue concentrations
+# SIM_CONC.ZEN %>%
+#   # filter(Tissue != "Intestine") %>% 
+#   ggplot(aes(Time, Concentration, colour = Tissue)) +
+#   facet_wrap(~Version) +
+#   geom_path(linewidth = 0.5) +
+#   labs(title = "Zearalenone tissue concentrations",
+#        x = "Time (h)",
+#        y = "Concentration (ng/ml)") +
+#   theme_CP()
+# ggsave(here(PlotFolderIs, "ZEN.simulated.png"), dpi = 300)
+# 
 
 # 
 # ### Simulated data for Zearalenone glucuronide ####
