@@ -18,7 +18,7 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # Working directory-----------------------------------------------------------#
-WhatAmITesting <- "7.1"
+WhatAmITesting <- "ChangingBiliaryClearance2.2"
 TodaysOuput <- here("Output/Data", Sys.Date(), WhatAmITesting)
 dir.create(TodaysOuput, WhatAmITesting,recursive = TRUE)
 PlotFolderIs <- here("Output/Plots", Sys.Date(), WhatAmITesting)
@@ -47,7 +47,7 @@ ZEN.dat <- read.csv(here("InputData/Zen.input.csv"), header=1)     #from {Agahi,
 
 # Tout
 STARTtime <- 0 # start of simulation (h)
-STOPtime <- 24 # end of simulation (h) (for repeated pregnancy in Videmann daily exposure time from D7 to D20 (13days)
+STOPtime <- 2 # end of simulation (h) (for repeated pregnancy in Videmann daily exposure time from D7 to D20 (13days)
 
 Dt <- 1/ 100 # steps of simulation (now it per minute) (could be 1/100, 1/200 or 1 for simulations over years)
 Tout <- seq(STARTtime,STOPtime,by=Dt)
@@ -100,7 +100,7 @@ PARAMETERS=c(Fa = 1,
              QSl = INPUT$QSl,  
              QRa = INPUT$QRa,
              ka = INPUT$ka.is,
-             kTIn = INPUT$kTIn,#total intestinal transit time
+             kTIn = INPUT$kTIn, #total intestinal transit time
              kTIn.3 = INPUT$kTIn/3, #intestine is splited in 3
              # kTsi = 1 / ZEN.dat$kTsi, 
              kTCo = 1 / ZEN.dat$kTco,
@@ -111,8 +111,9 @@ PARAMETERS=c(Fa = 1,
              KmGluc.In = INPUT$KmGluc.In,  #affinity constant zearalenone to UGT
              VmaxMet.Li = INPUT$VmaxMet.Li, #liver glucuronidation
              KmGluc.Li = INPUT$KmGluc.Li, 
-  VmaxHydro = 50, #L/h
-  KmHydro = 5, #uM
+  CL_Hydro = 50/5, #L/h 
+  #VmaxHydro = 50, #L/h
+  #KmHydro = 5, #uM
              kHydro = 1000 # /hydrolysis constant; assumption as in Veronique
 ) 
 
@@ -128,7 +129,7 @@ INITIALstate = c(
   # AIn1 = 0, 
   # AIn2 = 0,
   # AIn3 = 0,
-  # AFe = 0,
+  AFe = 0,
   ALi = 0,
   AKi = 0,
   AUr = 0,
@@ -243,14 +244,14 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     # Zearalenone-------------------- ##
     
     # Intestinal Lumen
-    dAInL <- - ka*AInL + VmaxHydro*CInL.glu/(KmHydro + CInL.glu) 
+    dAInL <- - ka*AInL + CL_Hydro*CInL.glu - kTCo*AInL#VmaxHydro*CInL.glu/(KmHydro + CInL.glu) 
     
     # dAInL1 <- - ka*AInL1 + kHydro*AInL1.glu - kTIn.3*AInL1 # Intestinal lumen 1
     # dAInL2 <- - ka*AInL2 + kHydro*AInL2.glu + kTIn.3*AInL1 - kTIn.3*AInL2 #+ kHydro*AInL1.glu    # Intestinal lumen 2
     # dAInL3 <- - ka*AInL3 + kHydro*AInL3.glu + kTIn.3*AInL2 - kTCo*AInL3 #+ kHydro*AInL.glu3  # Intestinal lumen 3
-    # 
+    
     # # Feces
-    # dAFe <- kTCo*AInL3
+    dAFe <- kTCo*AInL
     
     # # Intestinal tissue
     # dAIn1 <-  + ka*AInL1 + QIn*(CBl - CvIn1) - kTIn.3*AIn1  # Intestine 1 - VmaxMet.In*CIn1/(KmGluc.In+CIn1)
@@ -291,7 +292,7 @@ PBK_ZENandGLUC <- function(t,state,parameters){
     # dAIn3.glu <- VmaxMet.In*CIn3/(KmGluc.In+CIn3) - AIn3.glu + QIn*(CBl.glu - CvIn3.glu) + kTIn.3*AIn2.glu# Intestinal tissue 2  
     # 
     # Intestinal lumen
-    dAInL.glu <- kTge*ABi.glu - VmaxHydro*CInL.glu/(KmHydro + CInL.glu) # Intestinal Lumen 1 - kTIn.3*AInL1.glu
+    dAInL.glu <- kTge*ABi.glu - CL_Hydro*CInL.glu #VmaxHydro*CInL.glu/(KmHydro + CInL.glu) # Intestinal Lumen 1 - kTIn.3*AInL1.glu
     
     # dAInL1.glu <- AIn1.glu + kTge*ABi.glu - kTIn.3*AInL1.glu - kHydro*AInL1.glu # Intestinal Lumen 1
     # dAInL2.glu <- AIn2.glu + kTIn.3*AInL1.glu - kTIn.3*AInL2.glu - kHydro*AInL2.glu # Intestinal Lumen 2
@@ -336,7 +337,7 @@ PBK_ZENandGLUC <- function(t,state,parameters){
       #             dAIn1 = dAIn1, 
       #             dAIn2 = dAIn2, 
       #             dAIn3 = dAIn3, 
-      #             dAFe = dAFe,
+                  dAFe = dAFe,
                   dALi = dALi, 
                   dAKi = dAKi, 
                   dAUr = dAUr, 
@@ -427,14 +428,16 @@ VARYING.PARAMETERS <- tibble(
   fub = c(INPUT$fub, INPUT$fub, INPUT$fub, INPUT$fub),
   ka = c(100, 100, 100, 100), #same ka gives closer concentrations to the in vivo compared to increasing it
   kTge = c(INPUT$kTge, INPUT$kTge, INPUT$kTge, INPUT$kTge),
-  CL_Bi = c(INPUT$CL_Bi, INPUT$CL_Bi*100, INPUT$CL_Bi*100, INPUT$CL_Bi), #shouldn't be increased as the concentration in the bile is increased
+  kTCo = c(ZEN.dat$kTco, ZEN.dat$kTco, ZEN.dat$kTco, ZEN.dat$kTco),
+  CL_Bi = c(INPUT$CL_Bi, INPUT$CL_Bi, INPUT$CL_Bi/100, INPUT$CL_Bi*100), #shouldn't be increased as the concentration in the bile is increased
   KmGluc.In = c(INPUT$KmGluc.In, INPUT$KmGluc.In, INPUT$KmGluc.In, INPUT$KmGluc.In), #changing KmGluc.In doesn't make any significant difference
   VmaxMet.In = c(INPUT$VmaxMet.In, INPUT$VmaxMet.In, INPUT$VmaxMet.In, INPUT$VmaxMet.In), #changing VmaxMet.In doesn't make any significant difference
-  KmGluc.Li = c(INPUT$KmGluc.Li, INPUT$KmGluc.Li/2, INPUT$KmGluc.Li, INPUT$KmGluc.Li/2), #decreasing doesn't help as it decreases the blood concentration too much; increasing it doesn't help as it brings the blood concentration to0 high for sure shouldn't be to increased
+  KmGluc.Li = c(INPUT$KmGluc.Li, INPUT$KmGluc.Li, INPUT$KmGluc.Li, INPUT$KmGluc.Li), #decreasing doesn't help as it decreases the blood concentration too much; increasing it doesn't help as it brings the blood concentration to0 high for sure shouldn't be to increased
   VmaxMet.Li = c(INPUT$VmaxMet.Li, INPUT$VmaxMet.Li, INPUT$VmaxMet.Li, INPUT$VmaxMet.Li), #increasing it doesn't help as it decreases the blood concentration; decreasing it doesn't help as it brings the blood concentration to0 high
-  VmaxHydro = c(50, 50, 50, 50), #fitted
-  KmHydro = c(5/20, 5/20, 5/20, 5/20), #fitted
-  # kHydro = c(1000, 1000, 1000, 0.001), #changing it doesn't do anything actually
+  CL_Hydro = c(10, 1, 10, 10),
+  #VmaxHydro = c(50, 50, 50, 50), #fitted
+  #KmHydro = c(5/20, 5/20, 5/20, 5/20), #fitted
+  #kHydro = c(1000, 1000, 1000, 0.001), #changing it doesn't do anything actually
   CL_Re = c(INPUT$CL_Re, INPUT$CL_Re, INPUT$CL_Re, INPUT$CL_Re)
 )
 
