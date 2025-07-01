@@ -35,7 +35,7 @@ F_Vo.dat <- F_Vo.dat %>%
   pivot_wider(names_from = F_Vo.names, values_from = F_Vo )
 
 # ZEN physicochemical input                                                       #ZEN as monoprotic acid. It has 2 pKas 8.54 and 10.38. At pH 7.4 ZEN is >90 persent not ionized.
-ZEN.dat <- read.csv(here("InputData/Zen.input.csv"), header=1)     #from {Agahi, 2020 #456} and chemicalize, BP from Shin, Hong et al.2009
+ZEN.dat <- read.csv(here("InputData/Zen_input.csv"), header=1)     #from {Agahi, 2020 #456} and chemicalize, BP from Shin, Hong et al.2009
 
 
 #----Calculating-------------------------------------------------------------#
@@ -73,10 +73,10 @@ Calc.init.Input <- cbind(ZEN.dat,data.frame(PartiCoef),F_QC.dat, F_Vo.dat)
 
 #----Calculating Distribution Parameters--------------------------------------#
 # Tissue:Blood partition coefficients                                             #Tissue:Blood Partition coefficients = BloodPlasma ratio (BP) * Tissue:Plasma Partition coefficient (PTi)
-PLib =ZEN.dat$BP*Calc.init.Input$PLi;                                             #liver
-PKib =ZEN.dat$BP*Calc.init.Input$PKi;                                             #kidney
-PAdb =ZEN.dat$BP*Calc.init.Input$PAd;                                             #adipose
-PInb =ZEN.dat$BP*Calc.init.Input$PGu;                                             #intestine
+PLib =ZEN.dat$BP*Calc.init.Input$PLi                                             #liver
+PKib =ZEN.dat$BP*Calc.init.Input$PKi                                             #kidney
+PAdb =ZEN.dat$BP*Calc.init.Input$PAd                                             #adipose
+PInb =ZEN.dat$BP*Calc.init.Input$PGu                                             #intestine
 PSlb =ZEN.dat$BP*(((Calc.init.Input$FVBo*Calc.init.Input$PBo) + 
                      (Calc.init.Input$FVBr*Calc.init.Input$PBr) +
               (Calc.init.Input$FVMu*Calc.init.Input$PMu) + 
@@ -84,7 +84,7 @@ PSlb =ZEN.dat$BP*(((Calc.init.Input$FVBo*Calc.init.Input$PBo) +
              (Calc.init.Input$FVBo + 
                 Calc.init.Input$FVBr + 
                 Calc.init.Input$FVMu + 
-                Calc.init.Input$FVSk));                                          #slowly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
+                Calc.init.Input$FVSk))                                          #slowly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
 PRab =ZEN.dat$BP*(((Calc.init.Input$FVHe*Calc.init.Input$PHe) + 
               (Calc.init.Input$FVLu*Calc.init.Input$PLu) + 
               (Calc.init.Input$FVSp*Calc.init.Input$PSp) + 
@@ -92,7 +92,7 @@ PRab =ZEN.dat$BP*(((Calc.init.Input$FVHe*Calc.init.Input$PHe) +
              (Calc.init.Input$FVHe + 
                 Calc.init.Input$FVLu + 
                 Calc.init.Input$FVSp + 
-                Calc.init.Input$FVKi));                                          #rapidly perfused; calculated similarly to rapidly perfused
+                Calc.init.Input$FVKi))                                          #rapidly perfused; calculated similarly to rapidly perfused
 
 # Free fraction in blood
 fub = Calc.init.Input$fu*ZEN.dat$BP                                              #equation from {Grandoni, 2019 #457}
