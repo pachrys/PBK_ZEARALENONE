@@ -1,0 +1,26 @@
+---
+title: "Results on Diana's Zearalenone model"
+author: "Chrysanthi Pachoulide"
+format: html
+editor: visual
+---
+
+## Aim
+
+The general aim of this study is the development of a human pregnancy PBK model for Zearalenone and potentially its metabolites. As a PBK model was already available, the first step in the process was the evaluation of the already existing PBK model. The results of this are presented in this document.
+
+## Proceedure
+
+![](Quarto/Proceedure.1st.png){#fig-proceedureStep1}
+
+The already available PBK model was firstly transferred from Burkley Madonna to R. Then mass balance errors were resolved and a mathematically correct version of the model was developed. The model is the same for both rats and humans.
+
+The model was evaluated by means of goodness of fit *in vivo* data and global sensitivity analysis.
+
+### Goodness of fit
+
+### GSA
+
+#### Morris elementary effects screening test
+
+#### eFAST test
