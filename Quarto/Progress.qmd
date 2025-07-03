@@ -1,8 +1,26 @@
 ---
-title: "Results on Diana's Zearalenone model"
+title: "Updating the model"
 author: "Chrysanthi Pachoulide"
-format: html
 editor: visual
+toc: true
+format: 
+  html:
+    code-fold: true
+    fig-margin: 1.0
+    embed-resources: true
+    self-contained-math: true
+  pdf:
+    knitr:
+      opts_chunk:
+        screenshot.force: true
+    documentclass: report
+    geometry: 
+     - margin = 1in
+     - a4paper    
+    fig-width: 6.5
+    fig-height: 4.5
+    fig-align: center
+bibliography: references.bib
 ---
 
 ## Aim
@@ -11,7 +29,7 @@ The general aim of this study is the development of a human pregnancy PBK model 
 
 ## Proceedure
 
-![](Quarto/Proceedure.1st.png){#fig-proceedureStep1}
+![](Proceedure.1st.png){#fig-proceedureStep1}
 
 The already available PBK model was firstly transferred from Burkley Madonna to R. Then mass balance errors were resolved and a mathematically correct version of the model was developed. The model is the same for both rats and humans.
 
@@ -19,8 +37,62 @@ The model was evaluated by means of goodness of fit *in vivo* data and global se
 
 ### Goodness of fit
 
+Predicted blood and tissue concentrations were compared to those measured in three different toxicokinetic rat studies [@shin2009; @videmann2012; @lu2022].
+
+As seen in @fig-ObservedPlasma and @fig-ObservedPlasma.IV, there is inter-study variability in measured blood concentrations. This variability is not explained by the exposure dose which was at **8, 6.53 and 1mg/kg respectively in Shin, Q.Lu and Videmann**. It should be noted that the rat species was Sprague-Dawley in Shin and Q.Lu and Wistar in Videmann, while the formulation was DMSO:PEG 400:saline (1:%:4, v/v) in Shin, 0.5% SodiumCarboxymethyl Cellulose in Q.Lu and maize oil 5%DMSO in Videmann. Inter-study differences in absorption could be explained by the differences in oral dose formulation.
+
+A general trend in blood concentration could be an initial Cmax between 0.08 and 1 hour, followed by a secondary pick between 2 and 3 hours. Blood concentrations are in the range of 10 to 50ng/ml after a PO dose of 1 to 6mg/kg. The very low blood concentrations measured in Shin could be explained by limitations in the analytical method.
+
+![Measured plasma concentrations in rats, after different oral doses.](ObservedPlasma.png){#fig-ObservedPlasma}
+
+![Measured plasma concentrations in rats, after different intra-venous doses.](ObservedIV.png){#fig-ObservedPlasma.IV}
+
 ### GSA
 
-#### Morris elementary effects screening test
+We evaluated the sensitivity of the model outputs to the input parameters in a two step global sensitivity analysis. To this end, we used the rat model, which is identical to the human model, therefore assuming that both models have the same sensitivity to the input parameters. The model was run with both an IV and PO exposure.
 
-#### eFAST test
+All parameters were assumed to have a unified distribution and were varied in a unified manner with inferior and superior bounds of 0.9 and 1.1 respectively. All input parameters (54) parameters were included in the Morris test, while only the most highly ranked from the Morris test were included in the eFAST test.
+
+We evaluated the sensitivity of four model outputs to the input parameters. These were: Zearalenone concentration in blood, Zearalenone concentration in liver, Zearalenone glucuronide concentration in liver and the concentration of α-Zearalenol in blood. These were chosen because the blood concentration of the parent compound is the main model output, liver is the main excreting tissue and zearalenone glucuronide the main elimination product and lastly α-ZEL the active metabolite.
+
+To evaluate the robustness of the Morris test, we tested 50, 100 or 1000 elementary effects for each parameter variation, leading to a design of 2700, 5400 or 54000 runs of the PBK model. Increasing the number of repetitions requires more computational energy, however it provides more accuracy to the results. The experimental design and test code can be found in github.
+
+We run the eFAST test with a sample size of 1000.
+
+## Results
+
+### Model predictions
+
+![ZEN organ concentrations after PO dose of 8mg/kg](images/clipboard-1358628030.png){#fig-CTissuePO}
+
+### Goodness of fit
+
+As seen in @fig-PredObsPO , the model predictions against the measured blood, intestinal or liver concentrations, at different PO doses are not good. In general the model seems to under estimate blood concentrations and completely miss the secondary pick in blood concentration observed around 2 and 4 hours post administration. Furthermore, it also under-predicts the concentrations in liver and intestine. On the other hand, as seen in @fig-PredObsIV, the model predicted blood concentrations after an IV dose are predicted correctly.
+
+![Zearalenone concentrations in blood, intestine and liver after at different PO doses. The solid line represents the predicted blood concentration while the points represent the measured concentration.](PredObsPO.png){#fig-PredObsPO}
+
+![Zearalenone concentrations in blood at different IV doses. The solid line represents the predicted blood concentration while the points represent the measured concentration.](PredObsIV.png){#fig-PredObsIV}
+
+## GSA
+
+![Morris results after 50, 100 and 1000 repetitions.](Morris.diffr.png){#fig-Morris.diffr}
+
+As seen in @fig-Morris.diffr, the same paramaters had the highest score of elementary effects, independently of the number of repetitions (r50 to r1000) per input. A few differences in the order of classification of the parameters can be observed, but the exact order of the sensitivity of the model output per parameter will be evaluated in the next step of the GSA[^1].
+
+[^1]: A high μ\* indicates a parameter with an important overall influence on model output; a high σ indicates either a parameter interacting with other parameters, or a parameter whose effects are non-linear. The magnitude of μ\* and σ for each model parameter is relative, i.e., a parameter has a low μ\* relative to the parameter with the highest μ\*.
+
+Four model outputs were evaluated, zearalenone blood and liver concentration, zearalenone glucuronide liver concentration as well as α-zearalenol blood concentration. As shown in @fig-Morris.outputs, Zearalenone blood concentration was most sensitive to variations in the cardiac output, blood flow to the small intestine, liver and fat, the body weight, fractional volume of fat and the tissue-plasma partition coefficient. Interestingly, all these parameters are physiological and don't involve any of the elimination kinetics. Furthermore, Zearalenone and Zearalenone glucuronide liver concentrations were sensitive to all the above-mentioned parameters, as well as the glucuronidation kinetics in the liver and intestine and their relative scaling factors. Finally, α-Zearalenol blood concentration was sensitive to all the above mentioned parameters, but also the α-hydrolysis and glucuronidation kinetics in the liver and their relative scaling factors and the tissue-fat partition coefficient for this chemical.
+
+![Results on the sensitivity of different model outputs (ZEN blood and liver, α-ZEL blood and ZEN-GLUc liver concentrations) on the variation of input parameters (Morris Test).](Morris.outputs.png){#fig-Morris.outputs}
+
+Based on the results of the Morris elementary effects screening test, all parameters that had an elementary effect \>= 0.15 for all the tested model outputs combined, were evaluated in the eFAST variance test. As shown in @fig-lowryplot, body weight is the most influential parameter, together with the metabolism kinetics of formation of α-ZEL and ZEN-glucuronide in liver as well as the formation of α-ZEL-glucuronide in liver, highlighting their influence on the model. The partition coefficients had the least influence.
+
+![](lowry_plot.png){#fig-lowryplot width="650"}
+
+## Conclusions
+
+-   Given that the current model predicts well ZEN concentrations after IV dose, it can be concluded that it predicts well the tissue-plasma distribution of ZEN in the body. Furthermore, variation of tissue-plasma partition coefficients, except of those of the liver and fat is not influential to the model outputs.
+
+-   The model seems to not predict well the metabolism kinetics, mechanisms that are very influential to the model predictions. The model under-predicts the intestinal absorption and misses the toxicokinetic process responsible for the secondary pick.
+
+-   It is hypothesised that enterohepatic circulation is responsible for the secondary pick in the blood concentration of zearalenone. Another process could be the entreohepatic cirulation of only the glucuronide, which is then 100% hydrolysed in the intestine, as zearalenone which gets re-absorbed. In the intestine there is also glucuronidation, therefore there might be a competing mechanism between glucuronidation and re-absorption?!

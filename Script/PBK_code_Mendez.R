@@ -145,7 +145,7 @@ PBK.model <- function(t, state, parms){
     ## Dynamic ####
     
     # Stomach:
-    dAst <- ODOSEumol - ksto*Ast # amount in stomach
+    dAst <- - ksto*Ast # amount in stomach ODOSEumol
     
     # small intestine lumen compartment
     # intestines, divided in 7 compartments
@@ -206,8 +206,8 @@ PBK.model <- function(t, state, parms){
     dAS <- QS*(CB-CVS) # amount of ZEN in slowly perfused tissue, (μmol)
     
     #  blood compartment
-    dAB <- IVDOSEumol - QSI*CB - QL*CB + (QSI+QL)*CVLZEN - QF*CB + QF*CVF +
-      - QR*CB + QR*CVR - QS*CB + QS*CVS - KurZ*AB # amount of ZEN in blood, (μmol)
+    dAB <- - QSI*CB - QL*CB + (QSI+QL)*CVLZEN - QF*CB + QF*CVF +
+      - QR*CB + QR*CVR - QS*CB + QS*CVS - KurZ*AB # amount of ZEN in blood, (μmol) IVDOSEumol
     
     # urinary excretion
     dAZur <- KurZ*AB

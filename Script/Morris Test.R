@@ -183,12 +183,27 @@
   
   sim.results.morris <- as.matrix(y)
   
+  CB.sim.results.morris <- sim.results.morris[str_detect(rownames(sim.results.morris), "CB") &
+                                              !str_detect(rownames(sim.results.morris), "aZEL"), ]
+  
+  CBaZEL.sim.results.morris <- sim.results.morris[str_detect(rownames(sim.results.morris), "CB") &
+                                                    str_detect(rownames(sim.results.morris), "aZEL"), ]
+  
+  CLGLU.sim.results.morris <- sim.results.morris[str_detect(rownames(sim.results.morris), "CL") &
+                                                    str_detect(rownames(sim.results.morris), "GLU"), ]
+  
+  CL.sim.results.morris <- sim.results.morris[str_detect(rownames(sim.results.morris), "CL") &
+                                                   !str_detect(rownames(sim.results.morris), "GLU"), ]
+  
+  
+
+  
   mu = mu.star = sigma = NULL
 
   # Tell morris y for each model output
-  for (i in (1:length(sim.results.morris[,1])))
+  for (i in (1:length(CL.sim.results.morris[,1])))
   {
-    tell(Experience, sim.results.morris[i,])
+    tell(Experience, CL.sim.results.morris[i,])
     mu = rbind( mu, apply(Experience$ee, 2, mean, na.rm = TRUE))
     mu.star = rbind( mu.star, apply(Experience$ee, 2, function(x) mean(abs(x), na.rm = TRUE)))
     sigma = rbind( sigma, apply(Experience$ee, 2, sd, na.rm = TRUE))
@@ -197,7 +212,7 @@
   plot(Experience)
   
   # Save mu.star, mu, sigma, scaled indices and global indices
-  rownames( mu.star ) = rownames( mu ) = rownames( sigma ) = row.names(y)
+  rownames( mu.star ) = rownames( mu ) = rownames( sigma ) = row.names(CL.sim.results.morris)
   
   mu.star_scale = mu.star/apply(mu.star, 1, mean, na.rm=TRUE) 
   sigma_scale = sigma/apply(sigma, 1, mean, na.rm=TRUE)
@@ -223,7 +238,7 @@
     IGlobal = IGlobal
   )
   
-  save(Morris.indices, file = "Morris.indices.RData")
+  save(Morris.indices, file = here("CL.Morris.indices.RData"))
   
   
   # PLOT MORRIS RESULTS ####
@@ -266,7 +281,7 @@
     theme(plot.margin = margin(0, 0.15, 0, 0, "cm"))
   morris_plot
   ggsave(
-    filename = here("morrisGI_plot.png"),
+    filename = here("CL.morrisGI_plot.png"),
     plot = morris_plot,
     dpi = 1000, 
     width = 12, height = 9, units = "cm"
@@ -303,7 +318,7 @@
     theme(plot.margin = margin(0, 0.15, 0, 0, "cm"))
   morris_plot
   ggsave(
-    filename = here("morrisZoomOut_plot.png"),
+    filename = here("CL.morrisZoomOut_plot.png"),
     plot = morris_plot,
     dpi = 1000, 
     width = 12, height = 9, units = "cm"
@@ -323,7 +338,7 @@
       segment.alpha = 0.5,
       segment.linetype = "dotted",
       direction = "x",
-      ylim = c(0.1, 0.1),
+      ylim = c(0.035, 0.035),
       point.padding = 0.4,
       box.padding = 0.3,
       set.seed(123)
@@ -340,7 +355,7 @@
     theme(plot.margin = margin(0, 0.15, 0, 0, "cm"))
   morris_plot
   ggsave(
-    filename = here("morrisZoomIn_plot.png"),
+    filename = here("CL.morrisZoomIn_plot.png"),
     plot = morris_plot,
     dpi = 1000, 
     width = 12, height = 9, units = "cm"

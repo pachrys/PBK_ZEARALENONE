@@ -70,7 +70,7 @@ dir.create(OUTPUT,  recursive = TRUE)
   ksto = 2.8  # stomach emptying rate (/h) reference: Reilly et al. (1990)
   
   # intestinal absorption and transfer rates of ZEN
-  PappCaco2ZEN = 3.9838  # fitted Log Papp  Caco-2 (cm/h) reference: Pfeiffer et al. (2011)
+  PappCaco2ZEN = 1.01 #3.9838  # fitted Log Papp  Caco-2 (cm/h) reference: Pfeiffer et al. (2011)
   # Log (Papp in vivo) = 0.6836*Log(PappCaco2ZEN)-0.5579 # reference: Sun et al. (2002)
   
   Vin = 0.0012  # volume for each compartment of intestines (L)
