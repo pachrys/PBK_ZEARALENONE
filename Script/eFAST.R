@@ -231,7 +231,7 @@
   # save(Experience, file = "eFAST.ExperienceFull.RData")
 
   
-  # RUN MORRIS DESIGN ####
+  # RUN eFAST DESIGN ####
   # ---------------------------------------------------------------------------- #
 
   # Run model row-wise from design (i.e each row is an eFAST test). parm.GSA = row
