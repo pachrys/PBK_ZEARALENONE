@@ -54,21 +54,21 @@ print(MB_plot)
 
 C_organs.df <- PBK_OUTPUT %>% 
   transmute(time = time,
-            Intestinal.lumen_ZEN = Cin, #1 + Cin2 + Cin3 + Cin4 + Cin5 + Cin6 + Cin7,
-            Intestinal.tissue_ZEN = CSIZEN,
-            Intestinal.microb_ZEN = CLIZEN,
-            Liver_ZEN = CLZEN, 
-            Fat_ZEN = CF, Rapidly_ZEN = CR, Slowly_ZEN = CS, Blood_ZEN = CB, 
-            Intestinal.tissue_ZENGLU = CSIZENGLU,
-            Intestinal.microb_aZEL = CLIaZEL,
-            Intestinal.microb_bZEL = CLIbZEL,
-            Liver_aZEL = CLaZEL, 
-            Liver_bZEL = CLbZEL,
-            Liver_ZENGLU = CLZENGLU,
-            Liver_bZEL = CLbZEL,
-            Liver_aZELGLU = CLaZELGLU,
-            Fat_aZEL = CFaZEL, Rapidly_aZEL = CRaZEL, Slowly_aZEL = CSaZEL, 
-            Blood_aZEL = CBaZEL) 
+            Intestinal.lumen_ZEN = CIL_ZEN, #1 + Cin2 + Cin3 + Cin4 + Cin5 + Cin6 + Cin7,
+            Intestinal.tissue_ZEN = CSI_ZEN,
+            Intestinal.microb_ZEN = CLI_ZEN,
+            Liver_ZEN = CL_ZEN, 
+            Fat_ZEN = CF_ZEN, Rapidly_ZEN = CR_ZEN, Slowly_ZEN = CS_ZEN, Blood_ZEN = CB_ZEN, 
+            Intestinal.tissue_ZENGLU = CSI_ZENGLU,
+            Intestinal.microb_aZEL = CLI_aZEL,
+            Intestinal.microb_bZEL = CLI_bZEL,
+            Liver_aZEL = CL_aZEL, 
+            Liver_bZEL = CL_bZEL,
+            Liver_ZENGLU = CL_ZENGLU,
+            Liver_bZEL = CL_bZEL,
+            Liver_aZELGLU = CL_aZELGLU,
+            Fat_aZEL = CF_aZEL, Rapidly_aZEL = CR_aZEL, Slowly_aZEL = CS_aZEL, 
+            Blood_aZEL = CB_aZEL) 
 
 C_organs_long <- C_organs.df %>% 
   pivot_longer(names_to = c("Organ", "Compound"), 
