@@ -36,8 +36,8 @@ MB.df <- PBK_OUTPUT %>% select(time, ATotal, ACalculated, MB)  # change days to 
 ATOTAL <- ODOSEumol + IVDOSEumol
 MB.df$MB <- (ATOTAL- MB.df$ACalculated) + 1
 MB.df$MB <- round(MB.df$MB, 10) # rounding significance points
-MB.df$ERROR <- (ATOTAL - MB.df$ACalculated) / MB.df$ACalculated * 100
-# MB.df$ERROR <- (MB.df$ATotal - MB.df$ACalculated) / MB.df$ACalculated * 100
+# MB.df$ERROR <- (ATOTAL - MB.df$ACalculated) / MB.df$ACalculated * 100
+MB.df$ERROR <- (MB.df$ATotal - MB.df$ACalculated) / MB.df$ACalculated * 100
 MB.df$ERROR <- round(MB.df$ERROR, 10) # rounding significance points
 MB_plot <- ggplot(data = MB.df)+
   geom_line(aes(x = time, y = ERROR, color = "ERROR")) +
@@ -52,34 +52,46 @@ MB_plot <- ggplot(data = MB.df)+
   ylab("MB / ERROR")
 print(MB_plot)
 
-C_organs.df <- PBK_OUTPUT %>% 
+C_organs.df <- PBK_OUTPUT %>%
   transmute(time = time,
-            Intestinal.lumen_ZEN = CIL_ZEN, #1 + Cin2 + Cin3 + Cin4 + Cin5 + Cin6 + Cin7,
-            Intestinal.tissue_ZEN = CSI_ZEN,
-            Intestinal.microb_ZEN = CLI_ZEN,
-            Liver_ZEN = CL_ZEN, 
-            Fat_ZEN = CF_ZEN, Rapidly_ZEN = CR_ZEN, Slowly_ZEN = CS_ZEN, Blood_ZEN = CB_ZEN, 
-            Intestinal.tissue_ZENGLU = CSI_ZENGLU,
-            Intestinal.microb_aZEL = CLI_aZEL,
-            Intestinal.microb_bZEL = CLI_bZEL,
-            Liver_aZEL = CL_aZEL, 
+            SIntestineT_ZEN = CSI_ZEN,
+            SIntestineL_ZEN = CSIL_ZEN,
+            LIntestineL_ZEN = CLIL_ZEN,
+            RectumL_ZEN = CREL_ZEN,
+            Liver_ZEN = CL_ZEN,
+            Fat_ZEN = CF_ZEN,
+            Rapidly_ZEN = CR_ZEN,
+            Slowly_ZEN = CS_ZEN,
+            Blood_ZEN = CB_ZEN,
+            LIntestineL_aZEL = CLIL_aZEL,
+            SIntestineT_aZEL = CSI_aZEL,
+            Liver_aZEL = CL_aZEL,
+            Fat_aZEL = CF_aZEL,
+            Rapidly_aZEL = CR_aZEL,
+            Slowly_aZEL = CS_aZEL,
+            Blood_aZEL = CB_aZEL,
+            LIntestineL_bZEL = CLIL_bZEL,
             Liver_bZEL = CL_bZEL,
+            SIntestineT_ZENGLU = CSI_ZENGLU,
             Liver_ZENGLU = CL_ZENGLU,
-            Liver_bZEL = CL_bZEL,
+            Fat_ZENGLU = CF_ZENGLU,
+            Rapidly_ZENGLU = CR_ZENGLU,
+            Slowly_ZENGLU = CS_ZENGLU,
+            Blood_ZENGLU = CB_ZENGLU,
             Liver_aZELGLU = CL_aZELGLU,
-            Fat_aZEL = CF_aZEL, Rapidly_aZEL = CR_aZEL, Slowly_aZEL = CS_aZEL, 
-            Blood_aZEL = CB_aZEL) 
+            SIntestineT_aZELGLU = CSI_aZELGLU
+            )
 
-C_organs_long <- C_organs.df %>% 
-  pivot_longer(names_to = c("Organ", "Compound"), 
-               Intestinal.lumen_ZEN:Blood_aZEL, 
+C_organs_long <- C_organs.df %>%
+  pivot_longer(names_to = c("Organ", "Compound"),
+               SIntestineT_ZEN:SIntestineT_aZELGLU,
                values_to = "Concentration",
-               names_sep = "_") %>% 
+               names_sep = "_") %>%
   mutate(Concentration = Concentration*MWZEN)
 
 
-Plasma <- C_organs_long %>% 
-  filter(Organ == "Blood") %>% 
+Plasma <- C_organs_long %>%
+  filter(Organ == "Blood") %>%
   ggplot()+
   geom_path(aes(x = time, y = Concentration, colour = Compound), linewidth = 0.3) +
   # scale_color_manual(name = "Model",
@@ -168,7 +180,7 @@ VidemannPO <- ObsPO %>%
   mutate(#Concentration = ifelse(Tissue == "Plasma",
           #                      Concentration * 0.67, Concentration), #(ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
   Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
-  
+
 # rename(Blood = "Concentration")
 
 # VidemannPO <- VidemannPO %>%
@@ -187,16 +199,16 @@ pivot_longer(Blood:Liver, names_to = "Tissue", values_to = "Concentration")
 C_organs_wide <- C_organs_long %>%
   pivot_wider(names_from = "Organ", values_from = "Concentration") %>%
   filter(Compound == "ZEN") %>%
-  rename("Intestine" = "Intestinal.tissue") %>%
-  select(c("time", "Intestine", "Liver", "Blood"))
+  select(c("time", "SIntestineT", "SIntestineL", "LIntestineL", "RectumL", "Liver", "Blood")) %>% 
+  mutate("Intestine" = )
 
 PredPO <- C_organs_wide %>%
-  rename(Concentration = Blood) %>%
-  filter(time >= 0.05) #%>% #0.5 for Videmann, 0.05 for Q.Lu
+  rename(Concentration = Blood) # %>%
+  # filter(time >= 0.05) #%>% #0.5 for Videmann, 0.05 for Q.Lu
 
 Videmann.PredPO <- C_organs_wide %>%
-  pivot_longer(Intestine:Blood, names_to = "Tissue", values_to = "Concentration") %>%
-  filter(time >= 0.5) #%>% #0.5 for Videmann, 0.05 for Q.Lu
+  pivot_longer(Intestine:Blood, names_to = "Tissue", values_to = "Concentration") # %>%
+  # filter(time >= 0.5) #%>% #0.5 for Videmann, 0.05 for Q.Lu
 # filter(time <= 5)
 
 # Plots
@@ -211,7 +223,7 @@ Blood.PredObsVidemannPlotly <- ggplot() +
        color = "Author")+
   theme_minimal()
 # PredObsVidemannPlotly
-Blood.PredObsVidemannPlotly <- ggplotly(Blood.PredObsVidemannPlotly)
+# Blood.PredObsVidemannPlotly <- ggplotly(Blood.PredObsVidemannPlotly)
 print(Blood.PredObsVidemannPlotly)
 ggsave(
   filename = here(OUTPUT,"Blood.PredObsVidemannPlotly.png"),
@@ -222,7 +234,7 @@ ggsave(
 )
 
 PredObsVidemann <- ggplot() +
-  geom_point(data = VidemannPO_long, aes(Time, Concentration, color = Gender)) + 
+  geom_point(data = VidemannPO_long, aes(Time, Concentration, color = Gender)) +
   facet_wrap(~Tissue)+
   geom_line(data = Videmann.PredPO, aes(time, Concentration))+
   facet_wrap(~Tissue)+
@@ -307,12 +319,12 @@ ggsave(
 #   height = 7,
 #   units = "cm"
 # )
-# 
+#
 # ObsPOPlotly <- ggplotly(ObsIV_plot)
 # ObsPOPlotly
-# 
-# 
-# 
+#
+#
+#
 # ObsPred <- ggplot() +
 #   geom_path(ObsPO, aes(Time, Concentration, color = Author)) +
 #   facet_wrap(~Gender) +

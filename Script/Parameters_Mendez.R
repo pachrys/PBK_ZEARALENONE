@@ -81,7 +81,7 @@ dir.create(OUTPUT,  recursive = TRUE)
   SAinb = 1.57  # surface area of large intestine (dm2) reference: Vdoviaková et al. (2016)
 
   # α-ZEL
-  PappCaco2aZEL = 5.2676  #Log Papp  Caco-2 reference: Pfeiffer et al. (2011) (cm/h)
+  PappCaco2aZEL = 5.2676  #Log Papp  Caco-2 reference: Pfeiffer et al. (2011) (cm/h) 
   # Log (Papp in vivo) = 0.6836*Log(PappCaco2aZEL)-0.5579 reference: Sun et al. (2002)
   
   # urinary excretion

@@ -36,7 +36,7 @@ Species = "Rat"
 
 # Parameters
 Parameters <- if(Species == "Rat"){
-  read.csv(here("Input", "Parm.rat.csv"))
+  read.csv(here("Input", "tbdParm.rat.csv"))
 }else{
   read.csv(here("Input", "Parm.human.csv"))
 }
@@ -65,39 +65,62 @@ parm.c <- as.list(setNames(Parameters$Value, Parameters$Parameter))
 
 
 # Model Code
-source(here("Script", "PBK_code.R"))
+source(here("Script", "tbdPBK_code.R"))
 # source(here("Script", "PBK_code_Mendez.R"))
 
 
 # Tell Initials 
+ 
+# A_init <- c(
+#   AST_ZEN = ODOSEumol,
+#  ASIL_ZEN1 = 0,
+#  ASIL_ZEN2 = 0,
+#  ASIL_ZEN3 = 0,
+#  ASIL_ZEN4 = 0,
+#  ASIL_ZEN5 = 0,
+#  ASIL_ZEN6 = 0,
+#  ASIL_ZEN7 = 0,
+#  ASI_ZEN = 0,
+#   ASI_ZENGLU = 0,
+#   ALIL_ZEN = 0,
+#   ALIL_aZEL = 0,
+#   ALIL_bZEL = 0,
+#  AFE_ZEN = 0,
+#  AFE_aZEL = 0,
+#   AL_ZEN = 0,
+#   ALaZEL = 0,
+#   ALbZEL = 0,
+#   AL_ZENGLU = 0,
+#   AB_ZENGLU = 0, #new
+#   AUR_ZENGLU = 0, #new
+#   AL_aZELGLU = 0,
+#   AF = 0,
+#   AR = 0,
+#   AS = 0,
+#   AB = 0,
+#   AZur = 0,
+#   AFaZEL = 0,
+#   ARaZEL = 0,
+#   ASaZEL = 0,
+#   ABaZEL = 0,
+#   AaZur = 0,
+#   ATotal = 0
+# ) 
+
 A_init <- c(
   AST_ZEN = ODOSEumol,
-  AIL_ZEN = 0,
-  ASI_ZEN = 0,
-  ASI_ZENGLU = 0,
-  ALI_ZEN = 0,
-  ALI_aZEL = 0,
-  ALI_bZEL = 0,
-  AFE_ZEN = 0,
-  AFE_aZEL = 0,
-  AL_ZEN = 0,
-  AL_aZEL = 0,
-  AL_bZEL = 0,
-  AL_ZENGLU = 0,
-  AB_ZENGLU = 0,
-  AUR_ZENGLU = 0,
-  AL_aZELGLU = 0,
-  AF_ZEN = 0,
-  AR_ZEN = 0,
-  AS_ZEN = 0,
-  AB_ZEN = IVDOSEumol,
-  AUR_ZEN = 0,
-  AF_aZEL = 0,
-  AR_aZEL = 0,
-  AS_aZEL = 0,
-  AB_aZEL = 0,
-  AUR_aZEL = 0,
-  ATotal = 0
+  ASIL_ZEN = 0, ASIL_ZENGLU = 0,
+  ALIL_ZEN = 0, ALIL_aZEL = 0,ALIL_bZEL = 0,
+  AREL_ZEN = 0, ARE_ZEN = 0,
+  AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0,
+  ASI_ZEN = 0, ASI_ZENGLU = 0, ASI_bZEL = 0, ASI_aZEL = 0, ASI_aZELGLU = 0,
+  AL_ZEN = 0, AL_ZENGLU = 0, AL_bZEL = 0, AL_aZEL = 0, AL_aZELGLU = 0,
+  AB_ZEN = 0, AB_aZEL = 0, AB_ZENGLU = 0,
+  AUR_ZEN = 0, AUR_aZEL = 0, AUR_ZENGLU = 0,
+  AF_ZEN = 0, AF_aZEL = 0, AF_ZENGLU = 0,
+  AR_ZEN = 0, AR_aZEL = 0, AR_ZENGLU = 0,
+  AS_ZEN = 0, AS_aZEL = 0, AS_ZENGLU = 0#,
+  # ATotal = 0
   )
 
 
