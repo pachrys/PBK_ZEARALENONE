@@ -17,15 +17,15 @@
 # font_add(family = "Garamond", regular = "GARA.TTF")
 # showtext_auto()
 # 
-# CP_theme <- theme_minimal() +
-#   theme(
-#     axis.text = element_text(size = 56),
-#     axis.title = element_text(size = 62),
-#     plot.title = element_text(size = 65, face = "bold", hjust = 0.5),
-#     plot.subtitle = element_text(size = 56, hjust = 0.5),
-#     legend.position = "none",
-#     plot.margin = margin(0.3, 0.3, 0.3, 0.3, "cm") 
-#   )
+CP_theme <- theme_minimal() +
+  theme(
+    axis.text = element_text(size = 56),
+    axis.title = element_text(size = 62),
+    plot.title = element_text(size = 65, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 56, hjust = 0.5),
+    legend.position = "none",
+    plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm")
+  )
 
 # load(here(OUTPUT, "RawData_PBK.RData"))
 # save(PBK_OUTPUT, file = here(OUTPUT, "RawData_PBK.RData"))
@@ -93,7 +93,7 @@ C_organs_long <- C_organs.df %>%
 Plasma <- C_organs_long %>%
   filter(Organ == "Blood") %>%
   ggplot()+
-  geom_path(aes(x = time, y = Concentration, colour = Compound), linewidth = 0.3) +
+  geom_path(aes(x = time, y = Concentration, colour = Compound), linewidth = 0.5) +
   # scale_color_manual(name = "Model",
   #                    values = c("Predicted" = "blueviolet", "PredictedEFSA" = "darkblue"),
   #                    labels = c("Predicted" = "Predicted NG-PBK", "PredictedEFSA" = "Predicted EFSA 2020")
@@ -118,16 +118,16 @@ Plasma <- C_organs_long %>%
 print(Plasma)
 ggsave(
   filename = here(OUTPUT,"Blood.png"),
-  dpi = 300 #1000,
-  # width = 11,
-  # height = 7,
-  # units = "cm"
+  dpi = 1000,
+  width = 11,
+  height = 7,
+  units = "cm"
 )
 
 
 AllTissues <- C_organs_long %>%
   ggplot() +
-  geom_path(aes(x = time, y = Concentration, colour = Compound), linewidth = 0.3) +
+  geom_path(aes(x = time, y = Concentration, colour = Compound), linewidth = 0.5) +
   facet_wrap(~Organ, scales = "free")+
   # scale_color_manual(name = "Model",
   #                    values = c("Predicted" = "blueviolet", "PredictedEFSA" = "darkblue"),
@@ -138,10 +138,10 @@ AllTissues <- C_organs_long %>%
   #                       labels = c("Predicted" = "Predicted NG-PBK", "PredictedEFSA" = "Predicted EFSA 2020")) +
   # guides(color = guide_legend(override.aes = list(linetype = c("solid", "dashed"))))+
   theme_minimal() +
-  #CP_theme +
+  # CP_theme +
   ylab("Organ Concentration (ng/ml)") +
   xlab("Time (hours)") #+
-  # theme(legend.position = c(0.9, 0.2),
+  # theme(legend.position = "bottom", #c(0.9, 0.2),
   #       legend.text = element_text(size = 40),
   #       legend.title = element_blank(),
   #       legend.key.size = unit(0.5, "lines"),
@@ -151,13 +151,13 @@ AllTissues <- C_organs_long %>%
   #       # axis.text.x = element_text(margin = margin(t = 0, b = -10))
   # )
 print(AllTissues)
-ggsave(
-  filename = here(OUTPUT,"AllTissues.png"),
-  dpi = 300 # 1000,
-  # width = 11,
-  # height = 7,
-  # units = "cm"
-)
+# ggsave(
+#   filename = here(OUTPUT,"AllTissues.png"),
+#   dpi = 1000,
+#   width = 11,
+#   height = 7,
+#   units = "cm"
+# )
 
 
 
@@ -188,6 +188,15 @@ VidemannPO <- ObsPO %>%
 #                                 Concentration * 0.67, Concentration),
 #          Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
 
+BW <- parm.c$BW  ##{Kg} #  body weight rat
+
+VST <-parm.c$FV_ST*BW  # fraction volume of small intestine
+VSIL <- parm.c$FV_SIL*BW # fractional volume of small intestinal lumen
+VREL <- parm.c$FV_REL*parm.c$FV_LIL*BW # fractional volume of rectum lumen from total LI volume (only the lower part goes to the systemic circulation)
+VLIL <- (parm.c$FV_LIL*BW)-VREL
+VSI <- parm.c$FV_SI*BW # fractional volume of small intestinal tissue
+
+
 VidemannPO_wide <- VidemannPO %>%
   pivot_wider(names_from = Tissue, values_from = Concentration) %>%
   select(c("Time", "Gender", "Blood", "Intestine", "Liver"))
@@ -200,7 +209,10 @@ C_organs_wide <- C_organs_long %>%
   pivot_wider(names_from = "Organ", values_from = "Concentration") %>%
   filter(Compound == "ZEN") %>%
   select(c("time", "SIntestineT", "SIntestineL", "LIntestineL", "RectumL", "Liver", "Blood")) %>% 
-  mutate("Intestine" = )
+  mutate("IntestineL" = (((SIntestineL*VSIL) + (LIntestineL*VLIL) + (RectumL*VREL))/(VSIL+VLIL+VREL))) %>% 
+  # mutate("TIntestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL)))%>% 
+  rename("Intestine" = "SIntestineT") %>% 
+  select(c("time", "Intestine", "Liver", "Blood"))
 
 PredPO <- C_organs_wide %>%
   rename(Concentration = Blood) # %>%
@@ -222,16 +234,17 @@ Blood.PredObsVidemannPlotly <- ggplot() +
        y = "Concentration (ng/ml)",
        color = "Author")+
   theme_minimal()
+  # CP_theme
 # PredObsVidemannPlotly
 # Blood.PredObsVidemannPlotly <- ggplotly(Blood.PredObsVidemannPlotly)
 print(Blood.PredObsVidemannPlotly)
-ggsave(
-  filename = here(OUTPUT,"Blood.PredObsVidemannPlotly.png"),
-  dpi = 300 #,
-  # width = 11,
-  # height = 7,
-  # units = "cm"
-)
+# ggsave(
+#   filename = here(OUTPUT,"Blood.PredObsVidemannPlotly.png"),
+#   dpi = 1000,
+#   width = 11,
+#   height = 7,
+#   units = "cm"
+# )
 
 PredObsVidemann <- ggplot() +
   geom_point(data = VidemannPO_long, aes(Time, Concentration, color = Gender)) +
@@ -242,7 +255,8 @@ PredObsVidemann <- ggplot() +
        x = "Time (h)",
        y = "Concentration (ng/ml)",
        color = "Author") +
-  theme_minimal()  #CP_theme +
+  theme_minimal()
+  # CP_theme +
 # theme(legend.position = c(0.9, 0.9),
 #       legend.text = element_text(size = 40),
 #       legend.title = element_blank(),
@@ -253,13 +267,13 @@ PredObsVidemann <- ggplot() +
 #       # axis.text.x = element_text(margin = margin(t = 0, b = -10))
 # )
 print(PredObsVidemann)
-ggsave(
-  filename = here(OUTPUT,"PredObs.PO.Videmann.png"),
-  dpi = 300,
-  # width = 11,
-  # height = 7,
-  # units = "cm"
-)
+# ggsave(
+#   filename = here(OUTPUT,"PredObs.PO.Videmann.png"),
+#   dpi = 1000,
+#   width = 11,
+#   height = 7,
+#   units = "cm"
+# )
 
 
 Blood.PredObsVidemann <- ggplot() +
@@ -271,24 +285,25 @@ Blood.PredObsVidemann <- ggplot() +
        x = "Time (h)",
        y = "Concentration (ng/ml)",
        color = "Author") +
-  theme_minimal()  #CP_theme +
-  # theme(legend.position = c(0.9, 0.9),
-  #       legend.text = element_text(size = 40),
-  #       legend.title = element_blank(),
-  #       legend.key.size = unit(0.5, "lines"),
-  #       legend.spacing.y = unit(0, "cm"),
-  #       legend.margin = margin(0, 0, 0, 0),
-  #       strip.text = element_text(size = 45),
-  #       # axis.text.x = element_text(margin = margin(t = 0, b = -10))
-  # )
+  theme_minimal()
+# CP_theme +
+#   theme(legend.position = c(0.9, 0.9),
+#         legend.text = element_text(size = 40),
+#         legend.title = element_blank(),
+#         legend.key.size = unit(0.5, "lines"),
+#         legend.spacing.y = unit(0, "cm"),
+#         legend.margin = margin(0, 0, 0, 0),
+#         strip.text = element_text(size = 45),
+#         # axis.text.x = element_text(margin = margin(t = 0, b = -10))
+#   )
 print(Blood.PredObsVidemann)
-ggsave(
-  filename = here(OUTPUT,"PredObs.PO.VidemannBlood.png"),
-  dpi = 300,
-  # width = 11,
-  # height = 7,
-  # units = "cm"
-)
+# ggsave(
+#   filename = here(OUTPUT,"PredObs.PO.VidemannBlood.png"),
+#   dpi = 1000,
+#   width = 11,
+#   height = 7,
+#   units = "cm"
+# )
 
 
 

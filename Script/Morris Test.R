@@ -142,7 +142,7 @@
   Morris.design <- list(type = "oat", levels = 6, grid.jump = 3)
   
   # Repetitions
-  Morris.r <- 50
+  Morris.r <- 5
   
   # Morris test function
   Experience <- morris(model =  NULL, 

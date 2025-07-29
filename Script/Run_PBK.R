@@ -16,7 +16,7 @@ library(showtext)
 library(plotly)
 font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
-
+ 
 CP_theme <- theme_minimal() +
   theme(
     axis.text = element_text(size = 56),
