@@ -44,10 +44,10 @@ PBK.model <- function(t, state, parms){
     
     ## kinetic parameters ####
     ### absorption/transfer rates ####
-    CLSI_ZEN <- PappCaco2_ZEN * SASI * 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
-    CLLI_ZEN <- PappCaco2_ZEN * SALI * 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
-    CLRE_ZEN <- PappCaco2_ZEN * SARE * 1e-3#3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
-    CLLI_aZEL <- PappCaco2aZEL * SALI * 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
+    CLSI_ZEN <- PappCaco2_ZEN * SASI * 1e-2#3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
+    # CLLI_ZEN <- PappCaco2_ZEN * SALI * 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
+    CLRE_ZEN <- PappCaco2_ZEN * SARE * 1e-2#3 #3 #3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
+    # CLLI_aZEL <- PappCaco2aZEL * SALI * 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
     
     ### metabolism in small intestine tissue ####
     VmaxSI_aZEL <- VmaxSI_aZELc * S9SI * VSI        # umol/h
@@ -137,15 +137,15 @@ PBK.model <- function(t, state, parms){
     
     # Small intestinal lumen 
     dASIL_ZEN <- + GER*AST_ZEN - SITR*ASIL_ZEN - CLSI_ZEN*CSIL_ZEN # small intestine lumen compartment (μmol)
-    dASIL_ZENGLU <- + 1*CL_ZENGLU - SITR*ASIL_ZENGLU - (LITR+RETR)*ASIL_ZENGLU #7.440476e-05
+    dASIL_ZENGLU <- + 1*CL_ZENGLU - 1000*SITR*ASIL_ZENGLU - 100*(LITR+RETR)*ASIL_ZENGLU #7.440476e-05
     
     # Large intestinal lumen 
     dALIL_ZEN <- SITR*ASIL_ZEN + 
       # - VmaxLI_aZEL*CLIL_ZEN / (KmLI_aZEL + CLIL_ZEN) +
       # - VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN) +
-      + SITR*ASIL_ZENGLU +
+      + 1000*SITR*ASIL_ZENGLU +
       # - CLLI_ZEN*CLIL_ZEN +
-      - LITR*ALIL_ZEN #
+      - 10*LITR*ALIL_ZEN #
     
     dALIL_aZEL <- 0 #VmaxLI_aZEL*CLIL_ZEN / (KmLI_aZEL + CLIL_ZEN) +
       # - (LITR+RETR)*ALIL_aZEL # amount of α-ZEL formed due to gut microbial activity, (μmol)
@@ -153,13 +153,13 @@ PBK.model <- function(t, state, parms){
     dALIL_bZEL <- 0 #VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN)  #VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN) # amount of b-ZEL formed due to gut microbial activity, (μmol)
     
     # Rectum lumen
-    dAREL_ZEN <- LITR*ALIL_ZEN - RETR*AREL_ZEN - CLRE_ZEN*CREL_ZEN #LITR*ALIL_ZEN RETR*
+    dAREL_ZEN <- 10*LITR*ALIL_ZEN - 1000*RETR*AREL_ZEN - CLRE_ZEN*CREL_ZEN #LITR*ALIL_ZEN RETR*
     dARE_ZEN <- 0 #CLRE_ZEN*CREL_ZEN + QSI*(CB_ZEN-CVRE_ZEN)
     
     # Faeces ####
-    dAFE_ZEN <- RETR*AREL_ZEN #RETR*
+    dAFE_ZEN <- 1000*RETR*AREL_ZEN #RETR*
     dAFE_aZEL <- 0#(LITR+RETR)*ALIL_aZEL
-    dAFE_ZENGLU <- (LITR+RETR)*ASIL_ZENGLU
+    dAFE_ZENGLU <- 100*(LITR+RETR)*ASIL_ZENGLU
     
     
     # Small intestinal tissue ####
