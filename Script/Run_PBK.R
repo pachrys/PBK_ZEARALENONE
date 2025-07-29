@@ -110,7 +110,7 @@ source(here("Script", "tbdPBK_code.R"))
 A_init <- c(
   AST_ZEN = ODOSEumol,
   ASIL_ZEN = 0, ASIL_ZENGLU = 0,
-  ALIL_ZEN = 0, ALIL_aZEL = 0,ALIL_bZEL = 0,
+  ALIL_ZEN = 0, ALIL_ZENGLU = 0, ALIL_aZEL = 0,ALIL_bZEL = 0,
   AREL_ZEN = 0, ARE_ZEN = 0,
   AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0,
   ASI_ZEN = 0, ASI_ZENGLU = 0, ASI_bZEL = 0, ASI_aZEL = 0, ASI_aZELGLU = 0,

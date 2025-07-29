@@ -148,7 +148,7 @@ AllTissues <- C_organs_long %>%
   #       legend.spacing.y = unit(0, "cm"),
   #       legend.margin = margin(0, 0, 0, 0),
   #       strip.text = element_text(size = 45),
-  #       # axis.text.x = element_text(margin = margin(t = 0, b = -10))
+        # axis.text.x = element_text(margin = margin(t = 0, b = -10))
   # )
 print(AllTissues)
 # ggsave(
@@ -164,6 +164,7 @@ print(AllTissues)
 
 # Plot against in vivo ####
 
+## ZEN ##
 DataInvivo <- read.csv(here("Input", "InVivoData.csv"), header=1)
 ObsPO <- DataInvivo %>%
   filter(AdminType == "PO",
@@ -177,8 +178,8 @@ ObsPO <- DataInvivo %>%
 
 # Choose tissue to compare
 VidemannPO <- ObsPO %>%
-  mutate(#Concentration = ifelse(Tissue == "Plasma",
-          #                      Concentration * 0.67, Concentration), #(ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
+  mutate(Concentration = ifelse(Tissue == "Plasma",
+                               Concentration * 0.67, Concentration), #(ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
   Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
 
 # rename(Blood = "Concentration")
@@ -307,7 +308,101 @@ print(Blood.PredObsVidemann)
 
 
 
+## ZEN0GLUC ##
+ObsPO_GLUC <- DataInvivo %>%
+  filter(AdminType == "PO",
+         Gender != "Pregnant.F", #pregnancy not included yet
+         TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
+         Author == "Videmann", #Shin #Q.Lu #Videmann
+         # Tissue == "Plasma",
+         SampleCompound == "ZEN_glu") %>%
+  select(c("Author", "Gender","Tissue", "SamplingTime", "Concentration")) %>%
+  rename(Time = SamplingTime)
 
+VidemannPO_GLUC <- ObsPO_GLUC %>%
+  mutate(#Concentration = ifelse(Tissue == "Plasma",
+    #                      Concentration * 0.67, Concentration), #(ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
+    Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
+
+
+
+VidemannPO_wide_GLUC <- VidemannPO_GLUC %>%
+  pivot_wider(names_from = Tissue, values_from = Concentration) %>%
+  select(c("Time", "Gender", "Blood", "Intestine", "Liver"))
+
+VidemannPO_long_GLUC <- VidemannPO_wide_GLUC %>%
+  pivot_longer(Blood:Liver, names_to = "Tissue", values_to = "Concentration")
+
+# Observed
+C_organs_wide_GLUC <- C_organs_long %>%
+  pivot_wider(names_from = "Organ", values_from = "Concentration") %>%
+  filter(Compound == "ZENGLU") %>%
+  select(c("time", "SIntestineT", "SIntestineL", "LIntestineL", "RectumL", "Liver", "Blood")) %>% 
+  mutate("IntestineL" = (((SIntestineL*VSIL) + (LIntestineL*VLIL) + (RectumL*VREL))/(VSIL+VLIL+VREL))) %>% 
+  # mutate("TIntestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL)))%>% 
+  rename("Intestine" = "SIntestineT") %>% 
+  select(c("time", "Intestine", "Liver", "Blood"))
+
+PredPO_GLUC <- C_organs_wide_GLUC %>%
+  rename(Concentration = Blood) # %>%
+# filter(time >= 0.05) #%>% #0.5 for Videmann, 0.05 for Q.Lu
+
+Videmann.PredPO_GLUC <- C_organs_wide_GLUC %>%
+  pivot_longer(Intestine:Blood, names_to = "Tissue", values_to = "Concentration") # %>%
+# filter(time >= 0.5) #%>% #0.5 for Videmann, 0.05 for Q.Lu
+# filter(time <= 5)
+
+# Plots
+Blood.PredObsVidemannPlotly_GLUC <- ggplot() +
+  geom_point(data = filter(VidemannPO_GLUC, Tissue == "Blood"), aes(Time, Concentration)) + #, color = Gender)) +
+  # facet_wrap(~Tissue) +
+  geom_path(data = PredPO_GLUC, aes(time, Concentration)) +
+  # facet_wrap(~Tissue) +
+  labs(title = "Zearalenone glucuronide blood concentrations",
+       x = "Time (h)",
+       y = "Concentration (ng/ml)",
+       color = "Author")+
+  theme_minimal()
+# CP_theme
+# PredObsVidemannPlotly
+# Blood.PredObsVidemannPlotly <- ggplotly(Blood.PredObsVidemannPlotly)
+print(Blood.PredObsVidemannPlotly_GLUC)
+# ggsave(
+#   filename = here(OUTPUT,"Blood.PredObsVidemannPlotly.png"),
+#   dpi = 1000,
+#   width = 11,
+#   height = 7,
+#   units = "cm"
+# )
+
+PredObsVidemann_GLUC <- ggplot() +
+  geom_point(data = VidemannPO_long_GLUC, aes(Time, Concentration, color = Gender)) +
+  facet_wrap(~Tissue)+
+  geom_line(data = Videmann.PredPO_GLUC, aes(time, Concentration))+
+  facet_wrap(~Tissue)+
+  labs(title = "Zearalenone gluc blood concentrations",
+       x = "Time (h)",
+       y = "Concentration (ng/ml)",
+       color = "Author") +
+  theme_minimal()
+# CP_theme +
+# theme(legend.position = c(0.9, 0.9),
+#       legend.text = element_text(size = 40),
+#       legend.title = element_blank(),
+#       legend.key.size = unit(0.5, "lines"),
+#       legend.spacing.y = unit(0, "cm"),
+#       legend.margin = margin(0, 0, 0, 0),
+#       strip.text = element_text(size = 45),
+#       # axis.text.x = element_text(margin = margin(t = 0, b = -10))
+# )
+print(PredObsVidemann_GLUC)
+# ggsave(
+#   filename = here(OUTPUT,"PredObs.PO.Videmann.png"),
+#   dpi = 1000,
+#   width = 11,
+#   height = 7,
+#   units = "cm"
+# )
 
 # ObsIV_plot <- ObsPO %>% ggplot() +
 #   geom_path(aes(Time, Concentration, color = Author)) +
