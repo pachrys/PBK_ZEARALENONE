@@ -72,6 +72,8 @@ C_organs.df <- PBK_OUTPUT %>%
             Blood_aZEL = CB_aZEL,
             LIntestineL_bZEL = CLIL_bZEL,
             Liver_bZEL = CL_bZEL,
+            SIntestineL_ZENGLU = CSIL_ZENGLU,
+            LIntestineL_ZENGLU = CLIL_ZENGLU,
             SIntestineT_ZENGLU = CSI_ZENGLU,
             Liver_ZENGLU = CL_ZENGLU,
             Fat_ZENGLU = CF_ZENGLU,
@@ -125,43 +127,6 @@ ggsave(
 )
 
 
-AllTissues <- C_organs_long %>%
-  ggplot() +
-  geom_path(aes(x = time, y = Concentration, colour = Compound), linewidth = 0.5) +
-  facet_wrap(~Organ, scales = "free")+
-  # scale_color_manual(name = "Model",
-  #                    values = c("Predicted" = "blueviolet", "PredictedEFSA" = "darkblue"),
-  #                    labels = c("Predicted" = "Predicted NG-PBK", "PredictedEFSA" = "Predicted EFSA 2020")
-  # ) +
-  # scale_linetype_manual(name = "Model",
-  #                       values = c("Predicted" = "solid", "PredictedEFSA" = "dashed"),
-  #                       labels = c("Predicted" = "Predicted NG-PBK", "PredictedEFSA" = "Predicted EFSA 2020")) +
-  # guides(color = guide_legend(override.aes = list(linetype = c("solid", "dashed"))))+
-  theme_minimal() +
-  # CP_theme +
-  ylab("Organ Concentration (ng/ml)") +
-  xlab("Time (hours)") #+
-  # theme(legend.position = "bottom", #c(0.9, 0.2),
-  #       legend.text = element_text(size = 40),
-  #       legend.title = element_blank(),
-  #       legend.key.size = unit(0.5, "lines"),
-  #       legend.spacing.y = unit(0, "cm"),
-  #       legend.margin = margin(0, 0, 0, 0),
-  #       strip.text = element_text(size = 45),
-        # axis.text.x = element_text(margin = margin(t = 0, b = -10))
-  # )
-print(AllTissues)
-# ggsave(
-#   filename = here(OUTPUT,"AllTissues.png"),
-#   dpi = 1000,
-#   width = 11,
-#   height = 7,
-#   units = "cm"
-# )
-
-
-
-
 # Plot against in vivo ####
 
 ## ZEN ##
@@ -212,6 +177,7 @@ C_organs_wide <- C_organs_long %>%
   select(c("time", "SIntestineT", "SIntestineL", "LIntestineL", "RectumL", "Liver", "Blood")) %>% 
   mutate("IntestineL" = (((SIntestineL*VSIL) + (LIntestineL*VLIL) + (RectumL*VREL))/(VSIL+VLIL+VREL))) %>% 
   # mutate("TIntestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL)))%>% 
+  # mutate("Intestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL))) %>%
   rename("Intestine" = "SIntestineT") %>% 
   select(c("time", "Intestine", "Liver", "Blood"))
 
@@ -252,7 +218,7 @@ PredObsVidemann <- ggplot() +
   facet_wrap(~Tissue)+
   geom_line(data = Videmann.PredPO, aes(time, Concentration))+
   facet_wrap(~Tissue)+
-  labs(title = "Zearalenone blood concentrations",
+  labs(title = "Zearalenone tissue concentrations",
        x = "Time (h)",
        y = "Concentration (ng/ml)",
        color = "Author") +
@@ -338,7 +304,7 @@ C_organs_wide_GLUC <- C_organs_long %>%
   pivot_wider(names_from = "Organ", values_from = "Concentration") %>%
   filter(Compound == "ZENGLU") %>%
   select(c("time", "SIntestineT", "SIntestineL", "LIntestineL", "RectumL", "Liver", "Blood")) %>% 
-  mutate("IntestineL" = (((SIntestineL*VSIL) + (LIntestineL*VLIL) + (RectumL*VREL))/(VSIL+VLIL+VREL))) %>% 
+  mutate("IntestineL" = (((SIntestineL*VSIL) + (LIntestineL*VLIL))/(VSIL+VLIL))) %>% 
   # mutate("TIntestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL)))%>% 
   rename("Intestine" = "SIntestineT") %>% 
   select(c("time", "Intestine", "Liver", "Blood"))
@@ -380,7 +346,7 @@ PredObsVidemann_GLUC <- ggplot() +
   facet_wrap(~Tissue)+
   geom_line(data = Videmann.PredPO_GLUC, aes(time, Concentration))+
   facet_wrap(~Tissue)+
-  labs(title = "Zearalenone gluc blood concentrations",
+  labs(title = "Zearalenone gluc concentrations",
        x = "Time (h)",
        y = "Concentration (ng/ml)",
        color = "Author") +
@@ -403,6 +369,125 @@ print(PredObsVidemann_GLUC)
 #   height = 7,
 #   units = "cm"
 # )
+
+A_organs.df <- PBK_OUTPUT %>%
+  transmute(time = time,
+            SIntestineT_ZEN = ASI_ZEN,
+            SIntestineL_ZEN = ASIL_ZEN,
+            LIntestineL_ZEN = ALIL_ZEN,
+            RectumL_ZEN = AREL_ZEN,
+            Feces_ZEN = AFE_ZEN,
+            Liver_ZEN = AL_ZEN,
+            Fat_ZEN = AF_ZEN,
+            Rapidly_ZEN = AR_ZEN,
+            Slowly_ZEN = AS_ZEN,
+            Blood_ZEN = AB_ZEN,
+            Urine_ZEN = AUR_ZEN,
+            LIntestineL_aZEL = ALIL_aZEL,
+            Feces_aZEL = AFE_aZEL,
+            SIntestineT_aZEL = ASI_aZEL,
+            Liver_aZEL = AL_aZEL,
+            Fat_aZEL = AF_aZEL,
+            Rapidly_aZEL = AR_aZEL,
+            Slowly_aZEL = AS_aZEL,
+            Blood_aZEL = AB_aZEL,
+            Urine_aZEL = AUR_aZEL,
+            LIntestineL_bZEL = ALIL_bZEL,
+            Liver_bZEL = AL_bZEL,
+            SIntestineL_ZENGLU = ASIL_ZENGLU,
+            LIntestineL_ZENGLU = ALIL_ZENGLU,
+            SIntestineT_ZENGLU = ASI_ZENGLU,
+            Feces_ZENGLU = AFE_ZENGLU,
+            Liver_ZENGLU = AL_ZENGLU,
+            Fat_ZENGLU = AF_ZENGLU,
+            Rapidly_ZENGLU = AR_ZENGLU,
+            Slowly_ZENGLU = AS_ZENGLU,
+            Blood_ZENGLU = AB_ZENGLU,
+            Liver_aZELGLU = AL_aZELGLU,
+            SIntestineT_aZELGLU = ASI_aZELGLU
+  )
+
+A_organs_long <- A_organs.df %>%
+  pivot_longer(names_to = c("Organ", "Compound"),
+               SIntestineT_ZEN:SIntestineT_aZELGLU,
+               values_to = "Amount",
+               names_sep = "_")
+
+
+A_AllTissues <- A_organs_long %>%
+  ggplot() +
+  geom_path(aes(x = time, y = Amount, colour = Compound), linewidth = 0.5) +
+  facet_wrap(~Organ, scales = "free")+
+  # scale_color_manual(name = "Model",
+  #                    values = c("Predicted" = "blueviolet", "PredictedEFSA" = "darkblue"),
+  #                    labels = c("Predicted" = "Predicted NG-PBK", "PredictedEFSA" = "Predicted EFSA 2020")
+  # ) +
+  # scale_linetype_manual(name = "Model",
+  #                       values = c("Predicted" = "solid", "PredictedEFSA" = "dashed"),
+  #                       labels = c("Predicted" = "Predicted NG-PBK", "PredictedEFSA" = "Predicted EFSA 2020")) +
+  # guides(color = guide_legend(override.aes = list(linetype = c("solid", "dashed"))))+
+  theme_minimal() +
+  # CP_theme +
+  ylab("Organ Amount (umol)") +
+  xlab("Time (hours)") #+
+# theme(legend.position = "bottom", #c(0.9, 0.2),
+#       legend.text = element_text(size = 40),
+#       legend.title = element_blank(),
+#       legend.key.size = unit(0.5, "lines"),
+#       legend.spacing.y = unit(0, "cm"),
+#       legend.margin = margin(0, 0, 0, 0),
+#       strip.text = element_text(size = 45),
+# axis.text.x = element_text(margin = margin(t = 0, b = -10))
+# )
+print(A_AllTissues)
+
+
+
+
+
+
+AllTissues <- C_organs_long %>%
+  ggplot() +
+  geom_path(aes(x = time, y = Concentration, colour = Compound), linewidth = 0.5) +
+  facet_wrap(~Organ, scales = "free")+
+  # scale_color_manual(name = "Model",
+  #                    values = c("Predicted" = "blueviolet", "PredictedEFSA" = "darkblue"),
+  #                    labels = c("Predicted" = "Predicted NG-PBK", "PredictedEFSA" = "Predicted EFSA 2020")
+  # ) +
+  # scale_linetype_manual(name = "Model",
+  #                       values = c("Predicted" = "solid", "PredictedEFSA" = "dashed"),
+  #                       labels = c("Predicted" = "Predicted NG-PBK", "PredictedEFSA" = "Predicted EFSA 2020")) +
+  # guides(color = guide_legend(override.aes = list(linetype = c("solid", "dashed"))))+
+  theme_minimal() +
+  # CP_theme +
+  ylab("Organ Concentration (ng/ml)") +
+  xlab("Time (hours)") #+
+# theme(legend.position = "bottom", #c(0.9, 0.2),
+#       legend.text = element_text(size = 40),
+#       legend.title = element_blank(),
+#       legend.key.size = unit(0.5, "lines"),
+#       legend.spacing.y = unit(0, "cm"),
+#       legend.margin = margin(0, 0, 0, 0),
+#       strip.text = element_text(size = 45),
+# axis.text.x = element_text(margin = margin(t = 0, b = -10))
+# )
+print(AllTissues)
+# ggsave(
+#   filename = here(OUTPUT,"AllTissues.png"),
+#   dpi = 1000,
+#   width = 11,
+#   height = 7,
+#   units = "cm"
+# )
+
+
+
+
+
+
+
+
+
 
 # ObsIV_plot <- ObsPO %>% ggplot() +
 #   geom_path(aes(Time, Concentration, color = Author)) +
@@ -450,5 +535,4 @@ print(PredObsVidemann_GLUC)
 #         legend.spacing.y = unit(0, "cm"),
 #         legend.margin = margin(0, 0, 0, 0),
 #         strip.text = element_text(size = 45),
-#         # axis.text.x = element_text(margin = margin(t = 0, b = -10))
-#   )
+#         # axis.text.x = element_text(margin = margin(t = 0, b = -10))#   )

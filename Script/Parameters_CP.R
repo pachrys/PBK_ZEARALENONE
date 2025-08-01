@@ -59,11 +59,12 @@ dir.create(OUTPUT,  recursive = TRUE)
   QSc = 0.17  # 0.24 - QFc # fraction of blood flow to slowly perfused tissue
   QFc = 0.07  # fraction of blood flow to fat
   
-  # Intestinal fluid flow rates (reference: Punt et al. (2020))
-  GER = 22.2 # stomach emptying rate (/h)
-  SITR = 35.826 #0.68 # small intestinal transit time (/h)
-  LITR = 0.07 # large intestinal transit time (/h)
-  RETR = 0.14 # rectum transit time (/h)
+  # Intestinal fluid flow rates; Wistar rats (reference: Musther et al.(2017: http://dx.doi.org/10.1016/j.xphs.2017.05.003))
+  # Fasted state
+  GER = 1/0.25 # stomach emptying rate (/h)
+  SITR = 1/1.57 # small intestinal transit time (/h)
+  LITR = 1/19.7 # large intestinal transit time (/h)
+  RETR = 1/19.7 # rectum transit time (/h)
   
   # Glomerular filtration rate: Punt et al. (2020)
   GFRc = 0.312 #L/h/kg 0.08 #(/h)

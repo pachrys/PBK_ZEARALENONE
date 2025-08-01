@@ -35,38 +35,41 @@ PBK.model <- function(t, state, parms){
     
     # Intestinal fluid flow rates (reference: Punt et al. (2020))
     GER <- GER # stomach emptying rate (/h)
-    SITR <- SITR # small intestinal transit time (/h)
-    LITR <- LITR # large intestinal transit time (/h)
-    RETR <- RETR
+    SITR <- SITR #/10 # small intestinal transit time (/h)
+    LITR <- LITR #/10 # large intestinal transit time (/h)
+    RETR <- RETR*1e6 #/10
     
     # Glomerular filtration rate: Punt et al. (2020)
     GFR <- GFRc*BW #(/h)
     
     ## kinetic parameters ####
     ### absorption/transfer rates ####
-    CLSI_ZEN <- PappCaco2_ZEN * SASI * 1e-2 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
-    CLLI_ZEN <- PappCaco2_ZEN * SALI * 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
-    CLRE_ZEN <- PappCaco2_ZEN * SARE * 1e-2 #3 #3 #3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
-    CLLI_aZEL <- PappCaco2aZEL * SALI * 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
+    CLSI_ZEN <- 0.1*PappCaco2_ZEN * SASI # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
+    CLLI_ZEN <- 0 #PappCaco2_ZEN * SALI #* 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
+    CLRE_ZEN <- 0.01 #.001 * PappCaco2_ZEN * SARE #* 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
+    CLLI_aZEL <- 0 #PappCaco2aZEL * SALI #* 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
     
     ### metabolism in small intestine tissue ####
-    VmaxSI_aZEL <- VmaxSI_aZELc * S9SI * VSI        # umol/h
-    VmaxSI_bZEL <- VmaxSI_bZELc * S9SI * VSI        # umol/h
-    VmaxSI_ZENGLU <- VmaxSI_ZENGLUc * S9SI * VSI  # umol/h
+    VmaxSI_aZEL <- 1e3*VmaxSI_aZELc * S9SI * VSI        # umol/h
+    VmaxSI_bZEL <- 1e3*VmaxSI_bZELc * S9SI * VSI        # umol/h
+    VmaxSI_ZENGLU <- 20*VmaxSI_ZENGLUc * S9SI * VSI  # umol/h
     VmaxSI_aZELGLU <- VmaxSI_aZELGLUc * S9SI * VSI # umol/h
     
     ### metabolism in large intestine lumen (microbiota compartment) ####
-    VmaxLI_aZEL <- VmaxLI_aZELc*VMB  # umol/h 
-    VmaxLI_bZEL <-  VmaxLI_bZELc*VMB
+    VmaxLI_aZEL <- 0 #VmaxLI_aZELc*VMB  # umol/h 
+    VmaxLI_bZEL <-  0 #VmaxLI_bZELc*VMB
     
     ### metabolism in liver ####
-    VmaxL_aZEL <- VmaxL_aZELc * S9L * VL 
-    VmaxL_bZEL <- VmaxL_bZELc * S9L * VL
-    VmaxL_ZENGLU <- VmaxL_ZENGLUc * S9L * VL  
-    VmaxL_aZELGLU <-  VmaxL_aZELGLUc * S9L * VL
+    VmaxL_aZEL <- 1e3*VmaxL_aZELc * S9L * VL 
+    VmaxL_bZEL <- 1e3*VmaxL_bZELc * S9L * VL
+    VmaxL_ZENGLU <- 20*VmaxL_ZENGLUc * S9L * VL  
+    VmaxL_aZELGLU <- VmaxL_aZELGLUc * S9L * VL
     
     ### conversion ZENGLU to ZEN
-    kHydro <- 1000
+    CL_bile <- 1 #1e6 #2 #000
+    CL_bile_ZEN <- 0 #1
+    kHydro <- 1 #e-6 #1000
+    CL_SIZENGLU <- 0 #10
     
     ## Concentrations #####
     
@@ -114,6 +117,7 @@ PBK.model <- function(t, state, parms){
     # Zearalenone-glucuronide
     # CLIL_ZENGLU <- ALIL_ZENGLU/VLIL 
     CSI_ZENGLU <- ASI_ZENGLU/VSI 
+    CSIL_ZENGLU <- ASIL_ZENGLU/VSIL
     CLIL_ZENGLU <- ALIL_ZENGLU/VLIL 
     CL_ZENGLU <- AL_ZENGLU/VL
     CF_ZENGLU <- AF_ZENGLU/VF
@@ -139,43 +143,45 @@ PBK.model <- function(t, state, parms){
     dAST_ZEN <- - GER*AST_ZEN # amount in stomach #ODOSEumol
     
     # Small intestinal lumen 
-    dASIL_ZEN <- + GER*AST_ZEN - SITR*ASIL_ZEN - CLSI_ZEN*CSIL_ZEN # small intestine lumen compartment (μmol)
-    dASIL_ZENGLU <- + CL_ZENGLU - SITR*ASIL_ZENGLU #- kHydro*ASIL_ZENGLU 
+    dASIL_ZEN <- + GER*AST_ZEN - SITR*ASIL_ZEN - CLSI_ZEN*CSIL_ZEN #+
+      # CL_bile_ZEN*CL_ZEN # small intestine lumen compartment (μmol)
+    dASIL_ZENGLU <- + CL_bile*CL_ZENGLU - SITR*ASIL_ZENGLU +
+      + CL_SIZENGLU*CSI_ZENGLU*fup_ZENGLU #- kHydro*ASIL_ZENGLU 
     #LITR+RETR 7.440476e-05  100*SITR*ASIL_ZENGLU
     
     # Large intestinal lumen 
     dALIL_ZEN <- SITR*ASIL_ZEN + 
-      - VmaxLI_aZEL*CLIL_ZEN / (KmLI_aZEL + CLIL_ZEN) +
-      - VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN) +
+      # - VmaxLI_aZEL*CLIL_ZEN / (KmLI_aZEL + CLIL_ZEN) +
+      # - VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN) +
       + kHydro*ALIL_ZENGLU + #100*SITR*ASIL_ZENGLU +
       # - CLLI_ZEN*CLIL_ZEN +
-      - 10*LITR*ALIL_ZEN #
+      - LITR*ALIL_ZEN #
     
-    dALIL_ZENGLU <- - kHydro*ALIL_ZENGLU + (SITR)*ASIL_ZENGLU - LITR*ASIL_ZENGLU
+    dALIL_ZENGLU <- + SITR*ASIL_ZENGLU - kHydro*ALIL_ZENGLU #- LITR*ALIL_ZENGLU
     
-    dALIL_aZEL <- VmaxLI_aZEL*CLIL_ZEN / (KmLI_aZEL + CLIL_ZEN) +
-      - (LITR+RETR)*ALIL_aZEL # amount of α-ZEL formed due to gut microbial activity, (μmol)
+    dALIL_aZEL <- 0 #VmaxLI_aZEL*CLIL_ZEN / (KmLI_aZEL + CLIL_ZEN) +
+      # - (LITR+RETR)*ALIL_aZEL # amount of α-ZEL formed due to gut microbial activity, (μmol)
     
-    dALIL_bZEL <- VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN)  #VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN) # amount of b-ZEL formed due to gut microbial activity, (μmol)
+    dALIL_bZEL <- 0 #VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN)  #VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN) # amount of b-ZEL formed due to gut microbial activity, (μmol)
     
     # Rectum lumen
-    dAREL_ZEN <- 10*LITR*ALIL_ZEN - 1000*RETR*AREL_ZEN - CLRE_ZEN*CREL_ZEN #LITR*ALIL_ZEN RETR*
+    dAREL_ZEN <- LITR*ALIL_ZEN - RETR*AREL_ZEN - CLRE_ZEN*CREL_ZEN #LITR*ALIL_ZEN RETR*
     dARE_ZEN <- 0 #CLRE_ZEN*CREL_ZEN + QSI*(CB_ZEN-CVRE_ZEN)
     
     # Faeces ####
-    dAFE_ZEN <- 1000*RETR*AREL_ZEN #RETR*
-    dAFE_aZEL <- (LITR+RETR)*ALIL_aZEL
-    dAFE_ZENGLU <- LITR*ASIL_ZENGLU #SITR*ASIL_ZENGLU #(LITR+RETR)
+    dAFE_ZEN <- RETR*AREL_ZEN #RETR*
+    dAFE_aZEL <- 0 #(LITR+RETR)*ALIL_aZEL
+    dAFE_ZENGLU <- 0 #LITR*ALIL_ZENGLU #SITR*ASIL_ZENGLU #(LITR+RETR)
     
     
     # Small intestinal tissue ####
     dASI_ZEN <- CLSI_ZEN*CSIL_ZEN + QSI*(CB_ZEN-CVSI_ZEN) +
-      - VmaxSI_ZENGLU*CSI_ZEN*fup_ZEN / (KmSI_ZENGLU + CSI_ZEN*fup_ZEN) +
+      - VmaxSI_ZENGLU*CSI_ZEN*fup_ZEN / (KmSI_ZENGLU + CSI_ZEN*fup_ZEN) + 
       - VmaxSI_aZEL*CSI_ZEN*fup_ZEN / (KmSI_aZEL + CSI_ZEN*fup_ZEN) +
       - VmaxSI_bZEL*CSI_ZEN*fup_ZEN / (KmSI_bZEL + CSI_ZEN*fup_ZEN)
-    
+      
     dASI_ZENGLU <- VmaxSI_ZENGLU*CSI_ZEN*fup_ZEN / (KmSI_ZENGLU + CSI_ZEN*fup_ZEN) +
-      + QSI*(CB_ZENGLU-CVSI_ZENGLU)
+      + QSI*(CB_ZENGLU-CVSI_ZENGLU) - CL_SIZENGLU*CSI_ZENGLU*fup_ZENGLU
     
     dASI_aZEL <- VmaxSI_aZEL*CSI_ZEN*fup_ZEN / (KmSI_aZEL + CSI_ZEN*fup_ZEN) +
       + QSI*(CB_aZEL-CVSI_aZEL) +
@@ -187,7 +193,8 @@ PBK.model <- function(t, state, parms){
     
     
     # Liver 
-    dAL_ZEN <- + QSI*CVSI_ZEN + QL*CB_ZEN - (QSI+QL)*CVL_ZEN + #+ #CLLI_ZEN*CLIL_ZEN
+    dAL_ZEN <- + QSI*CVSI_ZEN + QL*CB_ZEN - (QSI+QL)*CVL_ZEN + 
+      # - CL_bile_ZEN*CL_ZEN + #CLLI_ZEN*CLIL_ZEN
       - VmaxL_aZEL*CL_ZEN*fup_ZEN / (KmL_aZEL + CL_ZEN*fup_ZEN) +
       - VmaxL_bZEL*CL_ZEN*fup_ZEN / (KmL_bZEL + CL_ZEN*fup_ZEN) +
       - VmaxL_ZENGLU*CL_ZEN*fup_ZEN / (KmL_ZENGLU + CL_ZEN*fup_ZEN) #+
@@ -195,13 +202,13 @@ PBK.model <- function(t, state, parms){
     
     dAL_ZENGLU <- VmaxL_ZENGLU*CL_ZEN*fup_ZEN / (KmL_ZENGLU + CL_ZEN*fup_ZEN) +
       +  QSI*CVSI_ZENGLU + QL*CB_ZENGLU - (QSI+QL)*CVL_ZENGLU +
-      - CL_ZENGLU #7.440476e-05
+      - CL_bile*CL_ZENGLU #7.440476e-05
     
     dAL_bZEL <- VmaxL_bZEL*CL_ZEN*fup_ZEN / (KmL_bZEL + CL_ZEN*fup_ZEN) # amount of ZEN metabolized to metabolite ß-ZEL in liver, (μmol)
     
     dAL_aZEL <- VmaxL_aZEL*CL_ZEN*fup_ZEN / (KmL_aZEL + CL_ZEN*fup_ZEN) +
       + QSI*CVSI_aZEL + QL*CB_aZEL - (QSI+QL)*CVL_aZEL +
-      # + CLLI_aZEL*CLIL_aZEL +
+      # # + CLLI_aZEL*CLIL_aZEL +
       - VmaxL_aZELGLU*CL_aZEL*fup_aZEL / (KmL_aZELGLU + CL_aZEL*fup_aZEL) # amount of ZEN metabolized to metabolite α-ZEL in liver, (μmol)
     
     dAL_aZELGLU <- VmaxL_aZELGLU*CL_aZEL*fup_aZEL / (KmL_aZELGLU + CL_aZEL*fup_aZEL) # amount of α-ZEL glucuronide in liver
@@ -279,7 +286,7 @@ PBK.model <- function(t, state, parms){
       ACalculated = ACalculated,
       MB = MB,
       CSI_ZEN = CSI_ZEN, CSI_ZENGLU = CSI_ZENGLU,  CSI_aZEL = CSI_aZEL, CSI_aZELGLU = CSI_aZELGLU,
-      CSIL_ZEN = CSIL_ZEN, 
+      CSIL_ZEN = CSIL_ZEN, CSIL_ZENGLU = CSIL_ZENGLU,
       CLIL_ZEN = CLIL_ZEN, CLIL_ZENGLU = CLIL_ZENGLU, CLIL_aZEL = CLIL_aZEL, CLIL_bZEL = CLIL_bZEL,
       CREL_ZEN = CREL_ZEN,
       CL_ZEN = CL_ZEN, CL_ZENGLU = CL_ZENGLU, CL_bZEL = CL_bZEL, CL_aZEL = CL_aZEL, CL_aZELGLU = CL_aZELGLU,
