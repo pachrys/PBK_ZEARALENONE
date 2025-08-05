@@ -20,8 +20,54 @@ format:
     fig-width: 6.5
     fig-height: 4.5
     fig-align: center
-bibliography: references.bib
+# bibliography: references.bib
 ---
+
+## 5-8-2025
+
+CL_Hydro = 0
+
+![](images/clipboard-5950949.png)
+
+![](images/clipboard-1535534703.png)
+
+![](images/clipboard-55563096.png)
+
+![](images/clipboard-766270640.png)
+
+![](images/clipboard-2699715914.png)
+
+![](images/clipboard-1233431925.png)
+
+![](images/clipboard-96647636.png)
+
+CL_Hydro = 1
+
+![](images/clipboard-3495492099.png)
+
+![](images/clipboard-937510738.png)
+
+![](images/clipboard-436734080.png)
+
+![](images/clipboard-1827814794.png)
+
+![](images/clipboard-4290641470.png)
+
+![](images/clipboard-814578514.png)
+
+Vmax_BSEP = 0
+
+![](images/clipboard-1535534703.png)
+
+![](images/clipboard-55563096.png)
+
+![](images/clipboard-2407318668.png)
+
+![](images/clipboard-3365276693.png)
+
+![](images/clipboard-949436989.png)
+
+![](images/clipboard-2241423988.png)
 
 ## Aim
 

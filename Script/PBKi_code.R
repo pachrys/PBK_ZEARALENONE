@@ -74,10 +74,10 @@ PBK.model <- function(t, state, parms){
     # lilTR <- LITR
     
     # kt <- 1/(Tsi/7)
-    Peff.cm.per.hr <- 2*PappCaco2_ZEN #cm/h
-    ka_duo <- Peff.cm.per.hr*2/Rduo
-    ka_jej <- Peff.cm.per.hr*2/Rjej
-    ka_ile <- Peff.cm.per.hr*2/Rile
+    Peff.cm.per.hr <- 5*PappCaco2_ZEN #cm/h
+    ka_duo <- Peff.cm.per.hr/Rduo
+    ka_jej <- Peff.cm.per.hr/Rjej
+    ka_ile <- Peff.cm.per.hr/Rile
     # ka_lil <- Peff.cm.per.hr*2/Rlil
     
     fa_duo <- 1 - (1 + ka_duo/(1/Tsiduo))**-7
@@ -95,7 +95,7 @@ PBK.model <- function(t, state, parms){
     ### metabolism in small intestine tissue ####
     VmaxSI_aZEL <- VmaxSI_aZELc * S9SI * VJej        # umol/h
     VmaxSI_bZEL <- VmaxSI_bZELc * S9SI * VJej        # umol/h
-    VmaxSI_ZENGLU <- 10*VmaxSI_ZENGLUc * S9SI * VJej  # umol/h
+    VmaxSI_ZENGLU <- 100*VmaxSI_ZENGLUc * S9SI * VJej  # umol/h
     VmaxSI_aZELGLU <- VmaxSI_aZELGLUc * S9SI * VJej # umol/h
     
     ### metabolism in large intestine lumen (microbiota compartment) ####
@@ -109,6 +109,7 @@ PBK.model <- function(t, state, parms){
     VmaxL_aZELGLU <- VmaxL_aZELGLUc * S9L * VL
     
     ### biliary clearance
+    fBile <- 0.5
     Vmax_BSEPc <- 7                            # umol/min/mg BSEP, Average active transport of bile acids, assuming that the maximum velocity of PFOA transport by BSEP corresponds to that of bile acids ; de Bruijn et al. 2024 https://doi.org/10.14573/altex.2302011 
     Km_BSEPc <- 16.4                           # umol/L, uM, Average affinity constant of bile acids to BSEP, following the above assumption ; de Bruijn et al. 2024 https://doi.org/10.14573/altex.2302011
     
@@ -122,9 +123,9 @@ PBK.model <- function(t, state, parms){
     
     ### conversion ZENGLU to ZEN
     # CL_bile <- 7.440476e-02  # biliary clearance ZEN gluc 
-    CL_Hydro <- 100000 # metabolic conversion ZEN gluc to ZEN
+    CL_Hydro <- 1 # metabolic conversion ZEN gluc to ZEN
     
-    
+    # fup_ZENGLU <- 0.15
     ## Concentrations #####
     
     # Zearalenone 
@@ -221,7 +222,7 @@ PBK.model <- function(t, state, parms){
       + jejTR*(CL_Hydro*CJejL_ZENGLU) +
       + CL_Hydro*CIleL_ZENGLU
     
-    dADuoL_ZENGLU <- + (Vmax_BSEP/(Km_BSEP + (CL_ZENGLU*fup_ZENGLU)))*CL_ZENGLU*fup_ZENGLU +
+    dADuoL_ZENGLU <- fBile*ABile_ZENGLU + #(Vmax_BSEP/(Km_BSEP + (CL_ZENGLU*fup_ZENGLU)))*CL_ZENGLU*fup_ZENGLU +
       - duoTR*ADuoL_ZENGLU 
     dAJejL_ZENGLU <- duoTR*ADuoL_ZENGLU - jejTR*AJejL_ZENGLU + 
       - jejTR*(CL_Hydro*CJejL_ZENGLU) +
@@ -257,13 +258,13 @@ PBK.model <- function(t, state, parms){
     # Small intestinal tissue ####
     dADuo_ZEN <- ka_duo*ADuoL_ZEN*fa_duo + QDuo*(CB_ZEN-CVDuo_ZEN) 
     dAJej_ZEN <- ka_jej*AJejL_ZEN*fa_jej + QJej*(CB_ZEN-CVJej_ZEN) +
-      - VmaxSI_ZENGLU*CJej_ZEN*fup_ZEN / (KmSI_ZENGLU + CJej_ZEN*fup_ZEN) + 
+      - VmaxSI_ZENGLU*CJej_ZEN*fup_ZEN / ((KmSI_ZENGLU) + CJej_ZEN*fup_ZEN) + 
       - VmaxSI_aZEL*CJej_ZEN*fup_ZEN / (KmSI_aZEL + CJej_ZEN*fup_ZEN) +
       - VmaxSI_bZEL*CJej_ZEN*fup_ZEN / (KmSI_bZEL + CJej_ZEN*fup_ZEN)
     
     dAIle_ZEN <- ka_ile*AIleL_ZEN*fa_ile + QIle*(CB_ZEN-CVIle_ZEN) 
     
-    dAJej_ZENGLU <- VmaxSI_ZENGLU*CJej_ZEN*fup_ZEN / (KmSI_ZENGLU + CJej_ZEN*fup_ZEN) + 
+    dAJej_ZENGLU <- VmaxSI_ZENGLU*CJej_ZEN*fup_ZEN / ((KmSI_ZENGLU) + CJej_ZEN*fup_ZEN) + 
       + QSI*(CB_ZENGLU-CVJej_ZENGLU) +
       - CL_SIZENGLU*CJej_ZENGLU*fup_ZENGLU
     
@@ -281,9 +282,9 @@ PBK.model <- function(t, state, parms){
       - (QSI+QL)*CVL_ZEN + 
       - VmaxL_aZEL*CL_ZEN*fup_ZEN / (KmL_aZEL + CL_ZEN*fup_ZEN) +
       - VmaxL_bZEL*CL_ZEN*fup_ZEN / (KmL_bZEL + CL_ZEN*fup_ZEN) +
-      - VmaxL_ZENGLU*CL_ZEN*fup_ZEN / (KmL_ZENGLU + CL_ZEN*fup_ZEN)
+      - VmaxL_ZENGLU*CL_ZEN*fup_ZEN / ((KmL_ZENGLU) + CL_ZEN*fup_ZEN)
     
-    dAL_ZENGLU <- VmaxL_ZENGLU*CL_ZEN*fup_ZEN / (KmL_ZENGLU + CL_ZEN*fup_ZEN) +
+    dAL_ZENGLU <- VmaxL_ZENGLU*CL_ZEN*fup_ZEN / ((KmL_ZENGLU) + CL_ZEN*fup_ZEN) +
       +  QSI*CVJej_ZENGLU + QL*CB_ZENGLU - (QSI+QL)*CVL_ZENGLU +
       - (Vmax_BSEP/(Km_BSEP + (CL_ZENGLU*fup_ZENGLU)))*CL_ZENGLU*fup_ZENGLU
     
@@ -294,6 +295,10 @@ PBK.model <- function(t, state, parms){
       - VmaxL_aZELGLU*CL_aZEL*fup_aZEL / (KmL_aZELGLU + CL_aZEL*fup_aZEL) 
     
     dAL_aZELGLU <- VmaxL_aZELGLU*CL_aZEL*fup_aZEL / (KmL_aZELGLU + CL_aZEL*fup_aZEL) 
+    
+    # Bile
+    dABile_ZENGLU <- (Vmax_BSEP/(Km_BSEP + (CL_ZENGLU*fup_ZENGLU)))*CL_ZENGLU*fup_ZENGLU +
+      - fBile*ABile_ZENGLU
     
     # Blood
     dAB_ZEN <- - (QSI + QL + QR + QS + QF)*CB_ZEN +  
@@ -340,6 +345,7 @@ PBK.model <- function(t, state, parms){
     ADuo_ZEN + AJej_ZEN + AIle_ZEN + 
     AJej_ZENGLU + AJej_aZEL + AJej_bZEL + AJej_aZELGLU + 
     AL_ZEN + AL_ZENGLU + AL_bZEL + AL_aZEL + AL_aZELGLU +
+    ABile_ZENGLU +
     AB_ZEN + AB_aZEL + AB_ZENGLU +
     AUR_ZEN + AUR_aZEL + AUR_ZENGLU + 
     AF_ZEN + AF_aZEL + AF_ZENGLU + 
@@ -361,6 +367,7 @@ PBK.model <- function(t, state, parms){
       dADuo_ZEN, dAJej_ZEN, dAIle_ZEN,
       dAJej_ZENGLU, dAJej_aZEL, dAJej_bZEL, dAJej_aZELGLU,
       dAL_ZEN, dAL_ZENGLU, dAL_bZEL, dAL_aZEL, dAL_aZELGLU, 
+      dABile_ZENGLU,
       dAB_ZEN, dAB_aZEL, dAB_ZENGLU, 
       dAUR_ZEN, dAUR_aZEL, dAUR_ZENGLU,
       dAF_ZEN, dAF_aZEL, dAF_ZENGLU,

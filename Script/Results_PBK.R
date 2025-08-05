@@ -204,9 +204,8 @@ C_organs_wide <- C_organs_long %>%
   mutate("IntestineL" = (((DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL) + (LIntestineL*VLIL) + (RectumL*VREL))/(VDuoL+VJejL+VIleL+VLIL+VREL))) %>%
   # mutate("TIntestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL)))%>%
   # mutate("Intestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL))) %>%
-  mutate("Intestine" = ((DuodenumT*VDuo) + (JejunumT*VJej) + (IleumT*VIle) +
-                          (DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL) + (LIntestineL*VLIL) + (RectumL*VREL))/(
-                            VDuo + VJej + VIle +VDuoL+VJejL+VIleL+VLIL+VREL)) %>%
+  mutate("Intestine" = ((DuodenumT*VDuo) + (JejunumT*VJej) + (IleumT*VIle) )/(# + (DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL)+ (LIntestineL*VLIL) + (RectumL*VREL)
+                            VDuo + VJej + VIleL)) %>% #L+VLIL+VRE  +VDuoL+VJejL+VIle
   # rename("Intestine" = "SIntestineT") %>%
   select(c("time", "Intestine", "Liver", "Blood"))
 
@@ -337,10 +336,9 @@ C_organs_wide_GLUC <- C_organs_long %>%
   mutate("IntestineL" = (((DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL) + (LIntestineL*VLIL))/(VDuoL+VJejL+VIleL+VLIL))) %>%
   # mutate("TIntestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL)))%>%
   # mutate("Intestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL))) %>%
-  mutate("Intestine" = ((DuodenumT*VDuo) + (JejunumT*VJej) + (IleumT*VIle) +
-                          (DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL) +
-                          (LIntestineL*VLIL))/ 
-           (VDuo + VJej + VIle + VDuoL + VJejL + VIleL + VLIL)) %>%
+  mutate("Intestine" = ((DuodenumT*VDuo) + (JejunumT*VJej) + (IleumT*VIle))/# + +  (DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL)
+                          # (LIntestineL*VLIL))/ 
+           (VDuo + VJej + VIle)) %>% # + VLIL + VDuoL + VJejL + VIleL
   # rename("Intestine" = "SIntestineT") %>%
   select(c("time", "Intestine", "Liver", "Blood"))
 

@@ -133,6 +133,7 @@ A_init <- c(
   ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
   AJej_ZENGLU = 0, AJej_aZEL = 0, AJej_bZEL = 0, AJej_aZELGLU = 0,
   AL_ZEN = 0, AL_ZENGLU = 0, AL_bZEL = 0, AL_aZEL = 0, AL_aZELGLU = 0,
+  ABile_ZENGLU = 0,
   AB_ZEN = 0, AB_aZEL = 0, AB_ZENGLU = 0, 
   AUR_ZEN = 0, AUR_aZEL = 0, AUR_ZENGLU = 0, 
   AF_ZEN = 0, AF_aZEL = 0, AF_ZENGLU = 0, 
