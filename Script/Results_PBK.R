@@ -3,7 +3,6 @@
 # # By: Chrysanthi Pachoulide
 # # Date: 23-06-2025
 # # --------------------------------------------------------------------------- #
-# 
 # rm(list=ls()) 
 # 
 # # Packages
@@ -26,6 +25,9 @@ CP_theme <- theme_minimal() +
     legend.position = "none",
     plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm")
   )
+
+MWZENGLUC <- 494.493
+MWaZEL <- 320.4
 
 # load(here(OUTPUT, "RawData_PBK.RData"))
 # save(PBK_OUTPUT, file = here(OUTPUT, "RawData_PBK.RData"))
@@ -54,8 +56,12 @@ print(MB_plot)
 
 C_organs.df <- PBK_OUTPUT %>%
   transmute(time = time,
-            SIntestineT_ZEN = CSI_ZEN,
-            SIntestineL_ZEN = CSIL_ZEN,
+            DuodenumT_ZEN = CDuo_ZEN,
+            DuodenumL_ZEN = CDuoL_ZEN,
+            JejunumT_ZEN = CJej_ZEN,
+            JejunumL_ZEN = CJejL_ZEN,
+            IleumT_ZEN = CIle_ZEN,
+            IleumL_ZEN = CIleL_ZEN,
             LIntestineL_ZEN = CLIL_ZEN,
             RectumL_ZEN = CREL_ZEN,
             Liver_ZEN = CL_ZEN,
@@ -63,33 +69,46 @@ C_organs.df <- PBK_OUTPUT %>%
             Rapidly_ZEN = CR_ZEN,
             Slowly_ZEN = CS_ZEN,
             Blood_ZEN = CB_ZEN,
-            LIntestineL_aZEL = CLIL_aZEL,
-            SIntestineT_aZEL = CSI_aZEL,
+            DuodenumT_aZEL = 0,
+            DuodenumL_aZEL = 0,
+            JejunumT_aZEL = CJej_aZEL,
+            JejunumL_aZEL = 0,
+            IleumT_aZEL = 0,
+            IleumL_aZEL = 0,
+            LIntestineL_aZEL = 0,
             Liver_aZEL = CL_aZEL,
             Fat_aZEL = CF_aZEL,
             Rapidly_aZEL = CR_aZEL,
             Slowly_aZEL = CS_aZEL,
             Blood_aZEL = CB_aZEL,
-            LIntestineL_bZEL = CLIL_bZEL,
-            Liver_bZEL = CL_bZEL,
-            SIntestineL_ZENGLU = CSIL_ZENGLU,
+            # LIntestineL_bZEL = CLIL_bZEL,
+            # Liver_bZEL = CL_bZEL,
+            DuodenumT_ZENGLU = 0,
+            DuodenumL_ZENGLU = CDuoL_ZENGLU,
+            JejunumT_ZENGLU = CJej_ZENGLU,
+            JejunumL_ZENGLU = CJejL_ZENGLU,
+            IleumT_ZENGLU = 0,
+            IleumL_ZENGLU = CIleL_ZENGLU,
             LIntestineL_ZENGLU = CLIL_ZENGLU,
-            SIntestineT_ZENGLU = CSI_ZENGLU,
+            JejunumT_ZENGLU = CJej_ZENGLU,
             Liver_ZENGLU = CL_ZENGLU,
             Fat_ZENGLU = CF_ZENGLU,
             Rapidly_ZENGLU = CR_ZENGLU,
             Slowly_ZENGLU = CS_ZENGLU,
-            Blood_ZENGLU = CB_ZENGLU,
-            Liver_aZELGLU = CL_aZELGLU,
-            SIntestineT_aZELGLU = CSI_aZELGLU
+            Blood_ZENGLU = CB_ZENGLU #,
+            # Liver_aZELGLU = CL_aZELGLU,
+            # JejunumT_aZELGLU = CJej_aZELGLU
             )
 
 C_organs_long <- C_organs.df %>%
   pivot_longer(names_to = c("Organ", "Compound"),
-               SIntestineT_ZEN:SIntestineT_aZELGLU,
+               DuodenumT_ZEN:Blood_ZENGLU,
                values_to = "Concentration",
                names_sep = "_") %>%
-  mutate(Concentration = Concentration*MWZEN)
+  mutate(Concentration = ifelse(Compound == "ZEN", Concentration*MWZEN, 
+                                ifelse(Compound == "ZENGLU",Concentration*MWZENGLUC,
+                                       Concentration*MWaZEL))
+         )
 
 
 Plasma <- C_organs_long %>%
@@ -161,6 +180,12 @@ VSIL <- parm.c$FV_SIL*BW # fractional volume of small intestinal lumen
 VREL <- parm.c$FV_REL*parm.c$FV_LIL*BW # fractional volume of rectum lumen from total LI volume (only the lower part goes to the systemic circulation)
 VLIL <- (parm.c$FV_LIL*BW)-VREL
 VSI <- parm.c$FV_SI*BW # fractional volume of small intestinal tissue
+VDuoL <- VSIL*0.183 # calculated from Musther
+VJejL <- VSIL*0.334 # calculated from Musther
+VIleL <- VSIL*0.483 # calculated from Musther
+VDuo <- VSI*0.060
+VJej <- VSI*0.769
+VIle <- VSI*0.171
 
 
 VidemannPO_wide <- VidemannPO %>%
@@ -174,11 +199,15 @@ pivot_longer(Blood:Liver, names_to = "Tissue", values_to = "Concentration")
 C_organs_wide <- C_organs_long %>%
   pivot_wider(names_from = "Organ", values_from = "Concentration") %>%
   filter(Compound == "ZEN") %>%
-  select(c("time", "SIntestineT", "SIntestineL", "LIntestineL", "RectumL", "Liver", "Blood")) %>% 
-  mutate("IntestineL" = (((SIntestineL*VSIL) + (LIntestineL*VLIL) + (RectumL*VREL))/(VSIL+VLIL+VREL))) %>% 
-  # mutate("TIntestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL)))%>% 
+  select(c("time", "DuodenumT", "JejunumT", "IleumT", "DuodenumL", "JejunumL", "IleumL", "LIntestineL", "RectumL", "Liver", "Blood")) %>%
+  # select(c("time", "SIntestineT", "SIntestineL", "LIntestineL", "RectumL", "Liver", "Blood")) %>%
+  mutate("IntestineL" = (((DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL) + (LIntestineL*VLIL) + (RectumL*VREL))/(VDuoL+VJejL+VIleL+VLIL+VREL))) %>%
+  # mutate("TIntestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL)))%>%
   # mutate("Intestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL))) %>%
-  rename("Intestine" = "SIntestineT") %>% 
+  mutate("Intestine" = ((DuodenumT*VDuo) + (JejunumT*VJej) + (IleumT*VIle) +
+                          (DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL) + (LIntestineL*VLIL) + (RectumL*VREL))/(
+                            VDuo + VJej + VIle +VDuoL+VJejL+VIleL+VLIL+VREL)) %>%
+  # rename("Intestine" = "SIntestineT") %>%
   select(c("time", "Intestine", "Liver", "Blood"))
 
 PredPO <- C_organs_wide %>%
@@ -303,10 +332,16 @@ VidemannPO_long_GLUC <- VidemannPO_wide_GLUC %>%
 C_organs_wide_GLUC <- C_organs_long %>%
   pivot_wider(names_from = "Organ", values_from = "Concentration") %>%
   filter(Compound == "ZENGLU") %>%
-  select(c("time", "SIntestineT", "SIntestineL", "LIntestineL", "RectumL", "Liver", "Blood")) %>% 
-  mutate("IntestineL" = (((SIntestineL*VSIL) + (LIntestineL*VLIL))/(VSIL+VLIL))) %>% 
-  # mutate("TIntestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL)))%>% 
-  rename("Intestine" = "SIntestineT") %>% 
+  select(c("time", "DuodenumT", "JejunumT", "IleumT", "DuodenumL", "JejunumL", "IleumL", "LIntestineL", "Liver", "Blood")) %>%
+  # select(c("time", "SIntestineT", "SIntestineL", "LIntestineL", "RectumL", "Liver", "Blood")) %>%
+  mutate("IntestineL" = (((DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL) + (LIntestineL*VLIL))/(VDuoL+VJejL+VIleL+VLIL))) %>%
+  # mutate("TIntestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL)))%>%
+  # mutate("Intestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL))) %>%
+  mutate("Intestine" = ((DuodenumT*VDuo) + (JejunumT*VJej) + (IleumT*VIle) +
+                          (DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL) +
+                          (LIntestineL*VLIL))/ 
+           (VDuo + VJej + VIle + VDuoL + VJejL + VIleL + VLIL)) %>%
+  # rename("Intestine" = "SIntestineT") %>%
   select(c("time", "Intestine", "Liver", "Blood"))
 
 PredPO_GLUC <- C_organs_wide_GLUC %>%
@@ -324,7 +359,7 @@ Blood.PredObsVidemannPlotly_GLUC <- ggplot() +
   # facet_wrap(~Tissue) +
   geom_path(data = PredPO_GLUC, aes(time, Concentration)) +
   # facet_wrap(~Tissue) +
-  labs(title = "Zearalenone glucuronide blood concentrations",
+  labs(title = "Zearalenone glucuronide blood concentration",
        x = "Time (h)",
        y = "Concentration (ng/ml)",
        color = "Author")+
@@ -372,8 +407,12 @@ print(PredObsVidemann_GLUC)
 
 A_organs.df <- PBK_OUTPUT %>%
   transmute(time = time,
-            SIntestineT_ZEN = ASI_ZEN,
-            SIntestineL_ZEN = ASIL_ZEN,
+            DuodenumT_ZEN = ADuo_ZEN,
+            DuodenumL_ZEN = ADuoL_ZEN,
+            JejunumT_ZEN = AJej_ZEN,
+            JejunumL_ZEN = AJejL_ZEN,
+            IleumT_ZEN = AIle_ZEN,
+            IleumL_ZEN = AIleL_ZEN,
             LIntestineL_ZEN = ALIL_ZEN,
             RectumL_ZEN = AREL_ZEN,
             Feces_ZEN = AFE_ZEN,
@@ -383,33 +422,40 @@ A_organs.df <- PBK_OUTPUT %>%
             Slowly_ZEN = AS_ZEN,
             Blood_ZEN = AB_ZEN,
             Urine_ZEN = AUR_ZEN,
+            DuodenumT_aZEL = 0,
+            DuodenumL_aZEL = 0,
+            JejunumT_aZEL = AJej_aZEL,
+            JejunumL_aZEL = 0,
+            IleumT_aZEL = 0,
+            IleumL_aZEL = 0,
             LIntestineL_aZEL = ALIL_aZEL,
             Feces_aZEL = AFE_aZEL,
-            SIntestineT_aZEL = ASI_aZEL,
             Liver_aZEL = AL_aZEL,
             Fat_aZEL = AF_aZEL,
             Rapidly_aZEL = AR_aZEL,
             Slowly_aZEL = AS_aZEL,
             Blood_aZEL = AB_aZEL,
             Urine_aZEL = AUR_aZEL,
-            LIntestineL_bZEL = ALIL_bZEL,
-            Liver_bZEL = AL_bZEL,
-            SIntestineL_ZENGLU = ASIL_ZENGLU,
+            # LIntestineL_bZEL = ALIL_bZEL,
+            # Liver_bZEL = AL_bZEL,
+            DuodenumT_ZENGLU = 0,
+            DuodenumL_ZENGLU = ADuoL_ZENGLU,
+            JejunumT_ZENGLU = AJej_ZENGLU,
+            JejunumL_ZENGLU = AJejL_ZENGLU,
+            IleumT_ZENGLU = 0,
+            IleumL_ZENGLU = AIleL_ZENGLU,
             LIntestineL_ZENGLU = ALIL_ZENGLU,
-            SIntestineT_ZENGLU = ASI_ZENGLU,
             Feces_ZENGLU = AFE_ZENGLU,
             Liver_ZENGLU = AL_ZENGLU,
             Fat_ZENGLU = AF_ZENGLU,
             Rapidly_ZENGLU = AR_ZENGLU,
             Slowly_ZENGLU = AS_ZENGLU,
             Blood_ZENGLU = AB_ZENGLU,
-            Liver_aZELGLU = AL_aZELGLU,
-            SIntestineT_aZELGLU = ASI_aZELGLU
-  )
+            Urine_ZENGLU = AUR_ZENGLU)
 
 A_organs_long <- A_organs.df %>%
   pivot_longer(names_to = c("Organ", "Compound"),
-               SIntestineT_ZEN:SIntestineT_aZELGLU,
+               DuodenumT_ZEN:Urine_ZENGLU,
                values_to = "Amount",
                names_sep = "_")
 

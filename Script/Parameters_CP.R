@@ -63,8 +63,8 @@ dir.create(OUTPUT,  recursive = TRUE)
   # Fasted state
   GER = 1/0.25 # stomach emptying rate (/h)
   SITR = 1/1.57 # small intestinal transit time (/h)
-  LITR = 1/19.7 # large intestinal transit time (/h)
-  RETR = 1/19.7 # rectum transit time (/h)
+  LITR = 1/19.7 #1/(0.8*19.7) # large intestinal transit time (/h)
+  RETR = 1/(0.2*19.7) # rectum transit time (/h)
   
   # Glomerular filtration rate: Punt et al. (2020)
   GFRc = 0.312 #L/h/kg 0.08 #(/h)

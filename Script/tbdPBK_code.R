@@ -8,12 +8,20 @@ PBK.model <- function(t, state, parms){
     # Fractional Tissue volumes (reference: Punt et al. (2020))
     BW <- BW  ##{Kg} #  body weight rat
     
-    VST <- FV_ST*BW  # fraction volume of small intestine
+    VST <- FV_ST*BW  # fraction volume of stomach
     VSIL <- FV_SIL*BW # fractional volume of small intestinal lumen
+    VDuoL <- VSIL*0.183 # calculated from Musther
+    VJejL <- VSIL*0.334 # calculated from Musther
+    VIleL <- VSIL*0.483 # calculated from Musther
+    
     VREL <- FV_REL*FV_LIL*BW # fractional volume of rectum lumen from total LI volume (only the lower part goes to the systemic circulation)
-    VLIL <- (FV_LIL*BW)-VREL
+    VLIL <- (FV_LIL*BW)-VREL # corrected fractional volume of the rest of the colon
     
     VSI <- FV_SI*BW # fractional volume of small intestinal tissue
+    VDuo <- VSI*0.060
+    VJej <- VSI*0.769
+    VIle <- VSI*0.171
+    
     VL <- FV_L*BW  # fractional of liver tissue
     VR <- FV_R*BW  # 0.082-VSIc-VLc # fraction of rapidly perfused tissue
     VS <- FV_S*BW  # 0.737-VFc # fraction of slowly perfused tissue
@@ -28,6 +36,9 @@ PBK.model <- function(t, state, parms){
     # Blood flow rates (reference: Punt et al. (2020))
     QC <- QC  ##{L/h} # cardiac output
     QSI <- QSIc*QC  # fraction of blood flow to small intestine
+    QDuo <- QSI*0.079
+    QJej <- QSI*0.680
+    QIle <- QSI*0.241
     QL <- QLc*QC  # 0.242 - QSIc # fraction of blood flow to liver 101 
     QR <- QRc*QC  # 0.76 - QSIc - QLc # fraction of blood flow to rapidly perfused tissue
     QS <- QSc*QC  # 0.24 - QFc # fraction of blood flow to slowly perfused tissue
@@ -37,38 +48,57 @@ PBK.model <- function(t, state, parms){
     GER <- GER # stomach emptying rate (/h)
     SITR <- SITR #/10 # small intestinal transit time (/h)
     LITR <- LITR #/10 # large intestinal transit time (/h)
-    RETR <- RETR*1e6 #/10
+    RETR <- RETR #/10
     
     # Glomerular filtration rate: Punt et al. (2020)
     GFR <- GFRc*BW #(/h)
     
     ## kinetic parameters ####
     ### absorption/transfer rates ####
-    CLSI_ZEN <- 0.1*PappCaco2_ZEN * SASI # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
+    R <- 0.18 #radius small intestine
+    
+    Rduo <- 0.275/2 #diameter / 2 = radius
+    Rjej <- 0.4/2
+    Rile <- 0.4/2
+    
+    Tsi <- 1.63 #small intestine transit time 
+    
+    Tsiduo <- 0.06*Tsi
+    Tsijej <- 0.192*Tsi
+    Tsiile <- 0.086*Tsi
+    
+    kt <- 1/(Tsi/7)
+    Peff.cm.per.hr <- PappCaco2_ZEN #cm/h
+    ka <- Peff.cm.per.hr*2/R
+    fa_duo <- 1 - (1 + ka/kt)**-7
+    fa_jej <- 1 - (1 + ka/kt)**-7
+    fa_ile <- 1 - (1 + ka/kt)**-7
+    
+    CLSI_ZEN <- PappCaco2_ZEN * SASI # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
     CLLI_ZEN <- 0 #PappCaco2_ZEN * SALI #* 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
-    CLRE_ZEN <- 0.01 #.001 * PappCaco2_ZEN * SARE #* 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
+    CLRE_ZEN <- 0 #PappCaco2_ZEN * SARE #* 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
     CLLI_aZEL <- 0 #PappCaco2aZEL * SALI #* 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011)
     
     ### metabolism in small intestine tissue ####
-    VmaxSI_aZEL <- 1e3*VmaxSI_aZELc * S9SI * VSI        # umol/h
-    VmaxSI_bZEL <- 1e3*VmaxSI_bZELc * S9SI * VSI        # umol/h
-    VmaxSI_ZENGLU <- 20*VmaxSI_ZENGLUc * S9SI * VSI  # umol/h
+    VmaxSI_aZEL <- VmaxSI_aZELc * S9SI * VSI        # umol/h
+    VmaxSI_bZEL <- VmaxSI_bZELc * S9SI * VSI        # umol/h
+    VmaxSI_ZENGLU <- VmaxSI_ZENGLUc * S9SI * VSI  # umol/h
     VmaxSI_aZELGLU <- VmaxSI_aZELGLUc * S9SI * VSI # umol/h
     
     ### metabolism in large intestine lumen (microbiota compartment) ####
-    VmaxLI_aZEL <- 0 #VmaxLI_aZELc*VMB  # umol/h 
-    VmaxLI_bZEL <-  0 #VmaxLI_bZELc*VMB
+    VmaxLI_aZEL <- VmaxLI_aZELc*VMB  # umol/h 
+    VmaxLI_bZEL <- VmaxLI_bZELc*VMB
     
     ### metabolism in liver ####
-    VmaxL_aZEL <- 1e3*VmaxL_aZELc * S9L * VL 
-    VmaxL_bZEL <- 1e3*VmaxL_bZELc * S9L * VL
-    VmaxL_ZENGLU <- 20*VmaxL_ZENGLUc * S9L * VL  
+    VmaxL_aZEL <- VmaxL_aZELc * S9L * VL 
+    VmaxL_bZEL <- VmaxL_bZELc * S9L * VL
+    VmaxL_ZENGLU <- VmaxL_ZENGLUc * S9L * VL  
     VmaxL_aZELGLU <- VmaxL_aZELGLUc * S9L * VL
     
     ### conversion ZENGLU to ZEN
     CL_bile <- 1 #1e6 #2 #000
     CL_bile_ZEN <- 0 #1
-    kHydro <- 1 #e-6 #1000
+    kHydro <- 1 #e-6 #1000 #7.440476e-05
     CL_SIZENGLU <- 0 #10
     
     ## Concentrations #####
@@ -140,113 +170,116 @@ PBK.model <- function(t, state, parms){
     ## Dynamic ####
     
     # Stomach (in) 
-    dAST_ZEN <- - GER*AST_ZEN # amount in stomach #ODOSEumol
+    dAST_ZEN <- - GER*AST_ZEN 
     
     # Small intestinal lumen 
-    dASIL_ZEN <- + GER*AST_ZEN - SITR*ASIL_ZEN - CLSI_ZEN*CSIL_ZEN #+
-      # CL_bile_ZEN*CL_ZEN # small intestine lumen compartment (μmol)
-    dASIL_ZENGLU <- + CL_bile*CL_ZENGLU - SITR*ASIL_ZENGLU +
-      + CL_SIZENGLU*CSI_ZENGLU*fup_ZENGLU #- kHydro*ASIL_ZENGLU 
-    #LITR+RETR 7.440476e-05  100*SITR*ASIL_ZENGLU
+    dADuo_ZEN <- + GER*AST_ZEN - Tsiduo*ADuo_ZEN*(1-fa_duo) - ka*ADuo_ZEN*fa_duo 
+    
+    dAJej_ZEN <- Tsiduo*ADuo_ZEN*(1-fa_duo) - ka*AJej_ZEN*fa_jej - Tsijej*AJej_ZEN*(1-fa_jej) 
+    
+    dAIle_ZEN <- Tsijej*AJej_ZEN*(1-fa_jej) - ka*AIle_ZEN*fa_ile - Tsiile*AIle_ZEN*(1-fa_ile) 
+    
+    dAJej_ZENGLU <- + CL_bile*CL_ZENGLU - SITR*ASIL_ZENGLU + CL_SIZENGLU*CSI_ZENGLU*fup_ZENGLU 
+    
     
     # Large intestinal lumen 
-    dALIL_ZEN <- SITR*ASIL_ZEN + 
-      # - VmaxLI_aZEL*CLIL_ZEN / (KmLI_aZEL + CLIL_ZEN) +
-      # - VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN) +
-      + kHydro*ALIL_ZENGLU + #100*SITR*ASIL_ZENGLU +
-      # - CLLI_ZEN*CLIL_ZEN +
-      - LITR*ALIL_ZEN #
+    dALIL_ZEN <- Tsiile*AIle_ZEN*(1-fa_ile) +
+      - VmaxLI_aZEL*CLIL_ZEN / (KmLI_aZEL + CLIL_ZEN) +
+      - VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN) +
+      + kHydro*ALIL_ZENGLU + 
+      - CLLI_ZEN*CLIL_ZEN +
+      - LITR*ALIL_ZEN
     
-    dALIL_ZENGLU <- + SITR*ASIL_ZENGLU - kHydro*ALIL_ZENGLU #- LITR*ALIL_ZENGLU
+    dALIL_ZENGLU <- + SITR*ASIL_ZENGLU - kHydro*ALIL_ZENGLU - LITR*ALIL_ZENGLU 
     
-    dALIL_aZEL <- 0 #VmaxLI_aZEL*CLIL_ZEN / (KmLI_aZEL + CLIL_ZEN) +
-      # - (LITR+RETR)*ALIL_aZEL # amount of α-ZEL formed due to gut microbial activity, (μmol)
+    dALIL_aZEL <- VmaxLI_aZEL*CLIL_ZEN / (KmLI_aZEL + CLIL_ZEN) +
+      - (LITR+RETR)*ALIL_aZEL 
     
-    dALIL_bZEL <- 0 #VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN)  #VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN) # amount of b-ZEL formed due to gut microbial activity, (μmol)
+    dALIL_bZEL <- VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN)  
     
     # Rectum lumen
-    dAREL_ZEN <- LITR*ALIL_ZEN - RETR*AREL_ZEN - CLRE_ZEN*CREL_ZEN #LITR*ALIL_ZEN RETR*
-    dARE_ZEN <- 0 #CLRE_ZEN*CREL_ZEN + QSI*(CB_ZEN-CVRE_ZEN)
+    dAREL_ZEN <- LITR*ALIL_ZEN - RETR*AREL_ZEN - CLRE_ZEN*CREL_ZEN 
+    dARE_ZEN <- CLRE_ZEN*CREL_ZEN + QSI*(CB_ZEN-CVRE_ZEN)
     
     # Faeces ####
-    dAFE_ZEN <- RETR*AREL_ZEN #RETR*
-    dAFE_aZEL <- 0 #(LITR+RETR)*ALIL_aZEL
-    dAFE_ZENGLU <- 0 #LITR*ALIL_ZENGLU #SITR*ASIL_ZENGLU #(LITR+RETR)
+    dAFE_ZEN <- RETR*AREL_ZEN 
+    dAFE_aZEL <- (LITR+RETR)*ALIL_aZEL
+    dAFE_ZENGLU <- LITR*ALIL_ZENGLU 
     
     
     # Small intestinal tissue ####
-    dASI_ZEN <- CLSI_ZEN*CSIL_ZEN + QSI*(CB_ZEN-CVSI_ZEN) +
-      - VmaxSI_ZENGLU*CSI_ZEN*fup_ZEN / (KmSI_ZENGLU + CSI_ZEN*fup_ZEN) + 
-      - VmaxSI_aZEL*CSI_ZEN*fup_ZEN / (KmSI_aZEL + CSI_ZEN*fup_ZEN) +
-      - VmaxSI_bZEL*CSI_ZEN*fup_ZEN / (KmSI_bZEL + CSI_ZEN*fup_ZEN)
-      
-    dASI_ZENGLU <- VmaxSI_ZENGLU*CSI_ZEN*fup_ZEN / (KmSI_ZENGLU + CSI_ZEN*fup_ZEN) +
+    dADuo_ZEN <- ka*ADuo_ZEN*fa_duo + QDuo*(CB_ZEN-CVDuo_ZEN) 
+    dAJej_ZEN <- ka*AJej_ZEN*fa_jej + QJej*(CB_ZEN-CVJej_ZEN) +
+      - VmaxSI_ZENGLU*CJej_ZEN*fup_ZEN / (KmSI_ZENGLU + CJej_ZEN*fup_ZEN) + 
+      - VmaxSI_aZEL*CJej_ZEN*fup_ZEN / (KmSI_aZEL + CJej_ZEN*fup_ZEN) +
+      - VmaxSI_bZEL*CJej_ZEN*fup_ZEN / (KmSI_bZEL + CJej_ZEN*fup_ZEN)
+    
+    dAIle_ZEN <- ka*AIle_ZEN*fa_ile + QIle*(CB_ZEN-CVDuo_ZEN) 
+    
+    dASI_ZENGLU <- VmaxSI_ZENGLU*CJej_ZEN*fup_ZEN / (KmSI_ZENGLU + CJej_ZEN*fup_ZEN) +
       + QSI*(CB_ZENGLU-CVSI_ZENGLU) - CL_SIZENGLU*CSI_ZENGLU*fup_ZENGLU
     
-    dASI_aZEL <- VmaxSI_aZEL*CSI_ZEN*fup_ZEN / (KmSI_aZEL + CSI_ZEN*fup_ZEN) +
+    dASI_aZEL <- VmaxSI_aZEL*CJej_ZEN*fup_ZEN / (KmSI_aZEL + CJej_ZEN*fup_ZEN) +
       + QSI*(CB_aZEL-CVSI_aZEL) +
       - VmaxSI_aZELGLU*CSI_aZEL*fup_aZEL / (KmSI_aZELGLU + CSI_aZEL*fup_aZEL)
     
-    dASI_bZEL <- VmaxSI_bZEL*CSI_ZEN*fup_ZEN / (KmSI_bZEL + CSI_ZEN*fup_ZEN)
+    dASI_bZEL <- VmaxSI_bZEL*CJej_ZEN*fup_ZEN / (KmSI_bZEL + CJej_ZEN*fup_ZEN)
     
     dASI_aZELGLU <- VmaxSI_aZELGLU*CSI_aZEL*fup_aZEL / (KmSI_aZELGLU + CSI_aZEL*fup_aZEL)
     
     
     # Liver 
-    dAL_ZEN <- + QSI*CVSI_ZEN + QL*CB_ZEN - (QSI+QL)*CVL_ZEN + 
-      # - CL_bile_ZEN*CL_ZEN + #CLLI_ZEN*CLIL_ZEN
+    dAL_ZEN <- + QDuo*CVDuo_ZEN + QJej*CVJej_ZEN + QIle*CVDuo_ZEN + QL*CB_ZEN +
+      - (QSI+QL)*CVL_ZEN + 
       - VmaxL_aZEL*CL_ZEN*fup_ZEN / (KmL_aZEL + CL_ZEN*fup_ZEN) +
       - VmaxL_bZEL*CL_ZEN*fup_ZEN / (KmL_bZEL + CL_ZEN*fup_ZEN) +
-      - VmaxL_ZENGLU*CL_ZEN*fup_ZEN / (KmL_ZENGLU + CL_ZEN*fup_ZEN) #+
-      # + CLLI_ZEN*CLIL_ZEN #
+      - VmaxL_ZENGLU*CL_ZEN*fup_ZEN / (KmL_ZENGLU + CL_ZEN*fup_ZEN)
     
     dAL_ZENGLU <- VmaxL_ZENGLU*CL_ZEN*fup_ZEN / (KmL_ZENGLU + CL_ZEN*fup_ZEN) +
       +  QSI*CVSI_ZENGLU + QL*CB_ZENGLU - (QSI+QL)*CVL_ZENGLU +
-      - CL_bile*CL_ZENGLU #7.440476e-05
+      - CL_bile*CL_ZENGLU 
     
-    dAL_bZEL <- VmaxL_bZEL*CL_ZEN*fup_ZEN / (KmL_bZEL + CL_ZEN*fup_ZEN) # amount of ZEN metabolized to metabolite ß-ZEL in liver, (μmol)
+    dAL_bZEL <- VmaxL_bZEL*CL_ZEN*fup_ZEN / (KmL_bZEL + CL_ZEN*fup_ZEN) 
     
     dAL_aZEL <- VmaxL_aZEL*CL_ZEN*fup_ZEN / (KmL_aZEL + CL_ZEN*fup_ZEN) +
       + QSI*CVSI_aZEL + QL*CB_aZEL - (QSI+QL)*CVL_aZEL +
-      # # + CLLI_aZEL*CLIL_aZEL +
-      - VmaxL_aZELGLU*CL_aZEL*fup_aZEL / (KmL_aZELGLU + CL_aZEL*fup_aZEL) # amount of ZEN metabolized to metabolite α-ZEL in liver, (μmol)
+      - VmaxL_aZELGLU*CL_aZEL*fup_aZEL / (KmL_aZELGLU + CL_aZEL*fup_aZEL) 
     
-    dAL_aZELGLU <- VmaxL_aZELGLU*CL_aZEL*fup_aZEL / (KmL_aZELGLU + CL_aZEL*fup_aZEL) # amount of α-ZEL glucuronide in liver
+    dAL_aZELGLU <- VmaxL_aZELGLU*CL_aZEL*fup_aZEL / (KmL_aZELGLU + CL_aZEL*fup_aZEL) 
     
     # Blood
-    dAB_ZEN <- - (QSI + QL + QR + QS + QF)*CB_ZEN + #  
-      + (QSI+QL)*CVL_ZEN + QF*CVF_ZEN + QR*CVR_ZEN + QS*CVS_ZEN + #QSI*CVRE_ZEN +
+    dAB_ZEN <- - (QSI + QL + QR + QS + QF)*CB_ZEN +  
+      + (QSI+QL)*CVL_ZEN + QF*CVF_ZEN + QR*CVR_ZEN + QS*CVS_ZEN + 
       - GFR*CB_ZEN*fup_ZEN +
       + CLRE_ZEN*CREL_ZEN 
-       # amount of ZEN in blood, (μmol) IVDOSEumol
-    
+
     dAB_aZEL <- - (QSI + QL + QR + QS + QF)*CB_aZEL +
       + (QL+QSI)*CVL_aZEL + QF*CVF_aZEL + QR*CVR_aZEL + QS*CVS_aZEL +
-      - GFR*CB_aZEL*fup_aZEL # amount of α-ZELin blood, (μmol)
+      - GFR*CB_aZEL*fup_aZEL
     
     dAB_ZENGLU <- - (QSI + QL + QR + QS + QF)*CB_ZENGLU + 
       + (QSI+QL)*CVL_ZENGLU + QF*CVF_ZENGLU + QR*CVR_ZENGLU + QS*CVS_ZENGLU +
       - GFR*CB_ZENGLU*fup_ZENGLU 
     
     # Urine
-    dAUR_ZEN <- GFR*CB_ZEN*fup_ZEN # urinary excretion
+    dAUR_ZEN <- GFR*CB_ZEN*fup_ZEN 
     dAUR_aZEL <- GFR*CB_aZEL*fup_aZEL
     dAUR_ZENGLU <- GFR*CB_ZENGLU*fup_ZENGLU
     
     # Fat 
-    dAF_ZEN <- QF*(CB_ZEN-CVF_ZEN) # amount of ZEN in fat tissue, (μmol)
-    dAF_aZEL <- QF*(CB_aZEL-CVF_aZEL) # amount of α-ZEL in fat tissue, (μmol)
-    dAF_ZENGLU <- QF*(CB_ZENGLU-CVF_ZENGLU) # amount of ZEN-gluc in fat tissue, (μmol)
+    dAF_ZEN <- QF*(CB_ZEN-CVF_ZEN) 
+    dAF_aZEL <- QF*(CB_aZEL-CVF_aZEL) 
+    dAF_ZENGLU <- QF*(CB_ZENGLU-CVF_ZENGLU) 
     
     # Rapidly Perfused 
-    dAR_ZEN <- QR*(CB_ZEN-CVR_ZEN) # amount of ZEN in rapidly perfused tissue, (μmol)
-    dAR_aZEL <- QR*(CB_aZEL-CVR_aZEL) # amount of α-ZEL in rapidly perfused tissue, (μmol)
-    dAR_ZENGLU <- QR*(CB_ZENGLU-CVR_ZENGLU) # amount of α-ZEL in rapidly perfused tissue, (μmol)
+    dAR_ZEN <- QR*(CB_ZEN-CVR_ZEN)
+    dAR_aZEL <- QR*(CB_aZEL-CVR_aZEL) 
+    dAR_ZENGLU <- QR*(CB_ZENGLU-CVR_ZENGLU) 
     
     # Slowly Perfused 
-    dAS_ZEN <- QS*(CB_ZEN-CVS_ZEN) # amount of ZEN in slowly perfused tissue, (μmol)
-    dAS_aZEL <- QS*(CB_aZEL-CVS_aZEL) # amount of α-ZEL in slowly perfused tissue, (μmol)
-    dAS_ZENGLU <- QS*(CB_ZENGLU-CVS_ZENGLU) # amount of α-ZEL in slowly perfused tissue, (μmol)
+    dAS_ZEN <- QS*(CB_ZEN-CVS_ZEN)
+    dAS_aZEL <- QS*(CB_aZEL-CVS_aZEL) 
+    dAS_ZENGLU <- QS*(CB_ZENGLU-CVS_ZENGLU)
     
     #mass balance calculation
     ATotal <- ODOSEumol + IVDOSEumol

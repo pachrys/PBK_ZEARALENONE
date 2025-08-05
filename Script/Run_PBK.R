@@ -65,7 +65,7 @@ parm.c <- as.list(setNames(Parameters$Value, Parameters$Parameter))
 
 
 # Model Code
-source(here("Script", "tbdPBK_code.R"))
+source(here("Script", "PBKi_code.R"))
 # source(here("Script", "PBK_code_Mendez.R"))
 
 
@@ -107,21 +107,38 @@ source(here("Script", "tbdPBK_code.R"))
 #   ATotal = 0
 # ) 
 
+# A_init <- c(
+#   AST_ZEN = ODOSEumol,
+#   ASIL_ZEN = 0, ASIL_ZENGLU = 0,
+#   ALIL_ZEN = 0, ALIL_ZENGLU = 0, ALIL_aZEL = 0,ALIL_bZEL = 0,
+#   AREL_ZEN = 0, ARE_ZEN = 0,
+#   AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0,
+#   ASI_ZEN = 0, ASI_ZENGLU = 0, ASI_bZEL = 0, ASI_aZEL = 0, ASI_aZELGLU = 0,
+#   AL_ZEN = 0, AL_ZENGLU = 0, AL_bZEL = 0, AL_aZEL = 0, AL_aZELGLU = 0,
+#   AB_ZEN = 0, AB_aZEL = 0, AB_ZENGLU = 0,
+#   AUR_ZEN = 0, AUR_aZEL = 0, AUR_ZENGLU = 0,
+#   AF_ZEN = 0, AF_aZEL = 0, AF_ZENGLU = 0,
+#   AR_ZEN = 0, AR_aZEL = 0, AR_ZENGLU = 0,
+#   AS_ZEN = 0, AS_aZEL = 0, AS_ZENGLU = 0#,
+#   # ATotal = 0
+#   )
+
 A_init <- c(
-  AST_ZEN = ODOSEumol,
-  ASIL_ZEN = 0, ASIL_ZENGLU = 0,
-  ALIL_ZEN = 0, ALIL_ZENGLU = 0, ALIL_aZEL = 0,ALIL_bZEL = 0,
-  AREL_ZEN = 0, ARE_ZEN = 0,
-  AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0,
-  ASI_ZEN = 0, ASI_ZENGLU = 0, ASI_bZEL = 0, ASI_aZEL = 0, ASI_aZELGLU = 0,
+  AST_ZEN = ODOSEumol, 
+  ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, 
+  ADuoL_ZENGLU = 0, AJejL_ZENGLU = 0, AIleL_ZENGLU = 0, 
+  ALIL_ZEN = 0, ALIL_ZENGLU = 0, ALIL_aZEL = 0, ALIL_bZEL = 0, 
+  AREL_ZEN = 0, 
+  AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0, 
+  ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
+  AJej_ZENGLU = 0, AJej_aZEL = 0, AJej_bZEL = 0, AJej_aZELGLU = 0,
   AL_ZEN = 0, AL_ZENGLU = 0, AL_bZEL = 0, AL_aZEL = 0, AL_aZELGLU = 0,
-  AB_ZEN = 0, AB_aZEL = 0, AB_ZENGLU = 0,
-  AUR_ZEN = 0, AUR_aZEL = 0, AUR_ZENGLU = 0,
-  AF_ZEN = 0, AF_aZEL = 0, AF_ZENGLU = 0,
-  AR_ZEN = 0, AR_aZEL = 0, AR_ZENGLU = 0,
-  AS_ZEN = 0, AS_aZEL = 0, AS_ZENGLU = 0#,
-  # ATotal = 0
-  )
+  AB_ZEN = 0, AB_aZEL = 0, AB_ZENGLU = 0, 
+  AUR_ZEN = 0, AUR_aZEL = 0, AUR_ZENGLU = 0, 
+  AF_ZEN = 0, AF_aZEL = 0, AF_ZENGLU = 0, 
+  AR_ZEN = 0, AR_aZEL = 0, AR_ZENGLU = 0, 
+  AS_ZEN = 0, AS_aZEL = 0, AS_ZENGLU = 0
+)
 
 
 PBK.out <- lsoda(y = A_init,
