@@ -299,11 +299,11 @@ dir.create(OUTPUT,  recursive = TRUE)
   # calculated based on QPPR of DeJongh et al. (1997)
   
   # ZEN in main model
-  PIZEN <- 6.56 # intestine/blood partition coefficient
-  PLZEN <- 6.56 # liver/blood partition coefficient
-  PRZEN <- 6.56 # rapidly perfused tissue/blood partition coefficient
-  PSZEN <- 4.25 # slowly perfused tissue/blood partition coefficient
-  PFZEN <- 134.86 # fat/blood partition coefficient
+  PIZEN <- 16.95 #6.56 # intestine/blood partition coefficient
+  PLZEN <- 12.24 #6.56 # liver/blood partition coefficient
+  PRZEN <- 30.54 #6.56 # rapidly perfused tissue/blood partition coefficient
+  PSZEN <- 21.70 #4.25 # slowly perfused tissue/blood partition coefficient
+  PFZEN <- 218.06 #134.86 # fat/blood partition coefficient
   
   # α-ZEL in sub-model
   PIaZEL <- 6.11 # intestine/blood partition coefficient

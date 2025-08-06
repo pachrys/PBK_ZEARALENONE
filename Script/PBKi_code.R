@@ -1,12 +1,14 @@
 ## PBK model rat ####
 PBK.model <- function(t, state, parms){
   with(as.list(c(state, parms)), {
+    MWZEN <- 318.37 
+    Si <- 0.002*10/MWZEN # mol/L, 0.002g/100ml -> *10 g/L, /MW mol/L 10.1016/s0065-2164(08)70160-6
     
     ## Calculated parameters ####
     
     ## Physiological constants ####
     # Fractional Tissue volumes (reference: Punt et al. (2020))
-    BW <- BW  ##{Kg} #  body weight rat
+    BW <- BW  # Kg # body weight rat
     
     VST <- FV_ST*BW  # fraction volume of stomach
     VSIL <- FV_SIL*BW # fractional volume of small intestinal lumen
@@ -55,15 +57,28 @@ PBK.model <- function(t, state, parms){
     
     ## kinetic parameters ####
     ### absorption/transfer rates ####
-    R <- 0.18 #radius small intestine
+    Peff.cm.per.hr <- PappCaco2_ZEN #cm/h
     
+    R <- 0.18 #radius small intestine
     Rduo <- 0.275/2 #diameter / 2 = radius, cm (Musther et al)
     Rjej <- 0.4/2   #diameter / 2 = radius, cm (Musther et al)
     Rile <- 0.4/2   #diameter / 2 = radius, cm (Musther et al)
     # Rlil <- 0.928/2 #diameter / 2 = radius, cm (Bartoli et al. 2013: DOI: 10.4253/wjge.v5.i5.226, diameter of the proximal colon)
     
-    Tsi <- 1.63 #small intestine transit time 
+    Lduo <- 7 #length cm (Musther et al)
+    Ljej <- 90   #cm (Musther et al)
+    Lile <- 20   #diameter / 2 = radius, cm (Musther et al)
     
+    Amp <- 1 #20 # microvilli amplification factor, ref: https://doi.org/10.1016/S0278-6915(00)00136-8
+    Ampduo <- 1*Amp
+    Ampjej <- 1*Amp #0.7
+    Ampile <- 1*Amp #0.5
+    
+    SAduo = 2*pi*Rduo*Lduo*Ampduo #cm2
+    SAjej = 2*pi*Rjej*Ljej*Ampjej #cm2
+    SAile = 2*pi*Rile*Lile*Ampile #cm2
+    
+    Tsi <- 1.63 #small intestine transit time 
     Tsiduo <- 0.06*Tsi
     Tsijej <- 0.192*Tsi
     Tsiile <- 0.086*Tsi
@@ -71,32 +86,35 @@ PBK.model <- function(t, state, parms){
     duoTR <- 1/Tsiduo
     jejTR <- 1/Tsijej
     ileTR <- 1/Tsiile
-    # lilTR <- LITR
+    lilTR <- LITR
     
     # kt <- 1/(Tsi/7)
-    Peff.cm.per.hr <- 5*PappCaco2_ZEN #cm/h
     ka_duo <- Peff.cm.per.hr/Rduo
     ka_jej <- Peff.cm.per.hr/Rjej
     ka_ile <- Peff.cm.per.hr/Rile
-    # ka_lil <- Peff.cm.per.hr*2/Rlil
+    ka_lil <- 0 #Peff.cm.per.hr*2/Rlil
     
     fa_duo <- 1 - (1 + ka_duo/(1/Tsiduo))**-7
     fa_jej <- 1 - (1 + ka_jej/(1/Tsijej))**-7
     fa_ile <- 1 - (1 + ka_ile/(1/Tsiile))**-7
-    # fa_lil <- 1 - (1 + ka/(1/Tsilil))**-7
+    fa_lil <- 0 #1 - (1 + ka_lil/(LITR))**-7
     
-    CLSI_ZEN <- 0 #PappCaco2_ZEN * SASI # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011) # uptake ZEN SI
-    CLLI_ZEN <- 0 #PappCaco2_ZEN * SALI #* 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011) # uptake ZEN LI 
-    CLRE_ZEN <- 0 #PappCaco2_ZEN * SARE #* 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011) # uptake ZEN rectum
-    CLLI_aZEL <- 0 #PappCaco2aZEL * SALI #* 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011) # uptake aZEL LI
-    CL_SIZENGLU <- 0 #10 # clearance ZENglu from intestinal tissue to intestinal lumen
+    # CLSI_ZEN <- PappCaco2_ZEN * SASI # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011) # uptake ZEN SI
+    CLduo_ZEN <- PappCaco2_ZEN * SAduo * 1e-3 # cm/h to cm3/h to L/h
+    CLjej_ZEN <- PappCaco2_ZEN * SAjej * 1e-3 # cm/h to cm3/h to L/h
+    CLile_ZEN <- PappCaco2_ZEN * SAile * 1e-3 # cm/h to cm3/h to L/h
+    
+    # CLLI_ZEN <- PappCaco2_ZEN * SALI * 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011) # uptake ZEN LI
+    # CLRE_ZEN <- PappCaco2_ZEN * SARE * 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011) # uptake ZEN rectum
+    # CLLI_aZEL <- PappCaco2aZEL * SALI * 1e-3 # (L/h) cm/h to L/h reference: Pfeiffer et al. (2011) # uptake aZEL LI
+    # CL_SIZENGLU <- 0 #10 # clearance ZENglu from intestinal tissue to intestinal lumen
     
     
     ### metabolism in small intestine tissue ####
     VmaxSI_aZEL <- VmaxSI_aZELc * S9SI * VJej        # umol/h
     VmaxSI_bZEL <- VmaxSI_bZELc * S9SI * VJej        # umol/h
-    VmaxSI_ZENGLU <- 100*VmaxSI_ZENGLUc * S9SI * VJej  # umol/h
-    VmaxSI_aZELGLU <- VmaxSI_aZELGLUc * S9SI * VJej # umol/h
+    VmaxSI_ZENGLU <- 50*VmaxSI_ZENGLUc * S9SI * VJej  # umol/h #100
+    VmaxSI_aZELGLU <- VmaxSI_aZELGLUc * S9SI * VJej  # umol/h
     
     ### metabolism in large intestine lumen (microbiota compartment) ####
     VmaxLI_aZEL <- VmaxLI_aZELc*VMB  # umol/h 
@@ -105,11 +123,14 @@ PBK.model <- function(t, state, parms){
     ### metabolism in liver ####
     VmaxL_aZEL <- VmaxL_aZELc * S9L * VL 
     VmaxL_bZEL <- VmaxL_bZELc * S9L * VL
-    VmaxL_ZENGLU <- 10*VmaxL_ZENGLUc * S9L * VL  
+    VmaxL_ZENGLU <- VmaxL_ZENGLUc * S9L * VL  
+    # Vmax L needs to go to 40 so that glucuronide is more than zen, if intestinal metabolism is not there
     VmaxL_aZELGLU <- VmaxL_aZELGLUc * S9L * VL
     
     ### biliary clearance
-    fBile <- 0.5
+    tau <- 2.5
+    fBile <- ifelse(t > tau, 20, 0) # 7.440476e-02 biliary clearance ZEN gluc
+    #fBile decreasing it decreases the rate of release of gluc from the bile / increasing it increases the intensity of the second pick
     Vmax_BSEPc <- 7                            # umol/min/mg BSEP, Average active transport of bile acids, assuming that the maximum velocity of PFOA transport by BSEP corresponds to that of bile acids ; de Bruijn et al. 2024 https://doi.org/10.14573/altex.2302011 
     Km_BSEPc <- 16.4                           # umol/L, uM, Average affinity constant of bile acids to BSEP, following the above assumption ; de Bruijn et al. 2024 https://doi.org/10.14573/altex.2302011
     
@@ -119,13 +140,13 @@ PBK.model <- function(t, state, parms){
     SF_BSEP <- mgBSEP.HC * HC.GL * 1e3          # Scaling factor for BSEP mediated hepatic efflux for GCA and GCDC ; de Bruijn et al. 2024 https://doi.org/10.14573/altex.2302011
     
     Vmax_BSEP <- Vmax_BSEPc*60*24*SF_BSEP*VL         # umol/d
-    Km_BSEP <- 10*Km_BSEPc                             # umol/L (uM)
+    Km_BSEP <- 10*Km_BSEPc                           # umol/L (uM)
     
     ### conversion ZENGLU to ZEN
-    # CL_bile <- 7.440476e-02  # biliary clearance ZEN gluc 
-    CL_Hydro <- 1 # metabolic conversion ZEN gluc to ZEN
+    CL_Hydro <- 0.5 # metabolic conversion ZEN gluc to ZEN 
+    # CL_Hydro makes the second pick appear, increasing it increases the second pick
     
-    # fup_ZENGLU <- 0.15
+    
     ## Concentrations #####
     
     # Zearalenone 
@@ -206,6 +227,11 @@ PBK.model <- function(t, state, parms){
     # CSI_aZELGLU <- ASI_aZELGLU/VSI
     CJej_aZELGLU <- AJej_aZELGLU/VJej
     
+    ## Calculation of the dissociation constant per intestinal section
+    KdDuo = 3*1E-4*60/(0.0005*1E6*0.003)*(Si*1000-CDuo_ZEN) #Si = intrinsict solubility
+    KdJej = 3*1E-4*60/(0.0005*1E6*0.003)*(Si*1000-CJej_ZEN) 
+    KdIle = 3*1E-4*60/(0.0005*1E6*0.003)*(Si*1000-CIle_ZEN) 
+    KdLIL = 3*1E-4*60/(0.0005*1E6*0.003)*(Si*1000-CLIL_ZEN) 
     
     ## Dynamic ####
     
@@ -213,104 +239,107 @@ PBK.model <- function(t, state, parms){
     dAST_ZEN <- - GER*AST_ZEN 
     
     # Small intestinal lumen 
-    dADuoL_ZEN <- + GER*AST_ZEN - duoTR*ADuoL_ZEN*(1-fa_duo) + 
-      - ka_duo*ADuoL_ZEN*fa_duo
-    dAJejL_ZEN <- duoTR*ADuoL_ZEN*(1-fa_duo) - jejTR*AJejL_ZEN*(1-fa_jej) +
-      - ka_jej*AJejL_ZEN*fa_jej
-    dAIleL_ZEN <- jejTR*AJejL_ZEN*(1-fa_jej) - ileTR*AIleL_ZEN*(1-fa_ile) + 
-      - ka_ile*AIleL_ZEN*fa_ile  +
-      + jejTR*(CL_Hydro*CJejL_ZENGLU) +
+    
+    dADuoL_ZEN <- + GER*AST_ZEN - duoTR*ADuoL_ZEN + #*(1-fa_duo) + 
+      - CLduo_ZEN*CDuoL_ZEN #- ka_duo*ADuoL_ZEN*fa_duo
+    dAJejL_ZEN <- + duoTR*ADuoL_ZEN + #*(1-fa_duo) +
+      - jejTR*AJejL_ZEN + #*(1-fa_jej) +
+      - CLjej_ZEN*CJejL_ZEN + #+#ka_jej*AJejL_ZEN*fa_jej
+      + CL_Hydro*CJejL_ZENGLU
+    dAIleL_ZEN <- + jejTR*AJejL_ZEN + #*(1-fa_jej) +
+      - ileTR*AIleL_ZEN + #*(1-fa_ile) + 
+      - CLile_ZEN*CIleL_ZEN + #ka_ile*AIleL_ZEN*fa_ile +
       + CL_Hydro*CIleL_ZENGLU
     
     dADuoL_ZENGLU <- fBile*ABile_ZENGLU + #(Vmax_BSEP/(Km_BSEP + (CL_ZENGLU*fup_ZENGLU)))*CL_ZENGLU*fup_ZENGLU +
       - duoTR*ADuoL_ZENGLU 
-    dAJejL_ZENGLU <- duoTR*ADuoL_ZENGLU - jejTR*AJejL_ZENGLU + 
-      - jejTR*(CL_Hydro*CJejL_ZENGLU) +
-      + CL_SIZENGLU*CJej_ZENGLU*fup_ZENGLU 
+    dAJejL_ZENGLU <- + duoTR*ADuoL_ZENGLU +
+      - jejTR*AJejL_ZENGLU + 
+      - CL_Hydro*CJejL_ZENGLU
+    
     dAIleL_ZENGLU <- jejTR*AJejL_ZENGLU - ileTR*AIleL_ZENGLU +
       - CL_Hydro*CIleL_ZENGLU
     
-    # Large intestinal lumen 
-    dALIL_ZEN <- ileTR*AIleL_ZEN*(1-fa_ile) +
-      - VmaxLI_aZEL*CLIL_ZEN / (KmLI_aZEL + CLIL_ZEN) +
-      - VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN) +
+    dALIL_ZEN <- + ileTR*AIleL_ZEN + #*(1-fa_ile) +
+      - ((VmaxLI_aZEL*CLIL_ZEN) / (KmLI_aZEL + (CLIL_ZEN))) +
+      - ((VmaxLI_bZEL*CLIL_ZEN) / (KmLI_bZEL + (CLIL_ZEN))) +
       + CL_Hydro*CLIL_ZENGLU + 
-      # - CLLI_ZEN*CLIL_ZEN +
-      - LITR*ALIL_ZEN
+      # # - ka_lil*ALIL_ZEN*fa_lil +
+      - LITR*ALIL_ZEN #*(1-fa_lil)
     
-    dALIL_ZENGLU <- + ileTR*AIleL_ZENGLU - LITR*ALIL_ZENGLU +
+    dALIL_ZENGLU <- ileTR*AIleL_ZENGLU +
+      - LITR*ALIL_ZENGLU +
       - CL_Hydro*CLIL_ZENGLU  
     
-    dALIL_aZEL <- VmaxLI_aZEL*CLIL_ZEN / (KmLI_aZEL + CLIL_ZEN) +
+    dALIL_aZEL <- ((VmaxLI_aZEL*CLIL_ZEN) / (KmLI_aZEL + (CLIL_ZEN))) +
       - LITR*ALIL_aZEL 
     
-    dALIL_bZEL <- VmaxLI_bZEL*CLIL_ZEN / (KmLI_bZEL + CLIL_ZEN)  
+    dALIL_bZEL <- ((VmaxLI_bZEL*CLIL_ZEN) / (KmLI_bZEL + (CLIL_ZEN)))  
     
     # Rectum lumen
     dAREL_ZEN <- 0 #LITR*ALIL_ZEN - RETR*AREL_ZEN - CLRE_ZEN*CREL_ZEN 
     
     # Faeces ####
-    dAFE_ZEN <- LITR*ALIL_ZEN #RETR*AREL_ZEN 
+    dAFE_ZEN <- LITR*ALIL_ZEN #*(1-fa_lil) #RETR*AREL_ZEN 
     dAFE_aZEL <- LITR*ALIL_aZEL
     dAFE_ZENGLU <- LITR*ALIL_ZENGLU 
     
     
     # Small intestinal tissue ####
-    dADuo_ZEN <- ka_duo*ADuoL_ZEN*fa_duo + QDuo*(CB_ZEN-CVDuo_ZEN) 
-    dAJej_ZEN <- ka_jej*AJejL_ZEN*fa_jej + QJej*(CB_ZEN-CVJej_ZEN) +
-      - VmaxSI_ZENGLU*CJej_ZEN*fup_ZEN / ((KmSI_ZENGLU) + CJej_ZEN*fup_ZEN) + 
-      - VmaxSI_aZEL*CJej_ZEN*fup_ZEN / (KmSI_aZEL + CJej_ZEN*fup_ZEN) +
-      - VmaxSI_bZEL*CJej_ZEN*fup_ZEN / (KmSI_bZEL + CJej_ZEN*fup_ZEN)
+    dADuo_ZEN <- CLduo_ZEN*CDuoL_ZEN + QDuo*(CB_ZEN-CVDuo_ZEN) #ka_duo*ADuoL_ZEN*fa_duo +
+    dAJej_ZEN <- CLjej_ZEN*CJejL_ZEN + QJej*(CB_ZEN-CVJej_ZEN) + #ka_jej*AJejL_ZEN*fa_jej + 
+      - ((VmaxSI_ZENGLU*CJej_ZEN*fup_ZEN) / ((KmSI_ZENGLU) + (CJej_ZEN*fup_ZEN))) +
+      - ((VmaxSI_aZEL*CJej_ZEN*fup_ZEN) / (KmSI_aZEL + (CJej_ZEN*fup_ZEN))) +
+      - ((VmaxSI_bZEL*CJej_ZEN*fup_ZEN) / (KmSI_bZEL + (CJej_ZEN*fup_ZEN)))
     
-    dAIle_ZEN <- ka_ile*AIleL_ZEN*fa_ile + QIle*(CB_ZEN-CVIle_ZEN) 
+    dAIle_ZEN <- CLile_ZEN*CIleL_ZEN + QIle*(CB_ZEN-CVIle_ZEN) #ka_ile*AIleL_ZEN*fa_ile 
     
-    dAJej_ZENGLU <- VmaxSI_ZENGLU*CJej_ZEN*fup_ZEN / ((KmSI_ZENGLU) + CJej_ZEN*fup_ZEN) + 
-      + QSI*(CB_ZENGLU-CVJej_ZENGLU) +
-      - CL_SIZENGLU*CJej_ZENGLU*fup_ZENGLU
+    dAJej_ZENGLU <- ((VmaxSI_ZENGLU*CJej_ZEN*fup_ZEN) / ((KmSI_ZENGLU) + (CJej_ZEN*fup_ZEN))) + 
+      + QSI*(CB_ZENGLU-CVJej_ZENGLU) 
     
-    dAJej_aZEL <- VmaxSI_aZEL*CJej_ZEN*fup_ZEN / (KmSI_aZEL + CJej_ZEN*fup_ZEN) +
+    dAJej_aZEL <- ((VmaxSI_aZEL*CJej_ZEN*fup_ZEN) / (KmSI_aZEL + (CJej_ZEN*fup_ZEN))) +
       + QSI*(CB_aZEL-CVJej_aZEL) +
-      - VmaxSI_aZELGLU*CJej_aZEL*fup_aZEL / (KmSI_aZELGLU + CJej_aZEL*fup_aZEL)
+      - ((VmaxSI_aZELGLU*CJej_aZEL*fup_aZEL) / (KmSI_aZELGLU + (CJej_aZEL*fup_aZEL)))
     
-    dAJej_bZEL <- VmaxSI_bZEL*CJej_ZEN*fup_ZEN / (KmSI_bZEL + CJej_ZEN*fup_ZEN)
+    dAJej_bZEL <- ((VmaxSI_bZEL*CJej_ZEN*fup_ZEN) / (KmSI_bZEL + (CJej_ZEN*fup_ZEN)))
     
-    dAJej_aZELGLU <- VmaxSI_aZELGLU*CJej_aZEL*fup_aZEL / (KmSI_aZELGLU + CJej_aZEL*fup_aZEL)
+    dAJej_aZELGLU <- ((VmaxSI_aZELGLU*CJej_aZEL*fup_aZEL) / (KmSI_aZELGLU + (CJej_aZEL*fup_aZEL)))
     
     
     # Liver 
-    dAL_ZEN <- + QDuo*CVDuo_ZEN + QJej*CVJej_ZEN + QIle*CVIle_ZEN + QL*CB_ZEN +
+    dAL_ZEN <- QDuo*CVDuo_ZEN + QJej*CVJej_ZEN + QIle*CVIle_ZEN + QL*CB_ZEN + #ka_lil*ALIL_ZEN*fa_lil + 
       - (QSI+QL)*CVL_ZEN + 
-      - VmaxL_aZEL*CL_ZEN*fup_ZEN / (KmL_aZEL + CL_ZEN*fup_ZEN) +
-      - VmaxL_bZEL*CL_ZEN*fup_ZEN / (KmL_bZEL + CL_ZEN*fup_ZEN) +
-      - VmaxL_ZENGLU*CL_ZEN*fup_ZEN / ((KmL_ZENGLU) + CL_ZEN*fup_ZEN)
+      - ((VmaxL_aZEL*CL_ZEN*fup_ZEN) / (KmL_aZEL + (CL_ZEN*fup_ZEN))) +
+      - ((VmaxL_bZEL*CL_ZEN*fup_ZEN) / (KmL_bZEL + (CL_ZEN*fup_ZEN))) +
+      - ((VmaxL_ZENGLU*CL_ZEN*fup_ZEN) / ((KmL_ZENGLU) + (CL_ZEN*fup_ZEN)))
     
-    dAL_ZENGLU <- VmaxL_ZENGLU*CL_ZEN*fup_ZEN / ((KmL_ZENGLU) + CL_ZEN*fup_ZEN) +
-      +  QSI*CVJej_ZENGLU + QL*CB_ZENGLU - (QSI+QL)*CVL_ZENGLU +
+    dAL_ZENGLU <- +  QSI*CVJej_ZENGLU + QL*CB_ZENGLU - (QSI+QL)*CVL_ZENGLU + 
+      + ((VmaxL_ZENGLU*CL_ZEN*fup_ZEN) / ((KmL_ZENGLU) + (CL_ZEN*fup_ZEN))) +
       - (Vmax_BSEP/(Km_BSEP + (CL_ZENGLU*fup_ZENGLU)))*CL_ZENGLU*fup_ZENGLU
     
-    dAL_bZEL <- VmaxL_bZEL*CL_ZEN*fup_ZEN / (KmL_bZEL + CL_ZEN*fup_ZEN) 
+    dAL_bZEL <- ((VmaxL_bZEL*CL_ZEN*fup_ZEN) / (KmL_bZEL + (CL_ZEN*fup_ZEN))) 
     
-    dAL_aZEL <- VmaxL_aZEL*CL_ZEN*fup_ZEN / (KmL_aZEL + CL_ZEN*fup_ZEN) +
-      + QSI*CVJej_aZEL + QL*CB_aZEL - (QSI+QL)*CVL_aZEL +
-      - VmaxL_aZELGLU*CL_aZEL*fup_aZEL / (KmL_aZELGLU + CL_aZEL*fup_aZEL) 
+    dAL_aZEL <- + QSI*CVJej_aZEL + QL*CB_aZEL - (QSI+QL)*CVL_aZEL + 
+      + ((VmaxL_aZEL*CL_ZEN*fup_ZEN) / (KmL_aZEL + (CL_ZEN*fup_ZEN))) +
+      - ((VmaxL_aZELGLU*CL_aZEL*fup_aZEL) / (KmL_aZELGLU + (CL_aZEL*fup_aZEL))) 
     
-    dAL_aZELGLU <- VmaxL_aZELGLU*CL_aZEL*fup_aZEL / (KmL_aZELGLU + CL_aZEL*fup_aZEL) 
+    dAL_aZELGLU <- ((VmaxL_aZELGLU*CL_aZEL*fup_aZEL) / (KmL_aZELGLU + (CL_aZEL*fup_aZEL))) 
     
     # Bile
     dABile_ZENGLU <- (Vmax_BSEP/(Km_BSEP + (CL_ZENGLU*fup_ZENGLU)))*CL_ZENGLU*fup_ZENGLU +
       - fBile*ABile_ZENGLU
     
     # Blood
-    dAB_ZEN <- - (QSI + QL + QR + QS + QF)*CB_ZEN +  
+    dAB_ZEN <- - (QSI + QL + QR + QS + QF)*CB_ZEN +  #
       + (QSI+QL)*CVL_ZEN + QF*CVF_ZEN + QR*CVR_ZEN + QS*CVS_ZEN + 
       - GFR*CB_ZEN*fup_ZEN #+
       # + CLRE_ZEN*CREL_ZEN 
 
-    dAB_aZEL <- - (QSI + QL + QR + QS + QF)*CB_aZEL +  
+    dAB_aZEL <- - (QSI + QL + QR + QS + QF)*CB_aZEL +  #
      + (QL+QSI)*CVL_aZEL + QF*CVF_aZEL + QR*CVR_aZEL + QS*CVS_aZEL +
      - GFR*CB_aZEL*fup_aZEL
     
-    dAB_ZENGLU <- - (QSI + QL + QR + QS + QF)*CB_ZENGLU +   
+    dAB_ZENGLU <- - (QSI + QL + QR + QS + QF)*CB_ZENGLU +   # 
       + (QSI+QL)*CVL_ZENGLU + QF*CVF_ZENGLU + QR*CVR_ZENGLU + QS*CVS_ZENGLU +
       - GFR*CB_ZENGLU*fup_ZENGLU 
     
@@ -360,7 +389,7 @@ PBK.model <- function(t, state, parms){
     list(c(
       dAST_ZEN, 
       dADuoL_ZEN, dAJejL_ZEN, dAIleL_ZEN, 
-      dADuoL_ZENGLU, dAJejL_ZENGLU, dAIleL_ZENGLU, 
+      dADuoL_ZENGLU, dAJejL_ZENGLU, dAIleL_ZENGLU,
       dALIL_ZEN, dALIL_ZENGLU, dALIL_aZEL, dALIL_bZEL, 
       dAREL_ZEN, 
       dAFE_ZEN, dAFE_aZEL, dAFE_ZENGLU,

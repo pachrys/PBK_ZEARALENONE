@@ -105,7 +105,7 @@ C_organs_long <- C_organs.df %>%
                DuodenumT_ZEN:Blood_ZENGLU,
                values_to = "Concentration",
                names_sep = "_") %>%
-  mutate(Concentration = ifelse(Compound == "ZEN", Concentration*MWZEN, 
+  mutate(Concentration = ifelse(Compound == "ZEN", Concentration*MWZEN,
                                 ifelse(Compound == "ZENGLU",Concentration*MWZENGLUC,
                                        Concentration*MWaZEL))
          )
@@ -337,7 +337,7 @@ C_organs_wide_GLUC <- C_organs_long %>%
   # mutate("TIntestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL)))%>%
   # mutate("Intestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VLIL+VREL)))/(VSI + VSIL+VLIL+VREL))) %>%
   mutate("Intestine" = ((DuodenumT*VDuo) + (JejunumT*VJej) + (IleumT*VIle))/# + +  (DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL)
-                          # (LIntestineL*VLIL))/ 
+                          # (LIntestineL*VLIL))/
            (VDuo + VJej + VIle)) %>% # + VLIL + VDuoL + VJejL + VIleL
   # rename("Intestine" = "SIntestineT") %>%
   select(c("time", "Intestine", "Liver", "Blood"))
@@ -445,6 +445,7 @@ A_organs.df <- PBK_OUTPUT %>%
             LIntestineL_ZENGLU = ALIL_ZENGLU,
             Feces_ZENGLU = AFE_ZENGLU,
             Liver_ZENGLU = AL_ZENGLU,
+            Bile_ZENGLU = ABile_ZENGLU,
             Fat_ZENGLU = AF_ZENGLU,
             Rapidly_ZENGLU = AR_ZENGLU,
             Slowly_ZENGLU = AS_ZENGLU,

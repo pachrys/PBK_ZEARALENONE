@@ -23,6 +23,96 @@ format:
 # bibliography: references.bib
 ---
 
+## 6-8-2025
+
+Vmax/Km original
+
+![](images/clipboard-4182815213.png)
+
+![](images/clipboard-212922300.png)
+
+![](images/clipboard-158580767.png)
+
+VmaxSI \* 5
+
+![](images/clipboard-1675727530.png)
+
+![](images/clipboard-2820993843.png)
+
+![](images/clipboard-1741009603.png)
+
+VmaxSI \* 10
+
+![](images/clipboard-1189380900.png)
+
+![](images/clipboard-1091353157.png)
+
+![](images/clipboard-1729044557.png)
+
+VmaxSI \* 50
+
+![](images/clipboard-2016514401.png)
+
+![](images/clipboard-3043440767.png)
+
+![](images/clipboard-4173683994.png)
+
+CL_hydro = 0.001
+
+![](images/clipboard-4117723200.png)
+
+![](images/clipboard-918540997.png)
+
+![](images/clipboard-154350599.png)
+
+CL_hydro = 0.01
+
+![](images/clipboard-124105501.png)
+
+![](images/clipboard-2540800534.png)
+
+![](images/clipboard-3674424096.png)
+
+CL_hydro = 0.05
+
+![](images/clipboard-1307633189.png)
+
+![](images/clipboard-3163378185.png)
+
+![](images/clipboard-2860261003.png)
+
+CL_hydro = 0.5, this is the max
+
+![](images/clipboard-2696962701.png)
+
+![](images/clipboard-8081897.png)
+
+![](images/clipboard-201041358.png)
+
+CL_Hydro = 1
+
+![](images/clipboard-1374166329.png)
+
+![](images/clipboard-1875787370.png)
+
+![](images/clipboard-2531841454.png)
+
+CL_Hydro = 10
+
+![](images/clipboard-1905985661.png)
+
+![](images/clipboard-1846855196.png)
+
+![](images/clipboard-3017837430.png)
+
+CL_Hydro = 100
+
+![](images/clipboard-559272372.png)
+
+![](images/clipboard-3479075506.png)
+
+![](images/clipboard-153374395.png)
+
 ## 5-8-2025
 
 CL_Hydro = 0
