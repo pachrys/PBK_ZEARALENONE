@@ -33,6 +33,8 @@ dir.create(OUTPUT, recursive = TRUE)
 
 # Species
 Species = "Rat"
+Select_Author = "Shin" #Shin, Q.Lu
+Select_AdminType = "IV" #IV, PO
 
 # Parameters
 Parameters <- if(Species == "Rat"){
@@ -46,11 +48,11 @@ Parameters <- if(Species == "Rat"){
 MWZEN <- 318.37 # molecular weight ZEN
 
 # oral dose
-ODOSEmg <- 1 #{mg/kg bw} # oral dose, variable Shin is 8, Videmann = 1
+ODOSEmg <- 1 #{mg/kg bw} # oral dose, variable Shin is 8, Videmann, Q.Lu = 1
 ODOSEumol <- ODOSEmg*1000/MWZEN*Parameters[1, "Value"] # (μmol) unit change to μmol
 
 # IV dose
-IVDOSEmg1 <- 0 #{mg/kg bw} # IV dose, variable Shin is 8
+IVDOSEmg1 <- 8 #{mg/kg bw} # IV dose, variable Shin is 8, Q.Lu = 6.63
 IVDOSEumol <-IVDOSEmg1*1000/MWZEN*Parameters[1, "Value"] # unit change to μmol
 # time
 
@@ -68,78 +70,45 @@ parm.c <- as.list(setNames(Parameters$Value, Parameters$Parameter))
 source(here("Script", "PBKi_code.R"))
 # source(here("Script", "PBK_code_Mendez.R"))
 
+# Initials
+if(Select_AdminType == "PO"){
+  A_init <- c(
+    AST_ZEN = ODOSEumol, 
+    ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, 
+    ADuoL_ZENGLU = 0, AJejL_ZENGLU = 0, AIleL_ZENGLU = 0, 
+    ALIL_ZEN = 0, ALIL_ZENGLU = 0, ALIL_aZEL = 0, ALIL_bZEL = 0, 
+    AREL_ZEN = 0, 
+    AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0, 
+    ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
+    AJej_ZENGLU = 0, AJej_aZEL = 0, AJej_bZEL = 0, AJej_aZELGLU = 0,
+    AL_ZEN = 0, AL_ZENGLU = 0, AL_bZEL = 0, AL_aZEL = 0, AL_aZELGLU = 0,
+    ABile_ZENGLU = 0,
+    AB_ZEN = 0, AB_aZEL = 0, AB_ZENGLU = 0, 
+    AUR_ZEN = 0, AUR_aZEL = 0, AUR_ZENGLU = 0, 
+    AF_ZEN = 0, AF_aZEL = 0, AF_ZENGLU = 0, 
+    AR_ZEN = 0, AR_aZEL = 0, AR_ZENGLU = 0, 
+    AS_ZEN = 0, AS_aZEL = 0, AS_ZENGLU = 0
+  )
+}else{
+  A_init <- c(
+    AST_ZEN = 0, 
+    ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, 
+    ADuoL_ZENGLU = 0, AJejL_ZENGLU = 0, AIleL_ZENGLU = 0, 
+    ALIL_ZEN = 0, ALIL_ZENGLU = 0, ALIL_aZEL = 0, ALIL_bZEL = 0, 
+    AREL_ZEN = 0, 
+    AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0, 
+    ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
+    AJej_ZENGLU = 0, AJej_aZEL = 0, AJej_bZEL = 0, AJej_aZELGLU = 0,
+    AL_ZEN = 0, AL_ZENGLU = 0, AL_bZEL = 0, AL_aZEL = 0, AL_aZELGLU = 0,
+    ABile_ZENGLU = 0,
+    AB_ZEN = IVDOSEumol, AB_aZEL = 0, AB_ZENGLU = 0, 
+    AUR_ZEN = 0, AUR_aZEL = 0, AUR_ZENGLU = 0, 
+    AF_ZEN = 0, AF_aZEL = 0, AF_ZENGLU = 0, 
+    AR_ZEN = 0, AR_aZEL = 0, AR_ZENGLU = 0, 
+    AS_ZEN = 0, AS_aZEL = 0, AS_ZENGLU = 0
+  )
+}
 
-# Tell Initials 
- 
-# A_init <- c(
-#   AST_ZEN = ODOSEumol,
-#  ASIL_ZEN1 = 0,
-#  ASIL_ZEN2 = 0,
-#  ASIL_ZEN3 = 0,
-#  ASIL_ZEN4 = 0,
-#  ASIL_ZEN5 = 0,
-#  ASIL_ZEN6 = 0,
-#  ASIL_ZEN7 = 0,
-#  ASI_ZEN = 0,
-#   ASI_ZENGLU = 0,
-#   ALIL_ZEN = 0,
-#   ALIL_aZEL = 0,
-#   ALIL_bZEL = 0,
-#  AFE_ZEN = 0,
-#  AFE_aZEL = 0,
-#   AL_ZEN = 0,
-#   ALaZEL = 0,
-#   ALbZEL = 0,
-#   AL_ZENGLU = 0,
-#   AB_ZENGLU = 0, #new
-#   AUR_ZENGLU = 0, #new
-#   AL_aZELGLU = 0,
-#   AF = 0,
-#   AR = 0,
-#   AS = 0,
-#   AB = 0,
-#   AZur = 0,
-#   AFaZEL = 0,
-#   ARaZEL = 0,
-#   ASaZEL = 0,
-#   ABaZEL = 0,
-#   AaZur = 0,
-#   ATotal = 0
-# ) 
-
-# A_init <- c(
-#   AST_ZEN = ODOSEumol,
-#   ASIL_ZEN = 0, ASIL_ZENGLU = 0,
-#   ALIL_ZEN = 0, ALIL_ZENGLU = 0, ALIL_aZEL = 0,ALIL_bZEL = 0,
-#   AREL_ZEN = 0, ARE_ZEN = 0,
-#   AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0,
-#   ASI_ZEN = 0, ASI_ZENGLU = 0, ASI_bZEL = 0, ASI_aZEL = 0, ASI_aZELGLU = 0,
-#   AL_ZEN = 0, AL_ZENGLU = 0, AL_bZEL = 0, AL_aZEL = 0, AL_aZELGLU = 0,
-#   AB_ZEN = 0, AB_aZEL = 0, AB_ZENGLU = 0,
-#   AUR_ZEN = 0, AUR_aZEL = 0, AUR_ZENGLU = 0,
-#   AF_ZEN = 0, AF_aZEL = 0, AF_ZENGLU = 0,
-#   AR_ZEN = 0, AR_aZEL = 0, AR_ZENGLU = 0,
-#   AS_ZEN = 0, AS_aZEL = 0, AS_ZENGLU = 0#,
-#   # ATotal = 0
-#   )
-
-A_init <- c(
-  AST_ZEN = ODOSEumol, 
-  ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, 
-  ADuoL_ZENGLU = 0, AJejL_ZENGLU = 0, AIleL_ZENGLU = 0, 
-  ALIL_ZEN = 0, ALIL_ZENGLU = 0, ALIL_aZEL = 0, ALIL_bZEL = 0, 
-  AREL_ZEN = 0, 
-  AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0, 
-  ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
-  AJej_ZENGLU = 0, AJej_aZEL = 0, AJej_bZEL = 0, AJej_aZELGLU = 0,
-  AL_ZEN = 0, AL_ZENGLU = 0, AL_bZEL = 0, AL_aZEL = 0, AL_aZELGLU = 0,
-  ABile_ZENGLU = 0,
-  AB_ZEN = 0, AB_aZEL = 0, AB_ZENGLU = 0, 
-  AUR_ZEN = 0, AUR_aZEL = 0, AUR_ZENGLU = 0, 
-  AF_ZEN = 0, AF_aZEL = 0, AF_ZENGLU = 0, 
-  AR_ZEN = 0, AR_aZEL = 0, AR_ZENGLU = 0, 
-  AS_ZEN = 0, AS_aZEL = 0, AS_ZENGLU = 0
-)
 
 
 PBK.out <- lsoda(y = A_init,

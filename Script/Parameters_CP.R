@@ -5,20 +5,11 @@
 # Date: 23-06-2025
 # --------------------------------------------------------------------------- #
 
-# --------------------------------------------------------------------------- #
-# Script for the PBK Model of DIANA et al. 
-# By: Chrysanthi Pachoulide
-# Date: 23-06-2025
-# --------------------------------------------------------------------------- #
-
 rm(list = ls()) 
 
 # Packages
 library(here)
 library(tidyverse)
-library(deSolve)
-library(PKNCA)
-library(pracma)
 library(showtext)
 font_add(family = "Garamond",  regular = "GARA.TTF")
 showtext_auto()
@@ -29,6 +20,14 @@ dir.create(OUTPUT,  recursive = TRUE)
 
 
 # Parameters for Rat####
+
+Rat.input <- read.csv(here("Input", "Rat.input.csv"), header=1) # tissue composition mainly as R&R composition, unified by Utsey and optimised as per Musther
+Rat.dat <- Rat.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for all tissues except for adipose and RBCs
+names <- substr(Rat.dat$tissue, 1, 2)
+F_Vo.names <- paste0("FV", names)
+F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo)) %>%
+  pivot_wider(names_from = F_Vo.names, values_from = F_Vo)
+
 
   ## Physiological constants ####
   # Fractional Tissue volumes (reference: Punt et al. (2020))
@@ -69,61 +68,225 @@ dir.create(OUTPUT,  recursive = TRUE)
   # Glomerular filtration rate: Punt et al. (2020)
   GFRc = 0.312 #L/h/kg 0.08 #(/h)
   
-  ## Physicochemical parameters ####
+  ## Partition coefficients / fraction unbound / fraction unionised ####
+  # Tissue partitioning (Rodgers and Rowland as coded by kmutsey: https://github.com/metrumresearchgroup/PBPK_PC/blob/master/script/CalcKp_P%26T.R
+  # Assumption that Zearalenone and a-Zearalenol are diprotic acids and Zearalenone glucuronide a monoprotic acid
+  #microsomes or S9 (Kilford et al., 2008 based on Halifax and Houston 2006)
+  Rat.input <- read.csv(here("Input", "Rat.input.csv"))
+  dat_all <- Rat.input %>% filter(!tissue %in% c("RBCs", "Adipose", "Plasma"))  #df for all tissues except for adipose, RBCs, and plasma
+  dat_ad <- Rat.input %>% filter(tissue == "Adipose")  #df for adipose
+  dat_rbc <- Rat.input %>% filter(tissue == "RBCs") #df for RBCs
+  dat_plas <- Rat.input %>% filter(tissue == "Plasma") #df for aplasma
   
-  ### partition coefficients ####
-  # Calculated based on R&R
-  # ZEN 
-  PSI_ZEN = 4.11 #2.64  # intestine/blood partition coefficient
-  PL_ZEN = 1.74  #2.64  # liver/blood partition coefficient
-  PR_ZEN = 1.60  #2.64  # rapidly perfused tissue/blood partition coefficient
-  PS_ZEN = 2.19 #0.76  # slowly perfused tissue/blood partition coefficient
-  PF_ZEN = 12.60 #106.93  # fat/blood partition coefficient
+  pH_IW <- 7       #pH of intracellular tissue water
+  pH_P <- 7.4      #pH of plasma
+  pH_RBC <- 7.22    #pH of blood cells
   
-  # ZEN-gluc
-  PSI_ZENGLU = 0.97
-  PL_ZENGLU = 1.66
-  PR_ZENGLU = 0.95
-  PS_ZENGLU = 1.30
-  PF_ZENGLU = 0.23
+  ### Calculate Kp for ZEN ####
   
-  # α-ZEL in sub-model; need to change them
-  PIaZEL = 2.38  # intestine/blood partition coefficient
-  PLaZEL = 2.38  # liver/blood partition coefficient
-  PRaZEL = 2.38  # rapidly perfused tissue/blood partition coefficient
-  PSaZEL = 0.71  # slowly perfused tissue/blood partition coefficient
-  PFaZEL = 92.79  # fat/blood partition coefficient
+  logP_ZEN <- 3.580 # Molgpka
+  pKa1_ZEN <- 7.5 # Molgpka
+  pKa2_ZEN <- 7.7 # Molgpka
+  BP_ZEN <- 0.67 # Shin et al. 2014 DOI: 10.1080/15287390903212741
+  fup_ZEN <- 0.156 # Mukherjee et al. 2014 doi:10.1371/journal.pone.0113632
+  
+  P <- 10^(logP_ZEN)   # octonal:water partition coeff
+  logP_OW <- 1.115*logP_ZEN - 1.35 #oil:water partition coeff
+  P_OW <- 10^(logP_OW) 
+  # Ka <- 10^(-pKa1_ZEN)
+  HCT <- 0.45 #hematocrit
+  
+  Kpu_bc <- (HCT - 1 + BP_ZEN)/(HCT*fup_ZEN)
+  
+  X <- 10^(pH_IW-pKa1_ZEN)+10^(2*pH_IW-pKa1_ZEN-pKa2_ZEN)       
+  
+  Y <- 10^(pH_P-pKa1_ZEN)+10^(2*pH_P-pKa1_ZEN-pKa2_ZEN)     
+  
+  Z <- 1 
+  
+  Ka_PR <- (1/fup_ZEN - 1 - (P*dat_plas$f_n_l + (0.3*P + 0.7)*dat_plas$f_n_pl)/(1+Y))
+  Ka_AP <- (Kpu_bc - (1 + Z)/(1 + Y)*dat_rbc$f_iw - (P*dat_rbc$f_n_l + (0.3*P + 0.7)*dat_rbc$f_n_pl)/(1 + Y)) * (1 + Y)/dat_rbc$f_a_pl/Z
+  
+  Kp_all <- (dat_all$f_ew + ((1 + X)/(1 + Y))*dat_all$f_iw + ((P*dat_all$f_n_l + (0.3*P + 0.7)*dat_all$f_n_pl))/(1 + Y) + (Ka_PR*dat_all$AR*X)/(1 + Y))*fup_ZEN  #non lipid
+  Kp_ad <- (dat_ad$f_ew + ((1 + X)/(1 + Y))*dat_ad$f_iw + ((P_OW*dat_ad$f_n_l + (0.3*P_OW + 0.7)*dat_ad$f_n_pl))/(1 + Y) + (Ka_PR*dat_ad$AR*X)/(1 + Y))*fup_ZEN  #lipid
+  
+  nms_all <- dat_all$tissue %>% substr(1,2) %>% tolower()
+  nms_all <- paste("Kp", nms_all, sep="")
+  nms <- c("Kpad",nms_all)
+  Kp_ZEN <- as.list(c(Kp_ad,Kp_all)) #maybe make as dataframe
+  names(Kp_ZEN) <- nms
+  
+  PSI_ZEN = Kp_ZEN$Kpgu #Intestine:Blood partition coefficient
+  PL_ZEN = Kp_ZEN$Kpli #Liver:Blood partition coefficient
+  PF_ZEN = Kp_ZEN$Kpad #Adipose:Blood partition coefficient
+  PS_ZEN = (F_Vo.dat$FVBo*Kp_ZEN$Kpbo + F_Vo.dat$FVBr*Kp_ZEN$Kpbr +
+              F_Vo.dat$FVMu*Kp_ZEN$Kpmu + F_Vo.dat$FVSk*Kp_ZEN$Kpsk) /
+    (F_Vo.dat$FVBo + F_Vo.dat$FVBr + F_Vo.dat$FVMu + F_Vo.dat$FVSk) #slowly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
+  PR_ZEN = (F_Vo.dat$FVHe*Kp_ZEN$Kphe + F_Vo.dat$FVKi*Kp_ZEN$Kpki + F_Vo.dat$FVLu*Kp_ZEN$Kplu + F_Vo.dat$FVSp*Kp_ZEN$Kpsp) /
+    (F_Vo.dat$FVHe + F_Vo.dat$FVKi + F_Vo.dat$FVLu + F_Vo.dat$FVSp)
+  
+  fut_ZEN <- 1/(1+((1-fup_ZEN)/fup_ZEN)*0.5) #fraction unbound in the tissues
+  
+  pH <- 7.4
+  logD_ZEN <- logP_ZEN-log10(1+10^(pH-pKa1_ZEN)+10^(pH-pKa1_ZEN+pH-pKa2_ZEN))
+  
+  frac.unionized_ZEN <- 1/(1+10^(pH-pKa1_ZEN)+10^(pH-pKa1_ZEN+pH-pKa2_ZEN))
+  f.frac.ionized_ZEN <- 1 - 1/(1+10^(pH-pKa1_ZEN)+10^(pH-pKa1_ZEN+pH-pKa2_ZEN))
+  
+  ### Calculate Kp for aZEL ####
+  
+  MW_aZEL <- 320.385 # PubMed
+  logP_aZEL <- 3.371 # Molgpka
+  pKa1_aZEL <- 7.5 # Molgpka
+  pKa2_aZEL <- 7.7 # Molgpka
+  BP_aZEL <- 0.67 # assuming the same as ZEN
+  fup_aZEL <- 0.156 # assuming the same as ZEN
+  
+  P <- 10^(logP_aZEL)   # octonal:water partition coeff
+  logP_OW <- 1.115*logP_aZEL - 1.35 #oil:water partition coeff
+  P_OW <- 10^(logP_OW) 
+  # Ka <- 10^(-pKa1_aZEL)
+  HCT <- 0.45 #hematocrit
+  
+  Kpu_bc <- (HCT - 1 + BP_aZEL)/(HCT*fup_aZEL)
+  
+  X <- 10^(pH_IW-pKa1_aZEL)+10^(2*pH_IW-pKa1_aZEL-pKa2_aZEL)       
+  
+  Y <- 10^(pH_P-pKa1_aZEL)+10^(2*pH_P-pKa1_aZEL-pKa2_aZEL)     
+  
+  Z <- 1 
+  
+  Ka_PR <- (1/fup_aZEL - 1 - (P*dat_plas$f_n_l + (0.3*P + 0.7)*dat_plas$f_n_pl)/(1+Y))
+  Ka_AP <- (Kpu_bc - (1 + Z)/(1 + Y)*dat_rbc$f_iw - (P*dat_rbc$f_n_l + (0.3*P + 0.7)*dat_rbc$f_n_pl)/(1 + Y)) * (1 + Y)/dat_rbc$f_a_pl/Z
+  
+  Kp_all <- (dat_all$f_ew + ((1 + X)/(1 + Y))*dat_all$f_iw + ((P*dat_all$f_n_l + (0.3*P + 0.7)*dat_all$f_n_pl))/(1 + Y) + (Ka_PR*dat_all$AR*X)/(1 + Y))*fup_aZEL  #non lipid
+  Kp_ad <- (dat_ad$f_ew + ((1 + X)/(1 + Y))*dat_ad$f_iw + ((P_OW*dat_ad$f_n_l + (0.3*P_OW + 0.7)*dat_ad$f_n_pl))/(1 + Y) + (Ka_PR*dat_ad$AR*X)/(1 + Y))*fup_aZEL #lipid
+  
+  nms_all <- dat_all$tissue %>% substr(1,2) %>% tolower()
+  nms_all <- paste("Kp", nms_all, sep="")
+  nms <- c("Kpad",nms_all)
+  Kp_aZEL <- as.list(c(Kp_ad,Kp_all))
+  names(Kp_aZEL) <- nms
+  
+  PSI_aZEL = Kp_aZEL$Kpgu #Intestine:Blood partition coefficient
+  PL_aZEL = Kp_aZEL$Kpli #Liver:Blood partition coefficient
+  PF_aZEL = Kp_aZEL$Kpad #Adipose:Blood partition coefficient
+  PS_aZEL = (F_Vo.dat$FVBo*Kp_aZEL$Kpbo + F_Vo.dat$FVBr*Kp_aZEL$Kpbr +
+              F_Vo.dat$FVMu*Kp_aZEL$Kpmu + F_Vo.dat$FVSk*Kp_aZEL$Kpsk) /
+    (F_Vo.dat$FVBo + F_Vo.dat$FVBr + F_Vo.dat$FVMu + F_Vo.dat$FVSk) #slowly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
+  PR_aZEL = (F_Vo.dat$FVHe*Kp_aZEL$Kphe + F_Vo.dat$FVKi*Kp_aZEL$Kpki + F_Vo.dat$FVLu*Kp_aZEL$Kplu + F_Vo.dat$FVSp*Kp_aZEL$Kpsp) /
+    (F_Vo.dat$FVHe + F_Vo.dat$FVKi + F_Vo.dat$FVLu + F_Vo.dat$FVSp)
+  
+  fut_aZEL <- 1/(1+((1-fup_aZEL)/fup_aZEL)*0.5) #fraction unbound in the tissues
+  
+  logD_aZEL <- logP_ZEN-log10(1+10^(pH-pKa1_aZEL)+10^(pH-pKa1_ZEN+pH-pKa2_aZEL))
+  frac.unionized_aZEL <- 1/(1+10^(pH-pKa1_aZEL)+10^(pH-pKa1_aZEL+pH-pKa2_aZEL))
+  f.frac.ionized_aZEL <- 1 - 1/(1+10^(pH-pKa1_aZEL)+10^(pH-pKa1_aZEL+pH-pKa2_aZEL))
 
-  # fraction unbound ####
-  fup_ZEN = 0.156
-  fup_aZEL = 0.156
-  fup_ZENGLU = 0.20
+  
+  ### Calculate Kp for ZENGLUC ####
+  
+  MW_ZENGLU <- 494.5 # PubMed
+  logP_ZENGLU <- 1.145 # Molgpka
+  pKa_ZENGLU <- 3 # Molgpka
+  BP_ZENGLU <- 0.67 # assuming the same as ZEN
+  fup_ZENGLU <- 1 / (1 + 10^(0.4485 * logP_ZENGLU - 0.4782)) #Lobell M, Sivarajah V. et al. 2003 doi: 10.1023/b:modi.0000006562.93049.36.
+  
+  P <- 10^(logP_ZENGLU)   # octonal:water partition coeff
+  logP_OW <- 1.115*logP_ZENGLU - 1.35 #oil:water partition coeff
+  P_OW <- 10^(logP_OW) 
+  Ka <- 10^(-pKa_ZENGLU)
+  HCT <- 0.45 #hematocrit
+  
+  
+  #Calculate Kp values
+  Kpu_bc <- (HCT - 1 + BP_ZENGLU)/(HCT*fup_ZENGLU)
+  
+  X <- 10^(pH_IW-pKa_ZENGLU)
+  Y <- 10^(pH_P-pKa_ZENGLU)
+  Z <- 1
+  
+  Ka_PR <- (1/fup_ZENGLU - 1 - (P*dat_plas$f_n_l + (0.3*P + 0.7)*dat_plas$f_n_pl)/(1+Y))
+  Ka_AP <- (Kpu_bc - (1 + Z)/(1 + Y)*dat_rbc$f_iw - (P*dat_rbc$f_n_l + (0.3*P + 0.7)*dat_rbc$f_n_pl)/(1 + Y)) * (1 + Y)/dat_rbc$f_a_pl/Z
+  
+  # Multiply by fup to get Kp rather than Kpu
+  Kp_all <- (dat_all$f_ew + ((1 + X)/(1 + Y))*dat_all$f_iw + ((P*dat_all$f_n_l + (0.3*P + 0.7)*dat_all$f_n_pl))/(1 + Y) + (Ka_PR*dat_all$AR*X)/(1 + Y))*fup_ZENGLU  #non lipid
+  Kp_ad <- (dat_ad$f_ew + ((1 + X)/(1 + Y))*dat_ad$f_iw + ((P_OW*dat_ad$f_n_l + (0.3*P_OW + 0.7)*dat_ad$f_n_pl))/(1 + Y) + (Ka_PR*dat_ad$AR*X)/(1 + Y))*fup_ZENGLU #lipid
+  
+  nms_all <- dat_all$tissue %>% substr(1,2) %>% tolower()
+  nms_all <- paste("Kp", nms_all, sep="")
+  nms <- c("Kpad",nms_all)
+  Kp_ZENGLU <- as.list(c(Kp_ad,Kp_all))
+  names(Kp_ZENGLU) <- nms
+  
+  PSI_ZENGLU = Kp_ZENGLU$Kpgu #Intestine:Blood partition coefficient
+  PL_ZENGLU = Kp_ZENGLU$Kpli #Liver:Blood partition coefficient
+  PF_ZENGLU = Kp_ZENGLU$Kpad #Adipose:Blood partition coefficient
+  PS_ZENGLU = (F_Vo.dat$FVBo*Kp_ZENGLU$Kpbo + F_Vo.dat$FVBr*Kp_ZENGLU$Kpbr +
+              F_Vo.dat$FVMu*Kp_ZENGLU$Kpmu + F_Vo.dat$FVSk*Kp_ZENGLU$Kpsk) /
+    (F_Vo.dat$FVBo + F_Vo.dat$FVBr + F_Vo.dat$FVMu + F_Vo.dat$FVSk) #slowly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
+  PR_ZENGLU = (F_Vo.dat$FVHe*Kp_ZENGLU$Kphe + F_Vo.dat$FVKi*Kp_ZENGLU$Kpki + F_Vo.dat$FVLu*Kp_ZENGLU$Kplu + F_Vo.dat$FVSp*Kp_ZENGLU$Kpsp) /
+    (F_Vo.dat$FVHe + F_Vo.dat$FVKi + F_Vo.dat$FVLu + F_Vo.dat$FVSp)
+  
+  fut_ZENGLU <- 1/(1+((1-fup_ZENGLU)/fup_ZENGLU)*0.5) #fraction unbound in the tissues
+  
+  logD_ZENGLU <- logP_ZENGLU - log10(1+10^(pH-pKa_ZENGLU))
+  
+  frac.unionized_ZENGLU <- 1/(1+10^(pH-pKa_ZENGLU))
+  f.frac.ionized_ZENGLU <- 1-1/(1+10^(pH-pKa_ZENGLU))
+
+  # # Calculated based on R&R
+  # # ZEN 
+  # PSI_ZEN = 4.11 #2.64  # intestine/blood partition coefficient
+  # PL_ZEN = 1.74  #2.64  # liver/blood partition coefficient
+  # PR_ZEN = 1.60  #2.64  # rapidly perfused tissue/blood partition coefficient
+  # PS_ZEN = 2.19 #0.76  # slowly perfused tissue/blood partition coefficient
+  # PF_ZEN = 12.60 #106.93  # fat/blood partition coefficient
+  # 
+  # # ZEN-gluc
+  # PSI_ZENGLU = 0.97
+  # PL_ZENGLU = 1.66
+  # PR_ZENGLU = 0.95
+  # PS_ZENGLU = 1.30
+  # PF_ZENGLU = 0.23
+  # 
+  # # α-ZEL in sub-model; need to change them
+  # PIaZEL = 2.38  # intestine/blood partition coefficient
+  # PLaZEL = 2.38  # liver/blood partition coefficient
+  # PRaZEL = 2.38  # rapidly perfused tissue/blood partition coefficient
+  # PSaZEL = 0.71  # slowly perfused tissue/blood partition coefficient
+  # PFaZEL = 92.79  # fat/blood partition coefficient
+  # 
+  # # fraction unbound ####
+  # fup_ZEN = 0.156 #0.270
+  # fup_aZEL = 0.156
+  # fup_ZENGLU = 0.20
   
   ### absorption/transfer rates ####
   PappCaco2_ZEN = 10.4 * 1e-6 * 3600# (cm/s->h) reference: Pfeiffer et al. (2011) DOI 10.1002/mnfr.201000381
-  PappCaco2aZEL = 5.4 * 1e-6 * 3600 # (cm/s->h) reference: Pfeiffer et al. (2011) DOI 10.1002/mnfr.201000381
+  PappCaco2_aZEL = 5.4 * 1e-6 * 3600 # (cm/s->h) reference: Pfeiffer et al. (2011) DOI 10.1002/mnfr.201000381
 
-  # Papp.cm.power.minus.six.per.s = 10.4 # 1e-6cm/s
-  # Peff.cm.power.minus.four.per.s.human = (10^(0.4926*log10(Papp.cm.power.minus.six.per.s)-0.1454))
-  # Peff.cm.power.minus.four.per.s = Peff.cm.power.minus.four.per.s.human/11.04
-  # Peff.cm.power.per.h = Peff.cm.power.minus.four.per.s/10000*3600
-  # Ka = Peff.cm.power.per.h/0.18
-  
   ## Kinetic parameters ####
   
   ### metabolism in small intestine tissue ####
   S9SI =  57 #37.1  # small intestinal S9 protein yield (mg S9 protein/gram intestine) reference: Peters et al. (2016); sum of microsomal 3.9 mg/g and cytosolic 18mg/g https://sci-hub.box/https://doi.org/10.1007/s13318-020-00666-w
   
-  VmaxSI_aZELc = 80*1e-6 * 60      # pmol->umol/min->h/mg protein reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-  KmSI_aZEL = 89                   # uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-  VmaxSI_bZELc = 495*1e-6 * 60     # pmol->umol/min->h/mg protein; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-  KmSI_bZEL = 10                   # uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
+  conc.HSD.S9I = 1.25 # mg protein/mL Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
+  VmaxSI_aZELc = 32*1e-6 * 60      # assuming the same as liver; pmol->umol/min->h/mg protein reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
+  KmSI_aZEL = 592                   # assuming the same as liver; uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
+  VmaxSI_bZELc = 72*1e-6 * 60     # assuming the same as liver; pmol->umol/min->h/mg protein; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
+  KmSI_bZEL = 21                   # assuming the same as liver; uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
   
+  conc.UGT.S9I = 0.04 # mg protein/ml Diana DOI: 10.1002/mnfr.202100443
   VmaxSI_ZENGLUc =  8.617  # nmol/min/mg S9; DOI: 10.1002/mnfr.202100443
   KmSI_ZENGLU = 6.198  # uM; DOI: 10.1002/mnfr.202100443
   
   VmaxSI_aZELGLUc = 6.963*1e-3 * 60 # nmol->umol/min->h/mg s9; DOI: 10.1002/mnfr.202100443
   KmSI_aZELGLU = 7.426              # uM; DOI: 10.1002/mnfr.202100443
+  
+  fuincS9I.HSD_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.HSD.S9I*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
+  fuincS9I.UGT_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.UGT.S9I*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
+  fuincS9I_aZEL <- (f.frac.ionized_aZEL+frac.unionized_aZEL)*(1/(1+conc.UGT.S9I*10^(0.072*logD_aZEL^2+0.067*logD_aZEL-1.126)))
   
   
   ### metabolism in large intestine lumen (microbiota compartment) ####
@@ -135,18 +298,24 @@ dir.create(OUTPUT,  recursive = TRUE)
   
   ### metabolism in liver ####
   S9L = 125                      # liver S9 protein yield, (mg S9 protein/gram liver) references: sum of microsomal 38mg/g liver and cytosolic 87mg/g liver content, references https://doi.org/10.2174/138920007779315053 and 10.1016/j.taap.2011.03.020, https://sci-hub.box/https://doi.org/10.1007/s13318-020-00666-w
+  conc.HSD.S9L = 1.25 # mg protein/mL Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
   
-  VmaxL_aZELc = 80*1e-6 * 60      # pmol->umol/min->h/mg protein reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-  KmL_aZEL = 89                   # uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-  VmaxL_bZELc = 495*1e-6 * 60     # pmol->umol/min->h/mg protein; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-  KmL_bZEL = 10                   # uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
+  VmaxL_aZELc = 32*1e-6 * 60      # pmol->umol/min->h/mg protein reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
+  KmL_aZEL = 592                   # uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
+  VmaxL_bZELc = 72*1e-6 * 60     # pmol->umol/min->h/mg protein; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
+  KmL_bZEL = 21                   # uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
   
+  conc.UGT.S9L = 0.2 # mg protein/ml Diana DOI: 10.1002/mnfr.202100443
   VmaxL_ZENGLUc = 7.029*1e-3 * 60  # nmol->umol/min->h/mg S9; DOI: 10.1002/mnfr.202100443
   KmL_ZENGLU = 6.753               # uM; DOI: 10.1002/mnfr.202100443
   
   VmaxL_aZELGLUc = 6.963*1e-3 * 60 # nmol->umol/min->h/mg s9; DOI: 10.1002/mnfr.202100443
   KmL_aZELGLU = 7.426              # uM; DOI: 10.1002/mnfr.202100443
 
+  fuincS9L.HSD_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.HSD.S9L*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
+  fuincS9L.UGT_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.UGT.S9L*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
+  fuincS9L_aZEL <- (f.frac.ionized_aZEL+frac.unionized_aZEL)*(1/(1+conc.UGT.S9L*10^(0.072*logD_aZEL^2+0.067*logD_aZEL-1.126)))
+  
   ### active uptake and secretion in small intestine tissue ####
   VmaxOut_aZELc = 208*1e-6       # pmol->umol/cm2/h doi:10.1016/j.fct.2008.07.011
   KmOut_aZEL = 46.9              # uM doi:10.1016/j.fct.2008.07.011
@@ -173,10 +342,6 @@ dir.create(OUTPUT,  recursive = TRUE)
   KmIn_aZELGLU = 7.6             # uM doi:10.1016/j.fct.2008.07.011
   
 
-  
-  
-  
-  
   Parm.c.rat <- as.list(
     c(BW = BW,
       FV_ST = FV_ST,
@@ -212,16 +377,28 @@ dir.create(OUTPUT,  recursive = TRUE)
       PR_ZENGLU = PR_ZENGLU,
       PS_ZENGLU = PS_ZENGLU,
       PF_ZENGLU = PF_ZENGLU,
-      PIaZEL = PIaZEL,
-      PLaZEL = PLaZEL,
-      PRaZEL = PRaZEL,
-      PSaZEL = PSaZEL,
-      PFaZEL = PFaZEL,
+      PSI_aZEL = PSI_aZEL,
+      PL_aZEL = PL_aZEL,
+      PR_aZEL = PR_aZEL,
+      PS_aZEL = PS_aZEL,
+      PF_aZEL = PF_aZEL,
+      BP_ZEN = BP_ZEN,
+      BP_aZEL = BP_aZEL,
+      BP_ZENGLU = BP_ZENGLU,
       fup_ZEN = fup_ZEN,
       fup_aZEL = fup_aZEL,
       fup_ZENGLU = fup_ZENGLU,
+      fut_ZEN = fut_ZEN, 
+      fut_aZEL = fut_aZEL, 
+      fut_ZENGLU = fut_ZENGLU,
+      fuincS9I.HSD_ZEN = fuincS9I.HSD_ZEN,
+      fuincS9I.UGT_ZEN = fuincS9I.UGT_ZEN,
+      fuincS9I_aZEL = fuincS9I_aZEL,
+      fuincS9L.HSD_ZEN = fuincS9L.HSD_ZEN,
+      fuincS9L.UGT_ZEN = fuincS9L.UGT_ZEN,
+      fuincS9L_aZEL = fuincS9L_aZEL,
       PappCaco2_ZEN = PappCaco2_ZEN,
-      PappCaco2aZEL = PappCaco2aZEL,
+      PappCaco2_aZEL = PappCaco2_aZEL,
       S9SI =  S9SI,
       VmaxSI_aZELc = VmaxSI_aZELc,
       KmSI_aZEL = KmSI_aZEL,
@@ -330,8 +507,8 @@ dir.create(OUTPUT,  recursive = TRUE)
   
   # α-ZEL
   # Papp, Caco-2 α-ZEL <- 5.4 (x10-6 cm/sec), apparent in vitro, from Caco-2 reference: Pfeiffer et al. (2011)
-  PappCaco2aZEL<--5.2676 # Log Papp, Caco-2
-  #  Log (Papp,in vivo) <- 0.6836*Log(PappCaco2aZEL)-0.5579 reference: Sun et al. (2002)
+  PappCaco2_aZEL<--5.2676 # Log Papp, Caco-2
+  #  Log (Papp,in vivo) <- 0.6836*Log(PappCaco2_aZEL)-0.5579 reference: Sun et al. (2002)
  
   # excretion (/h)
   KurZ <- 0.096 # urinary excretion of ZEN reference: Mukherjee et al. (2014)
@@ -347,7 +524,7 @@ dir.create(OUTPUT,  recursive = TRUE)
   S9SI<- 57 #35.2 # small intestinal S9 protein yield (mg S9 protein/gram intestine) reference: (Peters et al., 2016); sum of microsomal 3.9 mg/g and cytosolic 18mg/g https://sci-hub.box/https://doi.org/10.1007/s13318-020-00666-w
   # metabolites ZENGLU, unscaled maximum rates of metabolism, (nmol/min/mg S9 protein)
   VmaxSIZENGLUc<- 0.491 # in vitro, S9 incubations from this study
- 
+  
   # metabolites ZENGLU, affinity constants, (μmol/L)
   KmSIZENGLU <- 1.174 # in vitro, S9 incubations from this study
   
@@ -421,7 +598,7 @@ dir.create(OUTPUT,  recursive = TRUE)
       kin = kin,
       kin7 = kin7,
       SAinb = SAinb,
-      PappCaco2aZEL = PappCaco2aZEL,
+      PappCaco2_aZEL = PappCaco2_aZEL,
       KurZ = KurZ,
       KfeZ = KfeZ,
       KuraZ = KuraZ,

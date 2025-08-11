@@ -1,185 +1,182 @@
-# ## Admin Info ####
-# ## ------------------------------------------------------
+## Admin Info ####
+# ------------------------------------------------------ #
 # Script originally written by: Chrysanthi Pachoulide
 # User: Chrysanthi Pachoulide
-# Last updated: August 2024
+# Last updated: August 2025
 
-# ## Aim of the script ####
-# ## ------------------------------------------------------
-# This scipt is made to easily calculate the parameters needed for the PBK.
-# This can be used to add/delete tissues, recalculate partition coefficients
-# organ volumes etc. 
-# Absoprtion, metabolism and transport parameters are also calculated here.
-
-
-# ## Packages needed ####
-# ## ------------------------------------------------------
+## Packages needed ####
+# ------------------------------------------------------ #
 library(here)
 library(tidyverse)
 
-# -----------------------------------------------------------------------------
-# PHYSIOLOGY ####
-# -----------------------------------------------------------------------------
+# Input
+logP_ZEN <- 3.580 # Molgpka
+pKa1_ZEN <- 7.5 # Molgpka
+pka2_ZEN <- 7.7 # Molgpka
+BP_ZEN <- 0.67 # Shin et al. 2014 DOI: 10.1080/15287390903212741
+fup_ZEN <- 0.156 # Mukherjee et al. 2014 doi:10.1371/journal.pone.0113632
 
-## VOLUMES AND FLOW RATES ####
-## ------------------------------------------------------
+MW_aZEL <- 320.385 # PubMed
+logP_aZEL <- 3.371 # Molgpka
+pKa1_aZEL <- 7.5 # Molgpka
+pKa2_aZEL <- 7.7 # Molgpka
 
-BW <- 0.250 #(kg)
-QC <- 80 * 60 / 1000 #(L/h)
-
-Rat.input <- read.csv(here("Input", "Rat.input.csv"), header=1) #tissue composition mainly as R&R composition, unified by Utsey and optimised as per Musther
-Rat.dat <- Rat.input %>% filter(!tissue %in% c("RBCs", "Plasma")) #df for all tissues except for adipose and RBCs
-
-# Flow rates
-## Extracting fractional flow rate (constant)
-names <- substr(Rat.dat$tissue, 1, 2)
-F_QC.names <- paste0("FQ", names)
-F_QC.dat <- cbind(F_QC.names, select(Rat.dat, F_QC))
-
-## Calculating tissue blood flow rates (L/h)
-QC.dat <- F_QC.dat %>%
-  # mutate(F_QC = F_QC * QC) %>% #QC = QCconstant*QC
-  rename(QTissue = F_QC.names) %>%
-  rename(QValue = F_QC) %>%
-  mutate(QTissue = sub("^F", "", QTissue)) %>%
-  pivot_wider(names_from = QTissue, values_from = QValue) %>%
-  as.data.frame()
-
-# Tissue volumes
-## Extracting fractional volumes (constant)
-F_Vo.names <- paste0("FV", names)
-F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo))
-
-## Calculating tissue volumes (L) (assumption tissue density of 1 kg/L)            fractional volumes come from Musther (insignificant differences from Brown, Punt, Ruark)
-Vo.dat <- F_Vo.dat %>%
-  # mutate(F_Vo = F_Vo * BW) %>%
-  rename(VTissue = F_Vo.names) %>%
-  rename(VValue = F_Vo) %>%
-  mutate(VTissue = sub("F", "", VTissue)) %>%
-  pivot_wider(names_from = VTissue, values_from = VValue) %>%
-  as.data.frame()
-
-
-
-# -----------------------------------------------------------------------------
-# ZEARALENONE - PHYSICOCHEMICAL PARAMETERS ####
-# -----------------------------------------------------------------------------
-
-ZEN.dat <- read.csv(here("Input", "Zen.input.csv"), header=1)     #from {Agahi, 2020 #456} and chemicalize, BP from Shin, Hong et al.2009
-Rat.dat1 <- Rat.input %>% filter(!tissue %in% c("Plasma","Adipose","RBCs")) #df for all tissues except for adipose, RBCs and plasma
-Rat.dat2 <- Rat.input %>% filter(!tissue %in% c("Plasma","RBCs")) #df for all tissues expluding Plasma and RBCs
-fup <- 0.156 #Mukherjee
-
-
-## Tissue:Plasma partitioning ####
-## ------------------------------------------------------
-
-# Tissue partitioning (Poulin and Theil http://jpharmsci.org/article/S0022-3549(16)30889-9/fulltext), as coded by kmutsey: https://github.com/metrumresearchgroup/PBPK_PC/blob/master/script/CalcKp_P%26T.R
-# Assumption that Zearalenone is a monoprotic acid; in reality it's a diprotic acid with pKa2=10.38. Insignificant difference in tissue:plasma partition coefficients was observed when diprotic acid equations were tested. Check.As.Diprotic.RnR.R file.
-# Zearalenone is not ionized at physiological pH. RnR's equation for neutrals was overestimating the partition in all tissues by 7%. Check As.Neutral.RnR.R
-# Poulin and Theil is the best QSPR for gave the best predictions for neutral compounds 
-
-n <- length(Rat.input$tissue)
-
-#Plasma composition
-Vwp <- Rat.input$f_water[Rat.input$tissue == "Plasma"] #fraction of water in plasma
-Vnlp <- Rat.input$f_n_l[Rat.input$tissue == "Plasma"] #fraction of natural lipids in plasma
-Vphp <- Rat.input$f_pl[Rat.input$tissue == "Plasma"] #fraction of phospholipids in plasma
-
-# Partition coefficients of all tissues except adipose
-Vwt <- Rat.dat2$f_water[Rat.dat2$tissue != "Adipose"] #fraction of water in all tissues except adipose
-Vnlt <- Rat.dat2$f_n_l[Rat.dat2$tissue != "Adipose"] #fraction of natural lipids all tissues except adipose
-Vpht <- Rat.dat2$f_pl[Rat.dat2$tissue != "Adipose"] #fraction of phospholipids in all tissues except adipose
-
-
-# Partition coefficient of adipose
-Vwad <- Rat.dat2$f_water[Rat.dat2$tissue == "Adipose"] #fraction of water in adipose
-Vnlad <- Rat.dat2$f_n_l[Rat.dat2$tissue == "Adipose"] #fraction of natural lipids in adipose
-Vphad <- Rat.dat2$f_pl[Rat.dat2$tissue == "Adipose"] #fraction of phospholipids in adipose
-
-pH <- Rat.dat2$pH[Rat.dat2$tissue == "Adipose"] #pH in adipose
-logD <- 1.115*ZEN.dat$logP-1.35 #logD is the olive oil:buffer(water) partition coefficient of nonionized species
-
-logD_star <- logD-log10(1+10^(pH-ZEN.dat$pKa)) #as monoprotic acid
-D_star <- 10^logD_star   
-Kpad <- ((D_star*(Vnlad+0.3*Vphad)+(1*(Vwad+0.7*Vphad)))/(D_star*(Vnlp+0.3*Vphp)+(1*(Vwp+0.7*Vphp)))) * fup
-
-P <- 10^ZEN.dat$logP
-fut <- 1/(1+((1-fup)/fup)*0.5) #fraction unbound in the tissues
-Kpt <- ((P*(Vnlt+0.3*Vpht) + #partition in the natural lipids and phospholipids of the tissue
-           (1*(Vwt+0.7*Vpht))) / #partition in the water and the phospholipids of the tissue
-          (P*(Vnlp+0.3*Vphp) + #partition in the natural lipids and phospholipids of plasma
-             (1*(Vwp+0.7*Vphp)))) * #partition in the water and phospholipids of plasma
-  (fup/fut) #related to the fraction unbound in the plasma compared to the tissue
-
-Kp <- c(Kpad, Kpt)
-
-PC.names <- paste0("P", names)
-PC.dat <- data.frame(PC.names, kp = as.numeric(Kp))
+# Zearalenone 14-glucuronide
+MW_ZENGLU <- 494.5 # PubMed
+logP_ZENGLU <- 1.145 # Molgpka
+pKa_ZENGLU <- 3 # Molgpka
 
 ## Tissue:Blood partitioning ####
 ## ------------------------------------------------------
-PCB.dat <- PC.dat %>%
-  mutate(kp = kp * ZEN.dat$BP) %>% #Tissue:Blood Partition coefficients = BloodPlasma ratio (BP) * Tissue:Plasma Partition coefficient (PTi)
-  rename(PValue = kp) %>%
-  rename(PTissue = PC.names) %>%
-  pivot_wider(names_from = PTissue, values_from = PValue) %>%
-  as.data.frame()
 
-# Calculate free fraction in blood
-fub = fup * ZEN.dat$BP 
+# Tissue partitioning (Rodgers and Rowland as coded by kmutsey: https://github.com/metrumresearchgroup/PBPK_PC/blob/master/script/CalcKp_P%26T.R
+# Assumption that Zearalenone and a-Zearalenol are diprotic acids and Zearalenone glucuronide a monoprotic acid
+
+dat_all <- Rat.input %>% filter(!tissue %in% c("RBCs", "Adipose", "Plasma"))  #df for all tissues except for adipose, RBCs, and plasma
+dat_ad <- Rat.input %>% filter(tissue == "Adipose")  #df for adipose
+dat_rbc <- Rat.input %>% filter(tissue == "RBCs") #df for RBCs
+dat_plas <- Rat.input %>% filter(tissue == "Plasma") #df for aplasma
+
+pH_IW <- 7       #pH of intracellular tissue water
+pH_P <- 7.4      #pH of plasma
+pH_RBC <- 7.22    #pH of blood cells
+
+## Calculate Kp for ZEN ####
+
+logP_ZEN <- 3.580 # Molgpka
+pKa1_ZEN <- 7.5 # Molgpka
+pKa2_ZEN <- 7.7 # Molgpka
+BP_ZEN <- 0.67 # Shin et al. 2014 DOI: 10.1080/15287390903212741
+fup_ZEN <- 0.156 # Mukherjee et al. 2014 doi:10.1371/journal.pone.0113632
+
+P <- 10^(logP_ZEN)   # octonal:water partition coeff
+logP_OW <- 1.115*logP_ZEN - 1.35 #oil:water partition coeff
+P_OW <- 10^(logP_OW) 
+# Ka <- 10^(-pKa1_ZEN)
+HCT <- 0.45 #hematocrit
+
+Kpu_bc <- (HCT - 1 + BP_ZEN)/(HCT*fup_ZEN)
+
+X <- 10^(pH_IW-pKa1_ZEN)+10^(2*pH_IW-pKa1_ZEN-pKa2_ZEN)       
+
+Y <- 10^(pH_P-pKa1_ZEN)+10^(2*pH_P-pKa1_ZEN-pKa2_ZEN)     
+
+Z <- 1 
+
+Ka_PR <- (1/fup_ZEN - 1 - (P*dat_plas$f_n_l + (0.3*P + 0.7)*dat_plas$f_n_pl)/(1+Y))
+Ka_AP <- (Kpu_bc - (1 + Z)/(1 + Y)*dat_rbc$f_iw - (P*dat_rbc$f_n_l + (0.3*P + 0.7)*dat_rbc$f_n_pl)/(1 + Y)) * (1 + Y)/dat_rbc$f_a_pl/Z
+
+Kp_all <- (dat_all$f_ew + ((1 + X)/(1 + Y))*dat_all$f_iw + ((P*dat_all$f_n_l + (0.3*P + 0.7)*dat_all$f_n_pl))/(1 + Y) + (Ka_PR*dat_all$AR*X)/(1 + Y))*fup_ZEN  #non lipid
+Kp_ad <- (dat_ad$f_ew + ((1 + X)/(1 + Y))*dat_ad$f_iw + ((P_OW*dat_ad$f_n_l + (0.3*P_OW + 0.7)*dat_ad$f_n_pl))/(1 + Y) + (Ka_PR*dat_ad$AR*X)/(1 + Y))*fup_ZEN  #lipid
+
+nms_all <- dat_all$tissue %>% substr(1,2) %>% tolower()
+nms_all <- paste("Kp", nms_all, sep="")
+nms <- c("Kpad",nms_all)
+Kp_ZEN <- as.list(c(Kp_ad,Kp_all)) #maybe make as dataframe
+names(Kp_ZEN) <- nms
+
+fut_ZEN <- 1/(1+((1-fup_ZEN)/fup_ZEN)*0.5) #fraction unbound in the tissues
 
 
+pH <- 7.4
+logD_ZEN <- logP_ZEN-log10(1+10^(pH-pKa1_ZEN)+10^(pH-pKa1_ZEN+pH-pKa2_ZEN))
+
+frac.unionized_ZEN <- 1/(1+10^(pH-pKa1_ZEN)+10^(pH-pKa1_ZEN+pH-pKa2_ZEN))
+f.frac.ionized_ZEN <- 1 - 1/(1+10^(pH-pKa1_ZEN)+10^(pH-pKa1_ZEN+pH-pKa2_ZEN))
+conc.enzymes.Clint <- 165 # Ans Punt
+Fuinc_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.enzymes.Clint*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
+
+## Calculate Kp for aZEL ####
+
+MW_aZEL <- 320.385 # PubMed
+logP_aZEL <- 3.371 # Molgpka
+pKa1_aZEL <- 7.5 # Molgpka
+pKa2_aZEL <- 7.7 # Molgpka
+BP_aZEL <- 0.67 # assuming the same as ZEN
+fup_aZEL <- 0.156 # assuming the same as ZEN
+
+P <- 10^(logP_aZEL)   # octonal:water partition coeff
+logP_OW <- 1.115*logP_aZEL - 1.35 #oil:water partition coeff
+P_OW <- 10^(logP_OW) 
+# Ka <- 10^(-pKa1_aZEL)
+HCT <- 0.45 #hematocrit
+
+Kpu_bc <- (HCT - 1 + BP_aZEL)/(HCT*fup_aZEL)
+
+X <- 10^(pH_IW-pKa1_aZEL)+10^(2*pH_IW-pKa1_aZEL-pKa2_aZEL)       
+
+Y <- 10^(pH_P-pKa1_aZEL)+10^(2*pH_P-pKa1_aZEL-pKa2_aZEL)     
+
+Z <- 1 
+
+Ka_PR <- (1/fup_aZEL - 1 - (P*dat_plas$f_n_l + (0.3*P + 0.7)*dat_plas$f_n_pl)/(1+Y))
+Ka_AP <- (Kpu_bc - (1 + Z)/(1 + Y)*dat_rbc$f_iw - (P*dat_rbc$f_n_l + (0.3*P + 0.7)*dat_rbc$f_n_pl)/(1 + Y)) * (1 + Y)/dat_rbc$f_a_pl/Z
+
+Kp_all <- (dat_all$f_ew + ((1 + X)/(1 + Y))*dat_all$f_iw + ((P*dat_all$f_n_l + (0.3*P + 0.7)*dat_all$f_n_pl))/(1 + Y) + (Ka_PR*dat_all$AR*X)/(1 + Y))*fup_aZEL  #non lipid
+Kp_ad <- (dat_ad$f_ew + ((1 + X)/(1 + Y))*dat_ad$f_iw + ((P_OW*dat_ad$f_n_l + (0.3*P_OW + 0.7)*dat_ad$f_n_pl))/(1 + Y) + (Ka_PR*dat_ad$AR*X)/(1 + Y))*fup_aZEL #lipid
+
+nms_all <- dat_all$tissue %>% substr(1,2) %>% tolower()
+nms_all <- paste("Kp", nms_all, sep="")
+nms <- c("Kpad",nms_all)
+Kp_aZEL <- as.list(c(Kp_ad,Kp_all))
+names(Kp_aZEL) <- nms
+
+fut_aZEL <- 1/(1+((1-fup_aZEL)/fup_aZEL)*0.5) #fraction unbound in the tissues
+
+logD_aZEL <- logP_ZEN-log10(1+10^(pH-pKa1_aZEL)+10^(pH-pKa1_ZEN+pH-pKa2_aZEL))
+frac.unionized_aZEL <- 1/(1+10^(pH-pKa1_aZEL)+10^(pH-pKa1_aZEL+pH-pKa2_aZEL))
+f.frac.ionized_aZEL <- 1 - 1/(1+10^(pH-pKa1_aZEL)+10^(pH-pKa1_aZEL+pH-pKa2_aZEL))
+conc.enzymes.Clint <- 165 # Ans Punt
+Fuinc_aZEL <- (f.frac.ionized_aZEL+frac.unionized_aZEL)*(1/(1+conc.enzymes.Clint*10^(0.072*logD_aZEL^2+0.067*logD_aZEL-1.126)))
+
+
+
+## Calculate Kp for ZENGLUC ####
+
+MW_ZENGLU <- 494.5 # PubMed
+logP_ZENGLU <- 1.145 # Molgpka
+pKa_ZENGLU <- 3 # Molgpka
+BP_ZENGLU <- 0.67 # assuming the same as ZEN
+fup_ZENGLU <- 1 / (1 + 10^(0.4485 * logP_ZENGLU - 0.4782)) #Lobell M, Sivarajah V. et al. 2003 doi: 10.1023/b:modi.0000006562.93049.36.
+
+P <- 10^(logP_ZENGLU)   # octonal:water partition coeff
+logP_OW <- 1.115*logP_ZENGLU - 1.35 #oil:water partition coeff
+P_OW <- 10^(logP_OW) 
+Ka <- 10^(-pKa_ZENGLU)
+HCT <- 0.45 #hematocrit
+
+
+#Calculate Kp values
+Kpu_bc <- (HCT - 1 + BP_ZENGLU)/(HCT*fup_ZENGLU)
+
+X <- 10^(pH_IW-pKa_ZENGLU)
+Y <- 10^(pH_P-pKa_ZENGLU)
+Z <- 1
+
+Ka_PR <- (1/fup_ZENGLU - 1 - (P*dat_plas$f_n_l + (0.3*P + 0.7)*dat_plas$f_n_pl)/(1+Y))
+Ka_AP <- (Kpu_bc - (1 + Z)/(1 + Y)*dat_rbc$f_iw - (P*dat_rbc$f_n_l + (0.3*P + 0.7)*dat_rbc$f_n_pl)/(1 + Y)) * (1 + Y)/dat_rbc$f_a_pl/Z
+
+# Multiply by fup to get Kp rather than Kpu
+Kp_all <- (dat_all$f_ew + ((1 + X)/(1 + Y))*dat_all$f_iw + ((P*dat_all$f_n_l + (0.3*P + 0.7)*dat_all$f_n_pl))/(1 + Y) + (Ka_PR*dat_all$AR*X)/(1 + Y))*fup_ZENGLU  #non lipid
+Kp_ad <- (dat_ad$f_ew + ((1 + X)/(1 + Y))*dat_ad$f_iw + ((P_OW*dat_ad$f_n_l + (0.3*P_OW + 0.7)*dat_ad$f_n_pl))/(1 + Y) + (Ka_PR*dat_ad$AR*X)/(1 + Y))*fup_ZENGLU #lipid
+
+nms_all <- dat_all$tissue %>% substr(1,2) %>% tolower()
+nms_all <- paste("Kp", nms_all, sep="")
+nms <- c("Kpad",nms_all)
+Kp_ZENGLU <- as.list(c(Kp_ad,Kp_all))
+names(Kp_ZENGLU) <- nms
+
+fut_ZENGLU <- 1/(1+((1-fup_ZENGLU)/fup_ZENGLU)*0.5) #fraction unbound in the tissues
+
+logD_ZENGLU <- logP_ZENGLU - log10(1+10^(pH-pKa_ZENGLU))
+
+frac.unionized_ZENGLU <- 1/(1+10^(pH-pKa_ZENGLU))
+f.frac.ionized_ZENGLU <- 1-1/(1+10^(pH-pKa_ZENGLU))
+conc.enzymes.Clint <- 165 # Ans Punt
+Fuinc_ZENGLU <- 1/(1+conc.enzymes.Clint*10^(0.072*logD_ZENGLU^2+0.067*logD_ZENGLU-1.126)) 
 
 # -----------------------------------------------------------------------------
-# ZEARALENONE GLUCURONIDE - PHYSICOCHEMICAL PARAMETERS ####
-# -----------------------------------------------------------------------------
-
-## Tissue:Plasma partitioning ####
-## ------------------------------------------------------
-
-# Calculating fraction unbound in plasma #Reference: Lobell M, Sivarajah V. In silico prediction of aqueous solubility, human plasma protein binding and volume of distribution of compounds from calculated pKa and AlogP98 values. Mol Divers. 2003;7(1):69-87. doi: 10.1023/b:modi.0000006562.93049.36. PMID: 14768905.
-fup.glu <- 1 / (1 + 10^(0.4485 * ZEN.dat$logP.glu - 0.4782))
-
-## Calculating ionisation status
-## Zearalenone glucuronide is an acid and hydrophilic compound ; therefore the best QSPR for it is Schmitt. One could also consider modeling Zearalenone glucuronide kinetics are only driven by active transport and not diffusion.
-K_n_pl <- 10^ZEN.dat$logP.glu #neutral phospholipids:water partition coefficient (logP here is logMA of Shmitt)
-K_protein <- ((0.81 + 0.11 * K_n_pl) / 24.92) * 5 #protein:water partition; Schmitt, Walter (2008)
-pH <- Rat.dat$pH #tissue pH
-alpha <- 1e-3 #ratio between ditribution coefficient at given pH (D) and that in neutral form (D0)
-
-W <- 10^(Rat.dat$pH - ZEN.dat$pKa.glu) #Calculates ZEN ionisation status depending on tissue pH
-K_n_l <- K_n_pl * (((1 - alpha) / (1 + W)) + alpha) #Calculates neutral lipids:neutral phospholipids partition coefficient
-K_a_pl <- K_n_pl * ((1 / (1 + W)) + 0.05 * (1 - (1 / (1 + W)))) #Calculates acid phospholipids:neutral lipids partition coefficient based on ionisation status
-
-## Calculating Tissue:Plasma partition coefficients
-Kp.glu <- (Rat.dat$f_water +
-             (K_n_l * Rat.dat$f_n_l) +
-             (K_n_pl * Rat.dat$f_n_pl) +
-             (K_a_pl * Rat.dat$f_a_pl) +
-             (K_protein * Rat.dat$f_proteins)) * fup.glu
-
-PC.names.glu <- paste0("P", names, ".glu")
-PC.dat.glu <- data.frame(PC.names.glu, kp = as.numeric(Kp.glu))
-
-
-## Tissue:Blood partitioning ####
-## ------------------------------------------------------
-PCB.dat.glu <- PC.dat.glu %>%
-  #mutate(kp = kp * ZEN.dat$BP) %>% #assumption that BP is equal to 1
-  rename(PValue = kp) %>%
-  rename(PTissue = PC.names.glu) %>%
-  pivot_wider(names_from = PTissue, values_from = PValue) %>%
-  as.data.frame()
-
-
-# Calculate free fraction in blood
-#fub = fup * ZEN.dat$BP #assuming is equal as assuming BP equals 1 
-
-
-
-# -----------------------------------------------------------------------------
-# ZEARALENONE & ZEARALENONE GLUCURONIDE - Toxicokinetic ####
+# Toxicokinetic ####
 # -----------------------------------------------------------------------------
 
 # Gastric emptying rate (1/h)
@@ -242,6 +239,47 @@ KmGluc.Exc <- 40 #umol/L
 VmaxExc.In.glu <- VmaxGluc.Exc.In / 1000000 #umol/h, scaling from pmol/h
 
 
+# -----------------------------------------------------------------------------
+# PHYSIOLOGY ####
+# -----------------------------------------------------------------------------
+
+## VOLUMES AND FLOW RATES ####
+## ------------------------------------------------------
+
+BW <- 0.250 #(kg)
+QC <- 80 * 60 / 1000 #(L/h)
+
+Rat.input <- read.csv(here("Input", "Rat.input.csv"), header=1) #tissue composition mainly as R&R composition, unified by Utsey and optimised as per Musther
+Rat.dat <- Rat.input %>% filter(!tissue %in% c("RBCs", "Plasma")) #df for all tissues except for adipose and RBCs
+
+# Flow rates
+## Extracting fractional flow rate (constant)
+names <- substr(Rat.dat$tissue, 1, 2)
+F_QC.names <- paste0("FQ", names)
+F_QC.dat <- cbind(F_QC.names, select(Rat.dat, F_QC))
+
+## Calculating tissue blood flow rates (L/h)
+QC.dat <- F_QC.dat %>%
+  # mutate(F_QC = F_QC * QC) %>% #QC = QCconstant*QC
+  rename(QTissue = F_QC.names) %>%
+  rename(QValue = F_QC) %>%
+  mutate(QTissue = sub("^F", "", QTissue)) %>%
+  pivot_wider(names_from = QTissue, values_from = QValue) %>%
+  as.data.frame()
+
+# Tissue volumes
+## Extracting fractional volumes (constant)
+F_Vo.names <- paste0("FV", names)
+F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo))
+
+## Calculating tissue volumes (L) (assumption tissue density of 1 kg/L)            fractional volumes come from Musther (insignificant differences from Brown, Punt, Ruark)
+Vo.dat <- F_Vo.dat %>%
+  # mutate(F_Vo = F_Vo * BW) %>%
+  rename(VTissue = F_Vo.names) %>%
+  rename(VValue = F_Vo) %>%
+  mutate(VTissue = sub("F", "", VTissue)) %>%
+  pivot_wider(names_from = VTissue, values_from = VValue) %>%
+  as.data.frame()
 
 
 # -----------------------------------------------------------------------------
