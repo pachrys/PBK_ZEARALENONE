@@ -33,8 +33,8 @@ dir.create(OUTPUT, recursive = TRUE)
 
 # Species
 Species = "Rat"
-Select_Author = "Shin" #Shin, Q.Lu
-Select_AdminType = "IV" #IV, PO
+Select_Author = "Q.Lu" #Shin, Q.Lu, Videmann
+Select_AdminType = "PO" #IV, PO
 
 # Parameters
 Parameters <- if(Species == "Rat"){
@@ -48,12 +48,12 @@ Parameters <- if(Species == "Rat"){
 MWZEN <- 318.37 # molecular weight ZEN
 
 # oral dose
-ODOSEmg <- 1 #{mg/kg bw} # oral dose, variable Shin is 8, Videmann, Q.Lu = 1
-ODOSEumol <- ODOSEmg*1000/MWZEN*Parameters[1, "Value"] # (μmol) unit change to μmol
+ODOSEmg <- 6.65 #{mg/kg bw} # oral dose, variable Shin is 8, Videmann = 1, Q.Lu = 6.65
+ODOSEumol <- ((ODOSEmg*1000)/MWZEN)*Parameters[1, "Value"] # (μmol) unit change to μmol
 
 # IV dose
-IVDOSEmg1 <- 8 #{mg/kg bw} # IV dose, variable Shin is 8, Q.Lu = 6.63
-IVDOSEumol <-IVDOSEmg1*1000/MWZEN*Parameters[1, "Value"] # unit change to μmol
+IVDOSEmg1 <- 0 #{mg/kg bw} # IV dose, variable Shin is 8, Q.Lu = 6.65
+IVDOSEumol <-((IVDOSEmg1*1000)/MWZEN)*Parameters[1, "Value"] # unit change to μmol
 # time
 
 Dosing <- data.frame(
@@ -76,8 +76,7 @@ if(Select_AdminType == "PO"){
     AST_ZEN = ODOSEumol, 
     ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, 
     ADuoL_ZENGLU = 0, AJejL_ZENGLU = 0, AIleL_ZENGLU = 0, 
-    ALIL_ZEN = 0, ALIL_ZENGLU = 0, ALIL_aZEL = 0, ALIL_bZEL = 0, 
-    AREL_ZEN = 0, 
+    ACOL_ZEN = 0, ACOL_ZENGLU = 0, ACOL_aZEL = 0, ACOL_bZEL = 0, 
     AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0, 
     ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
     AJej_ZENGLU = 0, AJej_aZEL = 0, AJej_bZEL = 0, AJej_aZELGLU = 0,
@@ -94,8 +93,7 @@ if(Select_AdminType == "PO"){
     AST_ZEN = 0, 
     ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, 
     ADuoL_ZENGLU = 0, AJejL_ZENGLU = 0, AIleL_ZENGLU = 0, 
-    ALIL_ZEN = 0, ALIL_ZENGLU = 0, ALIL_aZEL = 0, ALIL_bZEL = 0, 
-    AREL_ZEN = 0, 
+    ACOL_ZEN = 0, ACOL_ZENGLU = 0, ACOL_aZEL = 0, ACOL_bZEL = 0, 
     AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0, 
     ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
     AJej_ZENGLU = 0, AJej_aZEL = 0, AJej_bZEL = 0, AJej_aZELGLU = 0,
