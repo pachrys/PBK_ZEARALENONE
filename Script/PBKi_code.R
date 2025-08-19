@@ -20,9 +20,13 @@ PBK.model <- function(t, state, parms){
     VSI <- FV_SI*BW # fractional volume of small intestinal tissue
     VDuo <- VSI*0.060
     VJej <- VSI*0.769
+    VJej_IC <- FV_Jej_IC*VJej
+    VJej_EC <- FV_Jej_EC*VJej
     VIle <- VSI*0.171
     
     VL <- FV_L*BW  # fractional of liver tissue
+    VL_IC <- FV_L_IC*VL
+    VL_EC <- FV_L_EC*VL
     VR <- FV_R*BW  # 0.082-VSIc-VLc # fraction of rapidly perfused tissue
     VS <- FV_S*BW  # 0.737-VFc # fraction of slowly perfused tissue
     VF <- FV_F*BW  # fraction of fat tissue
@@ -78,10 +82,11 @@ PBK.model <- function(t, state, parms){
     Vmax_BSEP <- Vmax_BSEPc*60*24*SF_BSEP*VL      # umol/d
     Km_BSEP <- Km_BSEPc                           # umol/L (uM)
     
-    CL.LI.MRP2 = CL.LI.MRP2.c*VL # L/h
-    CL.LI.MRP3 = CL.LI.MRP3.c*VL # L/h
-    CL.IN.MRP2 = CL.IN.MRP2.c*VSI # L/h
-    CL.IN.MRP3 = CL.IN.MRP3.c*VSI # L/h
+    CL.LI.MRP2 = CL.LI.MRP2.c*VL_IC # VL_IC # L/h
+    CL.LI.MRP3 = 0.01*CL.LI.MRP3.c*VL_IC # L/h
+    CL.IN.MRP2 = CL.IN.MRP2.c*VJej_IC # L/h
+    CL.IN.MRP3 = 0.01*CL.IN.MRP3.c*VJej_IC # L/h
+    CL.KI.MRP3 = 0.01*CL.KI.MRP3.c*VB
     
     ## Concentrations #####
     
@@ -127,19 +132,30 @@ PBK.model <- function(t, state, parms){
     CL_bZEL <- AL_bZEL/VL
     
     # Zearalenone-glucuronide
-    CJej_ZENGLU <- AJej_ZENGLU/VJej
+    # CJej_ZENGLU <- AJej_ZENGLU/VJej
+    CJej_IC_ZENGLU <- AJej_IC_ZENGLU/VJej_IC
+    CJej_EC_ZENGLU <- AJej_EC_ZENGLU/VJej_EC
+    
     CDuoL_ZENGLU <- ADuoL_ZENGLU/VDuoL
     CJejL_ZENGLU <- AJejL_ZENGLU/VJejL
     CIleL_ZENGLU <- AIleL_ZENGLU/VIleL 
     CCOL_ZENGLU <- ACOL_ZENGLU/VCOL 
-    CL_ZENGLU <- AL_ZENGLU/VL
+    
+    # CL_ZENGLU <- AL_ZENGLU/VL
+    CL_IC_ZENGLU <- AL_IC_ZENGLU/VL_IC
+    CL_EC_ZENGLU <- AL_EC_ZENGLU/VL_EC
+    
     CF_ZENGLU <- AF_ZENGLU/VF
     CR_ZENGLU <- AR_ZENGLU/VR
     CS_ZENGLU <- AS_ZENGLU/VS
     CB_ZENGLU <- AB_ZENGLU/VB
     
-    CVJej_ZENGLU <- CJej_ZENGLU/PSI_ZENGLU * BP_ZENGLU
-    CVL_ZENGLU <- CL_ZENGLU/PL_ZENGLU * BP_ZENGLU
+    # CVJej_ZENGLU <- CJej_ZENGLU/PSI_ZENGLU * BP_ZENGLU
+    CVJej_EC_ZENGLU <- CJej_EC_ZENGLU/PSI_ZENGLU * BP_ZENGLU
+    
+    # CVL_ZENGLU <- CL_ZENGLU/PL_ZENGLU * BP_ZENGLU
+    CVL_EC_ZENGLU <- CL_EC_ZENGLU/PL_ZENGLU * BP_ZENGLU
+    
     CVF_ZENGLU <- CF_ZENGLU/PF_ZENGLU * BP_ZENGLU
     CVR_ZENGLU <- CR_ZENGLU/PR_ZENGLU * BP_ZENGLU
     CVS_ZENGLU <- CS_ZENGLU/PS_ZENGLU * BP_ZENGLU
@@ -169,7 +185,7 @@ PBK.model <- function(t, state, parms){
     dADuoL_ZENGLU <- CL_Bile*ABile_ZENGLU + 
       - duoTR*ADuoL_ZENGLU 
     dAJejL_ZENGLU <- + duoTR*ADuoL_ZENGLU + 
-      + CL.IN.MRP2*CJej_ZENGLU*fut_ZENGLU + #((VmaxSI_ZENGLU*CJej_ZEN*fut_ZEN) / ((KmSI_ZENGLU) + (CJej_ZEN*fut_ZEN))) +
+      + CL.IN.MRP2*CJej_IC_ZENGLU*fut_ZENGLU + #CL.IN.MRP2*CJej_ZENGLU*fut_ZENGLU + #((VmaxSI_ZENGLU*CJej_ZEN*fut_ZEN) / ((KmSI_ZENGLU) + (CJej_ZEN*fut_ZEN))) +
       - jejTR*AJejL_ZENGLU + 
       - CL_Hydro*CJejL_ZENGLU
     
@@ -206,9 +222,15 @@ PBK.model <- function(t, state, parms){
     
     dAIle_ZEN <- CLile_ZEN*CIleL_ZEN + QIle*(CB_ZEN-CVIle_ZEN) #ka_ile*AIleL_ZEN*fa_ile 
     
-    dAJej_ZENGLU <- ((VmaxSI_ZENGLU*CJej_ZEN*fut_ZEN) / ((KmSI_ZENGLU) + (CJej_ZEN*fut_ZEN))) +
-      - CL.IN.MRP2*CJej_ZENGLU*fut_ZENGLU +
-      + QSI*(CB_ZENGLU-CVJej_ZENGLU) #
+    dAJej_IC_ZENGLU <- ((VmaxSI_ZENGLU*CJej_ZEN*fut_ZEN) / ((KmSI_ZENGLU) + (CJej_ZEN*fut_ZEN))) +
+      - CL.IN.MRP2*CJej_IC_ZENGLU*fut_ZENGLU +
+      - CL.IN.MRP3*CJej_IC_ZENGLU*fut_ZENGLU
+    
+    dAJej_EC_ZENGLU <- CL.IN.MRP3*CJej_IC_ZENGLU*fut_ZENGLU + QSI*(CB_ZENGLU-CVJej_EC_ZENGLU)
+    
+    # dAJej_ZENGLU <- ((VmaxSI_ZENGLU*CJej_ZEN*fut_ZEN) / ((KmSI_ZENGLU) + (CJej_ZEN*fut_ZEN))) +
+    #   - CL.IN.MRP2*CJej_ZENGLU*fut_ZENGLU +
+    #   + QSI*(CB_ZENGLU-CVJej_ZENGLU) #
     
     dAJej_aZEL <- ((VmaxSI_aZEL*CJej_ZEN*fut_ZEN) / (KmSI_aZEL + (CJej_ZEN*fut_ZEN))) +
       + QSI*(CB_aZEL-CVJej_aZEL) +
@@ -226,10 +248,17 @@ PBK.model <- function(t, state, parms){
       - ((VmaxL_bZEL*CL_ZEN*fut_ZEN) / (KmL_bZEL + (CL_ZEN*fut_ZEN))) +
       - ((VmaxL_ZENGLU*CL_ZEN*fut_ZEN) / ((KmL_ZENGLU) + (CL_ZEN*fut_ZEN)))
     
-    dAL_ZENGLU <- +  QSI*CVJej_ZENGLU + QL*CB_ZENGLU - (QSI+QL)*CVL_ZENGLU + 
-      + ((VmaxL_ZENGLU*CL_ZEN*fut_ZEN) / ((KmL_ZENGLU) + (CL_ZEN*fut_ZEN))) +
-      - CL.LI.MRP2*CL_ZENGLU*fut_ZENGLU #(Vmax_BSEP/(Km_BSEP + (CL_ZENGLU*fut_ZENGLU)))*CL_ZENGLU*fut_ZENGLU
+    dAL_IC_ZENGLU <- + ((VmaxL_ZENGLU*CL_ZEN*fut_ZEN) / ((KmL_ZENGLU) + (CL_ZEN*fut_ZEN))) +
+      - CL.LI.MRP2*CL_IC_ZENGLU*fut_ZENGLU + #(Vmax_BSEP/(Km_BSEP + (CL_ZENGLU*fut_ZENGLU)))*CL_ZENGLU*fut_ZENGLU
+      - CL.LI.MRP3*CL_IC_ZENGLU*fut_ZENGLU
+      
+    dAL_EC_ZENGLU <- + QSI*CVJej_EC_ZENGLU + QL*CB_ZENGLU - (QSI+QL)*CVL_EC_ZENGLU +
+      + CL.LI.MRP3*CL_IC_ZENGLU*fut_ZENGLU
     
+    # dAL_ZENGLU <- +  QSI*CVJej_ZENGLU + QL*CB_ZENGLU - (QSI+QL)*CVL_ZENGLU + 
+    #   + ((VmaxL_ZENGLU*CL_ZEN*fut_ZEN) / ((KmL_ZENGLU) + (CL_ZEN*fut_ZEN))) +
+    #   - CL.LI.MRP2*CL_ZENGLU*fut_ZENGLU #(Vmax_BSEP/(Km_BSEP + (CL_ZENGLU*fut_ZENGLU)))*CL_ZENGLU*fut_ZENGLU
+    # 
     dAL_bZEL <- ((VmaxL_bZEL*CL_ZEN*fut_ZEN) / (KmL_bZEL + (CL_ZEN*fut_ZEN))) 
     
     dAL_aZEL <- + QSI*CVJej_aZEL + QL*CB_aZEL - (QSI+QL)*CVL_aZEL + 
@@ -239,7 +268,7 @@ PBK.model <- function(t, state, parms){
     dAL_aZELGLU <- ((VmaxL_aZELGLU*CL_aZEL*fut_aZEL) / (KmL_aZELGLU + (CL_aZEL*fut_aZEL))) 
     
     # Bile
-    dABile_ZENGLU <- CL.LI.MRP2*CL_ZENGLU*fut_ZENGLU + #(Vmax_BSEP/(Km_BSEP + (CL_ZENGLU*fut_ZENGLU)))*CL_ZENGLU*fut_ZENGLU +
+    dABile_ZENGLU <- CL.LI.MRP2*CL_IC_ZENGLU*fut_ZENGLU  + #CL.LI.MRP2*CL_ZENGLU*fut_ZENGLU + #(Vmax_BSEP/(Km_BSEP + (CL_ZENGLU*fut_ZENGLU)))*CL_ZENGLU*fut_ZENGLU +
       - CL_Bile*ABile_ZENGLU
     
     # Blood
@@ -252,13 +281,14 @@ PBK.model <- function(t, state, parms){
      - GFR*CB_aZEL*fup_aZEL
     
     dAB_ZENGLU <- - (QSI + QL + QR + QS + QF)*CB_ZENGLU +   # 
-      + (QSI+QL)*CVL_ZENGLU + QF*CVF_ZENGLU + QR*CVR_ZENGLU + QS*CVS_ZENGLU +
-      - GFR*CB_ZENGLU*fup_ZENGLU 
+      + (QSI+QL)*CVL_EC_ZENGLU + QF*CVF_ZENGLU + QR*CVR_ZENGLU + QS*CVS_ZENGLU +
+      - GFR*CB_ZENGLU*fup_ZENGLU +
+      - CL.KI.MRP3*CB_ZENGLU*fup_ZENGLU
     
     # Urine
     dAUR_ZEN <- GFR*CB_ZEN*fup_ZEN 
     dAUR_aZEL <- GFR*CB_aZEL*fup_aZEL
-    dAUR_ZENGLU <- GFR*CB_ZENGLU*fup_ZENGLU
+    dAUR_ZENGLU <- GFR*CB_ZENGLU*fup_ZENGLU + CL.KI.MRP3*CB_ZENGLU*fup_ZENGLU
     
     # Fat 
     dAF_ZEN <- QF*(CB_ZEN-CVF_ZEN) 
@@ -283,8 +313,8 @@ PBK.model <- function(t, state, parms){
     ACOL_ZEN + ACOL_ZENGLU + ACOL_aZEL + ACOL_bZEL +
     AFE_ZEN + AFE_aZEL + AFE_ZENGLU + 
     ADuo_ZEN + AJej_ZEN + AIle_ZEN + 
-    AJej_ZENGLU + AJej_aZEL + AJej_bZEL + AJej_aZELGLU + 
-    AL_ZEN + AL_ZENGLU + AL_bZEL + AL_aZEL + AL_aZELGLU +
+    AJej_IC_ZENGLU + AJej_EC_ZENGLU + AJej_aZEL + AJej_bZEL + AJej_aZELGLU + #AJej_ZENGLU
+    AL_ZEN + AL_IC_ZENGLU + AL_EC_ZENGLU + AL_bZEL + AL_aZEL + AL_aZELGLU + #AL_ZENGLU
     ABile_ZENGLU +
     AB_ZEN + AB_aZEL + AB_ZENGLU +
     AUR_ZEN + AUR_aZEL + AUR_ZENGLU + 
@@ -304,8 +334,8 @@ PBK.model <- function(t, state, parms){
       dACOL_ZEN, dACOL_ZENGLU, dACOL_aZEL, dACOL_bZEL, 
       dAFE_ZEN, dAFE_aZEL, dAFE_ZENGLU,
       dADuo_ZEN, dAJej_ZEN, dAIle_ZEN,
-      dAJej_ZENGLU, dAJej_aZEL, dAJej_bZEL, dAJej_aZELGLU,
-      dAL_ZEN, dAL_ZENGLU, dAL_bZEL, dAL_aZEL, dAL_aZELGLU, 
+      dAJej_IC_ZENGLU, dAJej_EC_ZENGLU, dAJej_aZEL, dAJej_bZEL, dAJej_aZELGLU,#dAJej_ZENGLU
+      dAL_ZEN, dAL_IC_ZENGLU, dAL_EC_ZENGLU, dAL_bZEL, dAL_aZEL, dAL_aZELGLU, #dAL_ZENGLU
       dABile_ZENGLU,
       dAB_ZEN, dAB_aZEL, dAB_ZENGLU, 
       dAUR_ZEN, dAUR_aZEL, dAUR_ZENGLU,
@@ -320,8 +350,8 @@ PBK.model <- function(t, state, parms){
       CDuoL_ZENGLU = CDuoL_ZENGLU, CJejL_ZENGLU = CJejL_ZENGLU, CIleL_ZENGLU = CIleL_ZENGLU, 
       CCOL_ZEN = CCOL_ZEN, CCOL_ZENGLU = CCOL_ZENGLU, CCOL_aZEL = CCOL_aZEL, CCOL_bZEL = CCOL_bZEL,
       CDuo_ZEN = CDuo_ZEN, CJej_ZEN = CJej_ZEN, CIle_ZEN = CIle_ZEN, 
-      CJej_ZENGLU = CJej_ZENGLU,  CJej_aZEL = CJej_aZEL, CJej_aZELGLU = CJej_aZELGLU,
-      CL_ZEN = CL_ZEN, CL_ZENGLU = CL_ZENGLU, CL_bZEL = CL_bZEL, CL_aZEL = CL_aZEL, CL_aZELGLU = CL_aZELGLU,
+      CJej_ZENGLU = CJej_IC_ZENGLU,  CJej_aZEL = CJej_aZEL, CJej_aZELGLU = CJej_aZELGLU, # CJej_ZENGLU = CJej_ZENGLU; (((CJej_IC_ZENGLU/VJej_IC) + (CJej_EC_ZENGLU/VJej_EC))/(VJej_IC + VJej_EC))
+      CL_ZEN = CL_ZEN, CL_ZENGLU = CL_IC_ZENGLU, CL_bZEL = CL_bZEL, CL_aZEL = CL_aZEL, CL_aZELGLU = CL_aZELGLU, #CL_ZENGLU = CL_ZENGLU; (((CL_IC_ZENGLU/VL_IC) + (CL_EC_ZENGLU/VL_EC))/(VL_IC + VL_EC))
       CF_ZEN = CF_ZEN, CF_aZEL = CF_aZEL, CF_ZENGLU = CF_ZENGLU,
       CR_ZEN = CR_ZEN, CR_aZEL = CR_aZEL, CR_ZENGLU = CR_ZENGLU, 
       CS_ZEN = CS_ZEN, CS_aZEL = CS_aZEL, CS_ZENGLU = CS_ZENGLU,

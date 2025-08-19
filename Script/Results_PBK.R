@@ -85,7 +85,7 @@ C.Pre_wide <- C.Pre_long %>%
   select(c("Compound","Time", "DuodenumT", "JejunumT", "IleumT", "DuodenumL", "JejunumL", "IleumL", "LIntestineL", "Liver", "Blood")) %>%
   # mutate("IntestineL" = (((DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL) + (LIntestineL*VCOL))/(VDuoL+VJejL+VIleL+VCOL))) %>%
   # mutate("Intestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VCOL+VREL)))/(VSI + VSIL+VCOL+VREL))) %>%
-  mutate("Intestine" = ((DuodenumT*VDuo) + (JejunumT*VJej) + (IleumT*VIle) )/(# + (DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL)+ (LIntestineL*VCOL) + (RectumL*VREL)
+  mutate("Intestine" = ((DuodenumT*VDuo) + (JejunumT*VJej) + (IleumT*VIle))/(# + (DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL)+ (LIntestineL*VCOL) + (RectumL*VREL)
     VDuo + VJej + VIle)) %>% #L+VCOL+VRE  +VDuoL+VJejL+VIle
   # rename("Intestine" = "SIntestineT") %>%
   select(c("Compound", "Time", "Intestine", "Liver", "Blood")) %>% 
@@ -158,7 +158,7 @@ if(Select_Author == "Videmann"){
 
   PredvsObsAll <- ggplot(data = Cobs,
                          aes(x = Time, y = Concentration)) +
-    facet_wrap(~Tissue)+
+    facet_wrap(~Tissue, scales = "free")+
     geom_ribbon(aes(ymin = Cmin, ymax = Cmax, fill = Sex),
                 alpha = 0.3, color = NA) +
     scale_fill_manual(values = c("#008475", "#8631A7"))+
@@ -166,10 +166,10 @@ if(Select_Author == "Videmann"){
     scale_color_manual(values = c("#008475", "#8631A7"))+
     geom_path(data = Cpre,
               aes(Time, Concentration)) +
-    facet_wrap(~Tissue)+
+    facet_wrap(~Tissue, scales = "free")+
     geom_path(data = Cpre,
               aes(Time, Concentration)) +
-    facet_wrap(~Tissue)+
+    facet_wrap(~Tissue, scales = "free")+
     labs(title = "Zearalenone concentrations",
          x = "Time (h)",
          y = "Concentration (ng/ml)") +
@@ -217,7 +217,7 @@ if(Select_Author == "Videmann"){
   Cpre.glu <- C.Pre_wide %>% filter(Compound == "ZENGLU") %>%
       pivot_longer(Intestine:Blood, names_to = "Tissue", values_to = "Concentration")
 
-  PredvsObsBlood <- ggplot() +
+  PredvsObsBlood.GLU <- ggplot() +
     geom_point(data = filter(Cobs.glu, Tissue == "Blood"),
                aes(Time, Concentration, color = Sex)) +
     geom_path(data = filter(Cpre.glu, Tissue == "Blood"),
@@ -228,7 +228,7 @@ if(Select_Author == "Videmann"){
     # theme_minimal() +
     CP_theme + 
     theme(strip.text = element_text(size = 45))
-  PredvsObsBlood
+  PredvsObsBlood.GLU
   ggsave(
     filename = here(OUTPUT,"PredvsObsBloodZENGLUC.png"),
     dpi = 1000,
@@ -237,13 +237,13 @@ if(Select_Author == "Videmann"){
     units = "cm"
   )
 
-  PredvsObsAll <- ggplot() +
+  PredvsObsAll.GLU <- ggplot() +
     geom_point(data = Cobs.glu,
                aes(Time, Concentration, color = Sex)) +
-    facet_wrap(~Tissue)+
+    facet_wrap(~Tissue, scales = "free")+
     geom_path(data = Cpre.glu,
               aes(Time, Concentration)) +
-    facet_wrap(~Tissue)+
+    facet_wrap(~Tissue, scales = "free")+
     labs(title = "Zearalenone glucuronide concentrations",
          x = "Time (h)",
          y = "Concentration (ng/ml)")+
@@ -253,9 +253,9 @@ if(Select_Author == "Videmann"){
       override.aes = list(shape = c(4, 5),
                           color = c("blueviolet", "darkblue")
       ))
-    )
+    ) +
     theme(strip.text = element_text(size = 45))
-  PredvsObsAll
+    PredvsObsAll.GLU
   ggsave(
     filename = here(OUTPUT,"PredvsObsAllZENGLU.png"),
     dpi = 1000,
@@ -403,13 +403,13 @@ A.Pre <- PBK_OUTPUT %>%
             Urine_aZEL = AUR_aZEL,
             DuodenumT_ZENGLU = 0,
             DuodenumL_ZENGLU = ADuoL_ZENGLU,
-            JejunumT_ZENGLU = AJej_ZENGLU,
+            JejunumT_ZENGLU = AJej_IC_ZENGLU + AJej_EC_ZENGLU,#AJej_ZENGLU,
             JejunumL_ZENGLU = AJejL_ZENGLU,
             IleumT_ZENGLU = 0,
             IleumL_ZENGLU = AIleL_ZENGLU,
             LIntestineL_ZENGLU = ACOL_ZENGLU,
             Feces_ZENGLU = AFE_ZENGLU,
-            Liver_ZENGLU = AL_ZENGLU,
+            Liver_ZENGLU = AL_IC_ZENGLU + AL_EC_ZENGLU, #AL_ZENGLU,
             Bile_ZENGLU = ABile_ZENGLU,
             Fat_ZENGLU = AF_ZENGLU,
             Rapidly_ZENGLU = AR_ZENGLU,

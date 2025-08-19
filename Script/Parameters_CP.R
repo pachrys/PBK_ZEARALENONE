@@ -38,6 +38,8 @@ F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo)) %>%
   FV_SI = 0.026 # fractional volume of small intestinal tissue
   FV_Duo = 0.060
   FV_Jej = 0.769
+  FV_Jej_IC = Rat.input[Rat.input$tissue == "Gut", "f_iw"]
+  FV_Jej_EC = Rat.input[Rat.input$tissue == "Gut", "f_ew"]
   FV_Ile = 0.171
   
   FV_SIL = 0.014 # fractional volume of small intestinal lumen
@@ -48,6 +50,8 @@ F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo)) %>%
   FV_COL = 0.012 # fractional volume of large intestinal lumen
   
   FV_L = 0.036  # fractional of liver tissue
+  FV_L_IC = Rat.input[Rat.input$tissue == "Liver", "f_iw"]
+  FV_L_EC = Rat.input[Rat.input$tissue == "Liver", "f_ew"]
   FV_R = 0.02  # 0.082-VSIc-VLc # fraction of rapidly perfused tissue
   FV_S = 0.667  # 0.737-VFc # fraction of slowly perfused tissue
   FV_F = 0.070  # fraction of fat tissue
@@ -103,7 +107,7 @@ F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo)) %>%
   GFRc = 0.312 #L/h/kg 0.08 #(/h)
   
   ## Partition coefficients / fraction unbound / fraction unionised ####
-  # Tissue partitioning (RodgaTRs and Rowland as coded by kmutsey: https://github.com/metrumresearchgroup/PBPK_PC/blob/master/script/CalcKp_P%26T.R
+  # Tissue partitioning (Rodgers and Rowland as coded by kmutsey: https://github.com/metrumresearchgroup/PBPK_PC/blob/master/script/CalcKp_P%26T.R
   # Assumption that Zearalenone and a-Zearalenol are diprotic acids and Zearalenone glucuronide a monoprotic acid
   #microsomes or S9 (Kilford et al., 2008 based on Halifax and Houston 2006)
   Rat.input <- read.csv(here("Input", "Rat.input.csv"))
@@ -379,7 +383,7 @@ F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo)) %>%
   
   ### Biliary excretion ####
   CL_Bile.fasted <- 0.00075
-  CL_Bile.fed <- 0.1 #1
+  CL_Bile.fed <- 1 #1
   
   Vmax_BSEPc <- 7                            # umol/min/mg BSEP, Average active transport of bile acids, assuming that the maximum velocity of PFOA transport by BSEP corresponds to that of bile acids ; de Bruijn et al. 2024 https://doi.org/10.14573/altex.2302011 
   Km_BSEPc <- 16.4                           # umol/L, uM, Average affinity constant of bile acids to BSEP, following the above assumption ; de Bruijn et al. 2024 https://doi.org/10.14573/altex.2302011
@@ -418,7 +422,7 @@ F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo)) %>%
   CL.KI.MRP3.c <- (Vmax.MRP3 * 60 * 1e6 /Km.MRP3)/ f.in_out.MRP3 / pmol_mg.MRP3 / pmolMP_mgP.KI.MRP3 / mgP_mgKI # L/min -> h/mg -> kg kidney
   
   ### Hydrolysis by GUS ####
-  CL_Hydro <- 10 #L/h
+  CL_Hydro <- 1 #L/h
   
   Parm.c.rat <- as.list(
     c(BW = BW,
@@ -431,8 +435,12 @@ F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo)) %>%
       FV_SI = FV_SI,
       FV_Duo = FV_Duo,
       FV_Jej = FV_Jej,
+      FV_Jej_IC = FV_Jej_IC,
+      FV_Jej_EC = FV_Jej_EC,
       FV_Ile = FV_Ile,
       FV_L = FV_L,
+      FV_L_IC = FV_L_IC,
+      FV_L_EC = FV_L_EC,
       FV_R = FV_R,
       FV_S = FV_S,
       FV_F = FV_F,

@@ -9,8 +9,12 @@
 "FV_SI",0.026
 "FV_Duo",0.06
 "FV_Jej",0.769
+"FV_Jej_IC",0.475
+"FV_Jej_EC",0.282
 "FV_Ile",0.171
 "FV_L",0.036
+"FV_L_IC",0.573
+"FV_L_EC",0.161
 "FV_R",0.02
 "FV_S",0.667
 "FV_F",0.07
@@ -42,12 +46,12 @@
 "VmaxL_bZELc",0.00432
 "VmaxL_ZENGLUc",0.42174
 "VmaxL_aZELGLUc",0.41778
-"CL_Bile.fed",0.1
+"CL_Bile.fed",1
 "CL_Bile.fasted",0.00075
 "Vmax_BSEPc",7
 "SF_BSEP",11.62854
 "Km_BSEPc",16.4
-"CL_Hydro",10
+"CL_Hydro",1
 "BP_ZEN",0.67
 "BP_aZEL",0.67
 "BP_ZENGLU",0.67
