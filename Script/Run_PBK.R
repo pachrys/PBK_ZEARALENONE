@@ -17,7 +17,7 @@ library(plotly)
 font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
  
-CP_theme <- theme_minimal() +
+CP_theme <- theme_minimal() + 
   theme(
     axis.text = element_text(size = 56),
     axis.title = element_text(size = 62),
@@ -33,7 +33,7 @@ dir.create(OUTPUT, recursive = TRUE)
 
 # Species
 Species = "Rat"
-Select_Author = "Videmann" #Shin, Q.Lu, Videmann
+Select_Author = "Q.Lu" #Shin, Q.Lu, Videmann
 Select_AdminType = "PO" #IV, PO
 
 # Parameters
@@ -48,7 +48,7 @@ Parameters <- if(Species == "Rat"){
 MWZEN <- 318.37 # molecular weight ZEN
 
 # oral dose
-ODOSEmg <- 1 #{mg/kg bw} # oral dose, variable Shin is 8, Videmann = 1, Q.Lu = 6.65
+ODOSEmg <- 6.65 #{mg/kg bw} # oral dose, variable Shin is 8, Videmann = 1, Q.Lu = 6.65
 ODOSEumol <- ((ODOSEmg*1000)/MWZEN)*Parameters[1, "Value"] # (μmol) unit change to μmol
 
 # IV dose
@@ -76,10 +76,12 @@ if(Select_AdminType == "PO"){
     AST_ZEN = ODOSEumol, 
     ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, 
     ADuoL_ZENGLU = 0, AJejL_ZENGLU = 0, AIleL_ZENGLU = 0, 
+    # ACO_ZEN = 0, ACO_IC_ZENGLU = 0, ACO_EC_ZENGLU = 0,
     ACOL_ZEN = 0, ACOL_ZENGLU = 0, ACOL_aZEL = 0, ACOL_bZEL = 0, 
     AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0, 
     ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
-    AJej_IC_ZENGLU = 0, AJej_EC_ZENGLU = 0, AJej_aZEL = 0, AJej_bZEL = 0, AJej_aZELGLU = 0, #AJej_ZENGLU = 0, 
+    AJej_IC_ZENGLU = 0, AJej_EC_ZENGLU = 0, #AIle_IC_ZENGLU = 0, AIle_EC_ZENGLU = 0,
+    AJej_aZEL = 0, AJej_bZEL = 0, AJej_aZELGLU = 0, #AJej_ZENGLU = 0, 
     AL_ZEN = 0, AL_IC_ZENGLU = 0, AL_EC_ZENGLU = 0, AL_bZEL = 0, AL_aZEL = 0, AL_aZELGLU = 0, #AL_ZENGLU = 0
     ABile_ZENGLU = 0,
     AB_ZEN = 0, AB_aZEL = 0, AB_ZENGLU = 0, 
@@ -93,10 +95,12 @@ if(Select_AdminType == "PO"){
     AST_ZEN = 0, 
     ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, 
     ADuoL_ZENGLU = 0, AJejL_ZENGLU = 0, AIleL_ZENGLU = 0, 
+    # ACO_ZEN = 0, ACO_IC_ZENGLU = 0, ACO_EC_ZENGLU = 0,
     ACOL_ZEN = 0, ACOL_ZENGLU = 0, ACOL_aZEL = 0, ACOL_bZEL = 0, 
     AFE_ZEN = 0, AFE_aZEL = 0, AFE_ZENGLU = 0, 
     ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
-    AJej_IC_ZENGLU = 0, AJej_EC_ZENGLU = 0, AJej_aZEL = 0, AJej_bZEL = 0, AJej_aZELGLU = 0, #AJej_ZENGLU = 0, 
+    AJej_IC_ZENGLU = 0, AJej_EC_ZENGLU = 0, #AIle_IC_ZENGLU = 0, AIle_EC_ZENGLU = 0,
+    AJej_aZEL = 0, AJej_bZEL = 0, AJej_aZELGLU = 0, #AJej_ZENGLU = 0, 
     AL_ZEN = 0, AL_IC_ZENGLU = 0, AL_EC_ZENGLU = 0, AL_bZEL = 0, AL_aZEL = 0, AL_aZELGLU = 0, #AL_ZENGLU = 0
     ABile_ZENGLU = 0,
     AB_ZEN = IVDOSEumol, AB_aZEL = 0, AB_ZENGLU = 0, 
