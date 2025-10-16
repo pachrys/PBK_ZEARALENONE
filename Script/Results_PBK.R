@@ -73,12 +73,16 @@ VST <-parm.c$FV_ST*BW  # fraction volume of small intestine
 VSIL <- parm.c$FV_SIL*BW # fractional volume of small intestinal lumen
 # VCOL <- (parm.c$FV_LIL*BW)-VREL
 VSI <- parm.c$FV_SI*BW # fractional volume of small intestinal tissue
-VDuoL <- VSIL*0.183 # calculated from Musther
-VJejL <- VSIL*0.334 # calculated from Musther
-VIleL <- VSIL*0.483 # calculated from Musther
-VDuo <- VSI*0.060
-VJej <- VSI*0.769
-VIle <- VSI*0.171
+VDuoL <- VSIL*parm.c$FV_duol 
+VJejL <- VSIL*parm.c$FV_jejl 
+VIleL <- VSIL*parm.c$FV_ilel 
+VCOL <- parm.c$FV_COL*BW 
+
+VDuo <- VSI*parm.c$FV_Duo
+VJej <- VSI*parm.c$FV_Jej
+VJej_IC <- parm.c$FV_I_IC*VJej
+VJej_EC <- parm.c$FV_I_EC*VJej
+VIle <- VSI*parm.c$FV_Ile
 
 C.Pre_wide <- C.Pre_long %>%
   pivot_wider(names_from = "Tissue", values_from = "Concentration") %>%
@@ -89,7 +93,7 @@ C.Pre_wide <- C.Pre_long %>%
     VDuo + VJej + VIle)) %>% #L+VCOL+VRE  +VDuoL+VJejL+VIle
   # rename("Intestine" = "SIntestineT") %>%
   select(c("Compound", "Time", "Intestine", "Liver", "Blood")) %>% 
-  filter(Time >= 0.03)
+  filter(Time >= 0.01)
 
 # Plot against in vivo ####
 
@@ -148,7 +152,7 @@ PredvsObsBlood <- ggplot(data = filter(Cobs, Tissue == "Blood"),
 PredvsObsBlood
 ggsave(
   filename = here(OUTPUT,"PredvsObsBlood.png"),
-  dpi = 1000,
+  dpi = 600,
   width = 11,
   height = 7,
   units = "cm"
@@ -180,7 +184,7 @@ if(Select_Author == "Videmann"){
   PredvsObsAll
   ggsave(
     filename = here(OUTPUT,"PredvsObsAll.png"),
-    dpi = 1000,
+    dpi = 600,
     width = 11,
     height = 7,
     units = "cm"
@@ -206,10 +210,6 @@ if(Select_Author == "Videmann"){
            Concentration = as.numeric(Concentration),
            Concentration = ifelse(Tissue == "Plasma",
                                   Concentration * BP, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
-           # Cmin = ifelse(Tissue == "Plasma",
-           #               Cmin * BP, Cmin),
-           # Cmax = ifelse(Tissue == "Plasma",
-           #               Cmax * BP, Cmax),
            Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
   
   Cobs.glu <- Obs.glu %>%
@@ -231,7 +231,7 @@ if(Select_Author == "Videmann"){
   PredvsObsBlood.GLU
   ggsave(
     filename = here(OUTPUT,"PredvsObsBloodZENGLUC.png"),
-    dpi = 1000,
+    dpi = 600,
     width = 11,
     height = 7,
     units = "cm"
@@ -258,7 +258,7 @@ if(Select_Author == "Videmann"){
     PredvsObsAll.GLU
   ggsave(
     filename = here(OUTPUT,"PredvsObsAllZENGLU.png"),
-    dpi = 1000,
+    dpi = 600,
     width = 11,
     height = 7,
     units = "cm"
@@ -290,15 +290,15 @@ if(Select_Author == "Videmann"){
 
 
   CRegression_plot <- CRegression.M %>%
-    ggplot(aes(x = log(Observed), y = log(Predicted))) +
+    ggplot(aes(x = log10(Observed), y = log10(Predicted))) +
     # geom_smooth(method='lm', color = "black", se = TRUE)  +
     geom_abline(intercept = 0, slope = 1, linetype = "solid", linewidth = 0.3, color = "grey50") +
-    geom_abline(intercept = log(2), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
-    geom_abline(intercept = log(0.5), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
-    geom_abline(intercept = log(5), slope = 1, linetype = "dotted", linewidth = 0.1, color = "grey50") +
-    geom_abline(intercept = log(1/5), slope = 1, linetype = "dotted", linewidth = 0.1, color = "grey50") +
+    geom_abline(intercept = log10(2), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
+    geom_abline(intercept = log10(0.5), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
+    geom_abline(intercept = log10(10), slope = 1, linetype = "dotted", linewidth = 0.2, color = "grey50") +
+    geom_abline(intercept = log10(1/10), slope = 1, linetype = "dotted", linewidth = 0.2, color = "grey50") +
     geom_point(color = "blueviolet", shape = 4) +
-    geom_point(data = CRegression.F, aes(x = log(Observed), y = log(Predicted)),
+    geom_point(data = CRegression.F, aes(x = log10(Observed), y = log10(Predicted)),
                color = "darkblue", shape = 5) +
     scale_color_manual(name = "Sex",
       values = c("Male" = "blueviolet", "Female" = "darkblue"),
@@ -309,37 +309,37 @@ if(Select_Author == "Videmann"){
       labels = c("Male", "Female")
     ) +
     geom_abline(intercept = 0, slope = 1, linetype = "solid", linewidth = 0.3, color = "grey50") +
-    geom_abline(intercept = log(2), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
-    geom_abline(intercept = log(0.5), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
-    geom_abline(intercept = log(5), slope = 1, linetype = "dotted", linewidth = 0.1, color = "grey50") +
-    geom_abline(intercept = log(1/5), slope = 1, linetype = "dotted", linewidth = 0.1, color = "grey50") +
+    geom_abline(intercept = log10(2), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
+    geom_abline(intercept = log10(0.5), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
+    geom_abline(intercept = log10(10), slope = 1, linetype = "dotted", linewidth = 0.2, color = "grey50") +
+    geom_abline(intercept = log10(1/10), slope = 1, linetype = "dotted", linewidth = 0.2, color = "grey50") +
     CP_theme +
-    labs(x = "log 10 (Observed Blood Concentration) (ng/ml)", y = "log10 (Predicted Blood Concentration) (ng/ml)")
+    labs(x = "log10 10 (Observed Blood Concentration) (ng/ml)", y = "log1010 (Predicted Blood Concentration) (ng/ml)")
   CRegression_plot
 
   CRegression_plot <- ggplot() +
     geom_abline(intercept = 0, slope = 1, linetype = "solid", linewidth = 0.3, color = "grey50") +
-    geom_abline(intercept = log(2), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
-    geom_abline(intercept = log(0.5), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
-    geom_abline(intercept = log(5), slope = 1, linetype = "dotted", linewidth = 0.1, color = "grey50") +
-    geom_abline(intercept = log(1/5), slope = 1, linetype = "dotted", linewidth = 0.1, color = "grey50") +
+    geom_abline(intercept = log10(2), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
+    geom_abline(intercept = log10(0.5), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
+    geom_abline(intercept = log10(10), slope = 1, linetype = "dotted", linewidth = 0.2, color = "grey50") +
+    geom_abline(intercept = log10(1/10), slope = 1, linetype = "dotted", linewidth = 0.2, color = "grey50") +
     geom_point(data = CRegression.M,
-      aes(x = log(Observed), y = log(Predicted), color = "Male", shape = "Male"),
+      aes(x = log10(Observed), y = log10(Predicted), color = "Male", shape = "Male"),
       size = 1) +
     geom_point(
       data = CRegression.F,
-      aes(x = log(Observed), y = log(Predicted), color = "Female", shape = "Female"),
+      aes(x = log10(Observed), y = log10(Predicted), color = "Female", shape = "Female"),
       size = 1) +
     scale_color_manual(name = "Sex", values = c("Male" = "blueviolet", "Female" = "darkblue")) +
     scale_shape_manual(name = "Sex", values = c("Male" = 4, "Female" = 5)) +
     CP_theme +
-    labs(x = "log 10 (Observed Blood Concentration) (ng/ml)",
-         y = "log10 (Predicted Blood Concentration) (ng/ml)") +
+    labs(x = "log10 10 (Observed Blood Concentration) (ng/ml)",
+         y = "log1010 (Predicted Blood Concentration) (ng/ml)") +
     guides(color = guide_legend(override.aes = list(shape = c(4, 5))))
   CRegression_plot
   ggsave(filename = here(OUTPUT, "CRegression_plot.png"),
          plot = CRegression_plot,
-         dpi = 1000,
+         dpi = 600,
          width = 9,height = 7, units = "cm")
 
   }else{
@@ -351,19 +351,19 @@ if(Select_Author == "Videmann"){
   summary(CRegression)
 
   CRegression_plot <- CRegression %>%
-    ggplot(aes(x = log(Observed), y = log(Predicted))) +
+    ggplot(aes(x = log10(Observed), y = log10(Predicted))) +
     geom_abline(intercept = 0, slope = 1, linetype = "solid", linewidth = 0.3, color = "grey50") +
-    geom_abline(intercept = log(2), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
-    geom_abline(intercept = log(0.5), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
-    geom_abline(intercept = log(5), slope = 1, linetype = "dotted", linewidth = 0.1, color = "grey50") +
-    geom_abline(intercept = log(1/5), slope = 1, linetype = "dotted", linewidth = 0.1, color = "grey50") +
+    geom_abline(intercept = log10(2), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
+    geom_abline(intercept = log10(0.5), slope = 1, linetype = "dashed", linewidth = 0.2, color = "grey50") +
+    geom_abline(intercept = log10(10), slope = 1, linetype = "dotted", linewidth = 0.2, color = "grey50") +
+    geom_abline(intercept = log10(1/10), slope = 1, linetype = "dotted", linewidth = 0.2, color = "grey50") +
     geom_point(color = "blueviolet", shape = 4) +
     CP_theme +
-    labs(x = "log 10 (Observed Blood Concentration) (ng/ml)", y = "log10 (Predicted Blood Concentration) (ng/ml)")
+    labs(x = "log10 10 (Observed Blood Concentration) (ng/ml)", y = "log1010 (Predicted Blood Concentration) (ng/ml)")
   CRegression_plot
   ggsave(filename = here(OUTPUT, "CRegression_plot.png"),
          plot = CRegression_plot,
-         dpi = 1000,
+         dpi = 600,
          width = 9,height = 7, units = "cm")
 
   }
@@ -437,7 +437,7 @@ Plot.A.Pre <- A.Pre_long %>%
 print(Plot.A.Pre)
 ggsave(
   filename = here(OUTPUT,"AmountAll.png"),
-  dpi = 1000,
+  dpi = 600,
   width = 11,
   height = 7,
   units = "cm"
@@ -447,16 +447,16 @@ Plot.C.Pre <- C.Pre_long %>%
   ggplot() +
   geom_path(aes(x = Time, y = Concentration, colour = Compound), linewidth = 0.5) +
   facet_wrap(~Tissue, scales = "free")+
-  # theme_minimal() +
-  CP_theme +
-  theme(strip.text = element_text(size = 45),
-        axis.text = element_text(size = 40)) +
+  theme_minimal() +
+  # CP_theme +
+  # theme(strip.text = element_text(size = 45),
+  #       axis.text = element_text(size = 40)) +
   ylab("Tissue Concentration (ng/ml)") +
   xlab("Time (hours)")
 print(Plot.C.Pre)
 ggsave(
   filename = here(OUTPUT,"ConcentrationAll.png"),
-  dpi = 1000,
+  dpi = 600,
   width = 11,
   height = 7,
   units = "cm"
@@ -466,18 +466,24 @@ C_Blood <- C.Pre_long %>%
   filter(Tissue == "Blood") %>%
   ggplot()+
   geom_path(aes(x = Time, y = Concentration, colour = Compound), linewidth = 0.5) +
-  # theme_minimal()+
-  CP_theme +
+  theme_minimal()+
+  # CP_theme +
   ylab("Blood Concentration (ng/ml)") +
   xlab("Time (hours)")
 print(C_Blood)
 ggsave(
   filename = here(OUTPUT,"C_Blood.png"),
-  dpi = 1000,
+  dpi = 600,
   width = 11,
   height = 7,
   units = "cm"
 )
+
+
+
+C_ZEN <- max(C.Pre$Blood_ZEN)/MWZEN * 1000 #* 1000
+C_aZEL <- max(C.Pre$Blood_aZEL)/MWZEN * 1000 #* 1000
+
 
 # Mass Balance ####
 MB.df <- PBK_OUTPUT %>% select(time, ATotal, ACalculated, MB)  # change days to years if needed
@@ -501,7 +507,7 @@ MB_plot <- ggplot(data = MB.df)+
 print(MB_plot)
 ggsave(
   filename = here(OUTPUT,"MB_plot.png"),
-  dpi = 1000,
+  dpi = 600,
   width = 11,
   height = 7,
   units = "cm"
