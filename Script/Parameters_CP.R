@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------- #
 # Script for calculating parameters  
-# exact copy of the calculations of the PBK Model of Mendez-Catala et al. 2021 DOI: 10.1002/mnfr.202100443
+# exact copy of the calculations of the PBK Model of Mendez-Catala et al. 2021 Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 # By: Chrysanthi Pachoulide
 # Date: 23-06-2025
 # --------------------------------------------------------------------------- #
@@ -24,7 +24,7 @@ showtext_auto()
   Rat.input <- read_delim(here("Input", "TissueComposition.csv"),
                           delim = ";",
                         escape_double = FALSE, trim_ws = TRUE) %>%
-  filter(Species == "Rat") # tissue composition mainly as R&R composition, unified by Utsey and optimised as per Musther
+  filter(Species == "Rat") # tissue composition mainly as R&R composition, unified by Utsey and optimised as per Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
 
   Rat.dat <- Rat.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for all tissues except for adipose and RBCs
   names <- substr(Rat.dat$tissue, 1, 2)
@@ -34,7 +34,7 @@ showtext_auto()
 
 
   ## Physiological constants ####
-  # Fractional Tissue volumes (reference: Punt et al. (2020))
+  # Fractional Tissue volumes (reference: Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
   BW = 0.250  ##{Kg} #  body weight rat
 
   FV_ST = 0.012  # fraction volume of small intestine
@@ -46,13 +46,13 @@ showtext_auto()
   FV_I_IC = pull(Rat.input[Rat.input$tissue == "Gut", "f_iw"])
   FV_I_EC = pull(Rat.input[Rat.input$tissue == "Gut", "f_ew"])
   FV_Ile = 0.171
-  FV_CO = 0.002 # calculated from Musther (yotal volume was 0.238ml)
+  FV_CO = 0.002 # calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 (total volume was 0.238ml)
   
-  FV_SIL = 0.014 # fractional volume of small intestinal lumen (Punt et al. 2020)
+  FV_SIL = 0.014 # fractional volume of small intestinal lumen (Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
   FV_duol = 0.183
-  FV_jejl = 0.334 # calculated from Musther
-  FV_ilel = 0.483 # calculated from Musther
-  FV_COL = 0.012 # fractional volume of large intestinal lumen (Punt et al. 2020)
+  FV_jejl = 0.334 # calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
+  FV_ilel = 0.483 # calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
+  FV_COL = 0.012 # fractional volume of large intestinal lumen (Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
   
   # FV_L = 0.036  # fractional of liver tissue
   # FV_L_IC = pull(Rat.input[Rat.input$tissue == "Liver", "f_iw"])
@@ -74,15 +74,15 @@ showtext_auto()
   # FV_S = 0.96 - (FV_SI + FV_L + FV_R + FV_F + FV_B) # fraction of slowly perfused tissue (Bone/Skin/Adipose/Muscle/(brain and testes) (slowly equilibrating tissues with large time constants))
 
   R <- 0.18 #radius small intestine
-  Rduo <- 0.275/2 #diameter / 2 = radius, cm (Musther et al)
-  Rjej <- 0.4/2   #diameter / 2 = radius, cm (Musther et al)
-  Rile <- 0.4/2   #diameter / 2 = radius, cm (Musther et al)
+  Rduo <- 0.275/2 #diameter / 2 = radius, cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
+  Rjej <- 0.4/2   #diameter / 2 = radius, cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
+  Rile <- 0.4/2   #diameter / 2 = radius, cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
   
-  Lduo <- 7    #length cm (Musther et al)
-  Ljej <- 90   #cm (Musther et al)
-  Lile <- 20   #diameter / 2 = radius, cm (Musther et al)
+  Lduo <- 7    #length cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
+  Ljej <- 90   #cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
+  Lile <- 20   #diameter / 2 = radius, cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
   
-  Amp <- 120 # microvilli amplification factor, ref: https://doi.org/10.1016/S0278-6915(00)00136-8; villi and microvilli together amplify the small intestinal surface area by 60–120 times https://doi.org/10.3109/00365521.2014.898326
+  Amp <- 120 # microvilli amplification factor, ref: Desesso et al. (2001) https://doi.org/10.1016/S0278-6915(00)00136-8; villi and microvilli together amplify the small intestinal surface area by 60–120 times https://doi.org/10.3109/00365521.2014.898326
   Ampduo <- 1*Amp
   Ampjej <- 1*Amp #0.7
   Ampile <- 1*Amp #0.5
@@ -92,22 +92,22 @@ showtext_auto()
   SAile = 2*pi*Rile*Lile*Ampile #cm2
   # SAco = 0.034 * 10000 # Desesso 2001
   
-  # Blood flow rates (reference: Punt et al. (2020))
+  # Blood flow rates (reference: Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
   QC = 4.8  ##{L/h} # cardiac output
-  # QSIc = 0.101  # fraction of blood flow to small intestine Musther et al. SI
-  # QDuoc = 0.079 # Musther
-  # QJejc = 0.680 # Musther
-  # QIlec = 0.241 # Musther
-  # # QCOc = 0.022 # fraction of blood flow to large intestine Musther et al. SI
+  # QSIc = 0.101  # fraction of blood flow to small intestine Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al. SI
+  # QDuoc = 0.079 # Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
+  # QJejc = 0.680 # Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
+  # QIlec = 0.241 # Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
+  # # QCOc = 0.022 # fraction of blood flow to large intestine Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al. SI
   # QLc = 0.141  # 0.242 - QSIc # fraction of blood flow to liver 101 
   # QRc = 0.51  # 0.76 - QSIc - QLc # fraction of blood flow to rapidly perfused tissue
   # QSc = 0.17  # 0.24 - QFc # fraction of blood flow to slowly perfused tissue
   # QFc = 0.07  # fraction of blood flow to fat
   
   QSIc = pull(Rat.input[Rat.input$tissue == "Gut", "F_QC"])  # fraction of blood flow to small intestine
-  QDuoc = 0.079 # Musther
-  QJejc = 0.680 # Musther
-  QIlec = 0.241 # Musther
+  QDuoc = 0.079 # Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
+  QJejc = 0.680 # Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
+  QIlec = 0.241 # Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
   QLc = pull(Rat.input[Rat.input$tissue == "Liver", "F_QC"])  
   QRc = pull(Rat.input[Rat.input$tissue == "Heart", "F_QC"]) +
     pull(Rat.input[Rat.input$tissue == "Kidney", "F_QC"]) +
@@ -116,7 +116,7 @@ showtext_auto()
   QFc = pull(Rat.input[Rat.input$tissue == "Adipose", "F_QC"])  # fraction of blood flow to fat
   # QSc = 1 - (QSIc + QLc + QRc + QFc) # fraction of blood flow to slowly perfused tissue
 
-  # Intestinal fluid flow rates; Wistar (reference: Musther et al SI; Punt et al. (2020))
+  # Intestinal fluid flow rates; Wistar (reference: Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al SI; Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
   Tge <- 0.25 # stomach emptying time (h)
   Tsi <- 1.63 # small intestine transit time (h)
   Tsiduo <- 0.06*Tsi # duodenum transit time (h)
@@ -129,11 +129,11 @@ showtext_auto()
   ileTR <- 1/Tsiile # (/h)
   lilTR <- 1/19.7 #1/(0.8*19.7) # large intestinal transit time (/h)
   
-  # Glomerular filtration rate: Punt et al. (2020)
-  GFR = 0.0786 #L/h Grandoni: 10.5599/admet.638
+  # Glomerular filtration rate: Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307
+  GFR = 0.0786 #L/h Grandoni et al . (2019) DOI:  10.5599/admet.638 
   
   ## Partition coefficients / fraction unbound / fraction unionised ####
-  # Tissue partitioning (Rodgers and Rowland as coded by kmutsey: https://github.com/metrumresearchgroup/PBPK_PC/blob/master/script/CalcKp_P%26T.R
+  # Tissue partitioning (Rodgers and Rowland as coded by Utsey et al. (2020) DOI: 10.1124/dmd.120.090498: https://github.com/metrumresearchgroup/PBPK_PC/blob/master/script/CalcKp_P%26T.R
   # Assumption that Zearalenone and a-Zearalenol are diprotic acids and Zearalenone glucuronide a monoprotic acid
   #microsomes or S9 (Kilford et al., 2008 based on Halifax and Houston 2006)
   dat_all <- Rat.input %>% filter(!tissue %in% c("RBCs", "Adipose", "Plasma"))  #df for all tissues except for adipose, RBCs, and plasma
@@ -153,7 +153,7 @@ showtext_auto()
   BP_ZEN <- 0.67 # Shin et al. 2014 DOI: 10.1080/15287390903212741
   fup_ZEN <- 0.156 # Mukherjee et al. 2014 doi:10.1371/journal.pone.0113632
   
-  P <- 10^(logP_ZEN)   # octonal:water partition coeff
+  P <- 10^(logP_ZEN)   # octanol:water partition coeff
   logP_OW <- 1.115*logP_ZEN - 1.35 #oil:water partition coeff
   P_OW <- 10^(logP_OW) 
   # Ka <- 10^(-pKa1_ZEN)
@@ -176,7 +176,7 @@ showtext_auto()
   nms_all <- dat_all$tissue %>% substr(1,2) %>% tolower()
   nms_all <- paste("Kp", nms_all, sep="")
   nms <- c("Kpad",nms_all)
-  Kp_ZEN <- as.list(c(Kp_ad,Kp_all)) #maybe make as dataframe
+  Kp_ZEN <- as.list(c(Kp_ad,Kp_all)) 
   names(Kp_ZEN) <- nms
   
   PSI_ZEN = Kp_ZEN$Kpgu #Intestine:Blood partition coefficient
@@ -205,7 +205,7 @@ showtext_auto()
   BP_aZEL <- 0.67 # assuming the same as ZEN
   fup_aZEL <- 0.156 # assuming the same as ZEN
   
-  P <- 10^(logP_aZEL)   # octonal:water partition coeff
+  P <- 10^(logP_aZEL)   # octanol:water partition coeff
   logP_OW <- 1.115*logP_aZEL - 1.35 #oil:water partition coeff
   P_OW <- 10^(logP_OW) 
   # Ka <- 10^(-pKa1_aZEL)
@@ -255,7 +255,7 @@ showtext_auto()
   BP_ZENGLU <- 0.67 # assuming the same as ZEN
   fup_ZENGLU <- 1 / (1 + 10^(0.4485 * logP_ZENGLU - 0.4782)) #Lobell M, Sivarajah V. et al. 2003 doi: 10.1023/b:modi.0000006562.93049.36.
   
-  P <- 10^(logP_ZENGLU)   # octonal:water partition coeff
+  P <- 10^(logP_ZENGLU)   # octanol:water partition coeff
   logP_OW <- 1.115*logP_ZENGLU - 1.35 #oil:water partition coeff
   P_OW <- 10^(logP_OW) 
   Ka <- 10^(-pKa_ZENGLU)
@@ -307,24 +307,24 @@ showtext_auto()
   Peff.cm.per.hr <- PappCaco2_ZEN #cm/h
   
   ### Metabolism in small intestine tissue ####
-  S9SI =  21.9 #37.1  # small intestinal S9 protein yield (mg S9 protein/gram intestine) reference: Peters et al. (2016); sum of microsomal 3.9 mg/g and cytosolic 18mg/g https://sci-hub.box/https://doi.org/10.1007/s13318-020-00666-w
+  S9SI =  21.9 # small intestinal S9 protein yield (mg S9 protein/gram intestine) reference: Doerksen et al. (2020) doi: 10.1007/s13318-020-00666-w sum of microsomal 3.9 mg/g and cytosolic 18mg/g 
   
-  conc.HSD.S9I = 1.25 # mg protein/mL Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-  VmaxSI_aZELc = 32*1e-6 * 60      # assuming the same as liver; pmol->umol/min->h/mg protein reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
+  # conc.HSD.S9I = 1.25 # mg protein/mL Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
+  VmaxSI_aZELc = 32*1e-6 * 60      # assuming the same as liver; pmol-> umol/min->h/mg protein reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
   KmSI_aZEL = 592                   # assuming the same as liver; uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
   VmaxSI_bZELc = 72*1e-6 * 60     # assuming the same as liver; pmol->umol/min->h/mg protein; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
   KmSI_bZEL = 21                   # assuming the same as liver; uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
   
-  conc.UGT.S9I = 0.04 # mg protein/ml Diana DOI: 10.1002/mnfr.202100443
-  VmaxSI_ZENGLUc =  8.617*1e-3 * 60  # nmol->umol/min->h/mg S9; DOI: 10.1002/mnfr.202100443
-  KmSI_ZENGLU = 6.198  # uM; DOI: 10.1002/mnfr.202100443
+  # conc.UGT.S9I = 0.04 # mg protein/ml Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
+  VmaxSI_ZENGLUc =  8.617*1e-3 * 60  # nmol->umol/min->h/mg S9; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
+  KmSI_ZENGLU = 6.198  # uM; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
   
-  VmaxSI_aZELGLUc = 6.963*1e-3 * 60 # nmol->umol/min->h/mg s9; DOI: 10.1002/mnfr.202100443
-  KmSI_aZELGLU = 7.426              # uM; DOI: 10.1002/mnfr.202100443
+  VmaxSI_aZELGLUc = 6.963*1e-3 * 60 # nmol->umol/min->h/mg s9; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
+  KmSI_aZELGLU = 7.426              # uM; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
   
-  fuincS9I.HSD_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.HSD.S9I*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
-  fuincS9I.UGT_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.UGT.S9I*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
-  fuincS9I_aZEL <- (f.frac.ionized_aZEL+frac.unionized_aZEL)*(1/(1+conc.UGT.S9I*10^(0.072*logD_aZEL^2+0.067*logD_aZEL-1.126)))
+  # fuincS9I.HSD_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.HSD.S9I*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
+  # fuincS9I.UGT_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.UGT.S9I*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
+  # fuincS9I_aZEL <- (f.frac.ionized_aZEL+frac.unionized_aZEL)*(1/(1+conc.UGT.S9I*10^(0.072*logD_aZEL^2+0.067*logD_aZEL-1.126)))
   
   ### Metabolism in large intestine lumen (microbiota compartment) ####
   VMB = 0.0164                    # fraction of feces of BW reference: Hoskins and Zamcheck (1968)
@@ -334,28 +334,28 @@ showtext_auto()
   KmLI_bZEL = 80                  # uM; reference: Mendez-Catala et al. (2020)
   
   ### Metabolism in liver ####
-  S9L = 125 #125                      # liver S9 protein yield, (mg S9 protein/gram liver) references: sum of microsomal 38mg/g liver and cytosolic 87mg/g liver content, references https://doi.org/10.2174/138920007779315053 and 10.1016/j.taap.2011.03.020, https://sci-hub.box/https://doi.org/10.1007/s13318-020-00666-w
-  conc.HSD.S9L = 1.25 # mg protein/mL Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
+  S9L = 112.7            # liver S9 protein yield, (mg S9 protein/gram liver) reference: Moerenhout et al. (2024) DOI 10.1021/acs.est.4c06534 sum of microsomal 32mg/g liver and cytosolic 80.7mg/g liver content
+  # conc.HSD.S9L = 1.25 # mg protein/mL Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
   
   VmaxL_aZELc = 32*1e-6 * 60      # pmol->umol/min->h/mg protein reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
   KmL_aZEL = 592                  # uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
   VmaxL_bZELc = 72*1e-6 * 60      # pmol->umol/min->h/mg protein; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
   KmL_bZEL = 21                   # uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
   
-  conc.UGT.S9L = 0.2 # mg protein/ml Diana DOI: 10.1002/mnfr.202100443
-  VmaxL_ZENGLUc = 7.029*1e-3 * 60  # umol/h/mg S9; nmol->umol/min->h/mg S9; DOI: 10.1002/mnfr.202100443
-  KmL_ZENGLU = 6.753               # uM; DOI: 10.1002/mnfr.202100443
+  # conc.UGT.S9L = 0.2 # mg protein/ml Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
+  VmaxL_ZENGLUc = 7.029*1e-3 * 60  # umol/h/mg S9; nmol->umol/min->h/mg S9; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
+  KmL_ZENGLU = 6.753               # uM; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
   
-  VmaxL_aZELGLUc = 6.963*1e-3 * 60 # umol/h/mg S9; nmol->umol/min->h/mg s9; DOI: 10.1002/mnfr.202100443
-  KmL_aZELGLU = 7.426              # uM; DOI: 10.1002/mnfr.202100443
+  VmaxL_aZELGLUc = 6.963*1e-3 * 60 # umol/h/mg S9; nmol->umol/min->h/mg s9; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
+  KmL_aZELGLU = 7.426              # uM; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 
-  fuincS9L.HSD_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.HSD.S9L*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
-  fuincS9L.UGT_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.UGT.S9L*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
-  fuincS9L_aZEL <- (f.frac.ionized_aZEL+frac.unionized_aZEL)*(1/(1+conc.UGT.S9L*10^(0.072*logD_aZEL^2+0.067*logD_aZEL-1.126)))
+  # fuincS9L.HSD_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.HSD.S9L*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
+  # fuincS9L.UGT_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.UGT.S9L*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
+  # fuincS9L_aZEL <- (f.frac.ionized_aZEL+frac.unionized_aZEL)*(1/(1+conc.UGT.S9L*10^(0.072*logD_aZEL^2+0.067*logD_aZEL-1.126)))
   
   ### Biliary excretion ####
-  Bile.fasted <- 0.00075 # in h; in rats there is a constant flow of bile to the duodenum
-  Bile.fed <- 1 # in h; increase of bile excretion during feeding
+  Bile.fasted <- 0.00075 # in L/h; In the rat, the bile acid-dependent and-independent bile flow has been estimated to be approximately 50 and 70 μl/kg/min, respectively. in rats there is a constant flow of bile to the duodenum
+  Bile.fed <- 1 # in L/h; increase of bile excretion during feeding
   
   Vmax.MRP2 <- 4767e-6  # pmol -> umol/min/mg MRP2, 2935.5
   Km.MRP2 <- 109.6      # umol/L, 76.925
@@ -370,7 +370,7 @@ showtext_auto()
   
   MWMRP2 <- 190e3 # kDa -> g/mol https://www.sciencedirect.com/science/article/abs/pii/S0308814619305898
   #assuming equal distribution of MRP2 in the small intestine
-  pmolMP_mgP.IN.MRP2 <- 4.76e3/MWMRP2 # poml transporter/mg protein; ng->pg, pg -> pmol Gavins et al. 2023 https://doi.org/10.1016/j.biopha.2023.114329 
+  pmolMP_mgP.IN.MRP2 <- 4.76e3/MWMRP2 # pmol transporter/mg protein; ng->pg, pg -> pmol Gavins et al. 2023 https://doi.org/10.1016/j.biopha.2023.114329 
   # pmolMP_mgP.IN.NRP2.fasted <- 4.76e3/MWMRP2 # ng->pg, og -> pmol
   # pmolMP_mgP.IN.NRP2.fed <- 2*4.76e3/MWMRP2 # ng->pg, og -> pmol
   # pmolMP_mgP.IN.MRP2 <- 0.9 # pmol MRP2/mg protein in intestine
@@ -402,29 +402,33 @@ showtext_auto()
   REF.LI.MRP3 <- pmolMP_mgP.LI.MRP3/pmol_mg.MRP3
   REF.KI.MRP3 <- pmolMP_mgP.KI.MRP3/pmol_mg.MRP3
   
-  SF.IN.MRP2 <- mgP_mgLI * REF.IN.MRP2 * 1e6       # (mg liver * 1e6 -> kg liver)
-  SF.LI.MRP2 <- mgP_mgLI * REF.LI.MRP2 * 1e6       # (mg liver * 1e6 -> kg liver)
-  SF.KI.MRP2 <- mgP_mgLI * REF.KI.MRP2 * 1e6       # (mg liver * 1e6 -> kg liver)
+  SF.IN.MRP2 <- mgP_mgIN * REF.IN.MRP2       # (mg protein / mg small intestine) #pmolMP_mgP.IN.MRP2*1e-6*MWMRP2*
+  SF.LI.MRP2 <- mgP_mgLI * REF.LI.MRP2       # (mg protein / mg liver) #pmolMP_mgP.LI.MRP2*1e-6*MWMRP2*
+  SF.KI.MRP2 <- mgP_mgLI * REF.KI.MRP2       # (mg protein / mg kidney) #pmolMP_mgP.KI.MRP2*1e-6*MWMRP2*
   
-  SF.IN.MRP3 <- mgP_mgLI * REF.IN.MRP3 * 1e6       # (mg liver * 1e6 -> kg liver)
-  SF.LI.MRP3 <- mgP_mgLI * REF.LI.MRP3 * 1e6       # (mg liver * 1e6 -> kg liver)
-  SF.KI.MRP3 <- mgP_mgLI * REF.KI.MRP3 * 1e6       # (mg liver * 1e6 -> kg liver)
+  SF.IN.MRP3 <- mgP_mgLI * REF.IN.MRP3       # (mg protein / mg liver) #pmolMP_mgP.IN.MRP3*1e-6*MWMRP3
+  SF.LI.MRP3 <- mgP_mgLI * REF.LI.MRP3       # (mg protein / mg liver) #pmolMP_mgP.LI.MRP3*1e-6*MWMRP3*
+  SF.KI.MRP3 <- mgP_mgLI * REF.KI.MRP3       # (mg protein / mg liver) #pmolMP_mgP.KI.MRP3*1e-6*MWMRP3*
   
+  Vmax.MRP2.LI.c <- Vmax.MRP2 / f.in_out.MRP2 * SF.LI.MRP2  # umol/min/mg MRP2 * mg MRP2 / mg liver -> umol/min/mg liver 
+  Vmax.MRP2.IN.c <- Vmax.MRP2 / f.in_out.MRP2 * SF.IN.MRP2  # umol/min/mg MRP2 * mg MRP2 / mg liver -> umol/min/mg liver
+  Vmax.MRP3.LI.c <- Vmax.MRP3 / f.in_out.MRP3 * SF.LI.MRP3  # umol/min/mg MRP2 * mg MRP2 / mg liver -> umol/min/mg liver
+  Vmax.MRP3.IN.c <- Vmax.MRP3 / f.in_out.MRP3 * SF.IN.MRP3  # umol/min/mg MRP2 * mg MRP2 / mg liver -> umol/min/mg liver
   
   CL.LI.MRP2.c <- (Vmax.MRP2 / f.in_out.MRP2 * SF.LI.MRP2 * 60)/Km.MRP2
   CL.IN.MRP2.c <- (Vmax.MRP2 / f.in_out.MRP2 * SF.IN.MRP2 * 60)/Km.MRP2
   CL.KI.MRP2.c <- (Vmax.MRP2 / f.in_out.MRP2 * SF.KI.MRP2 * 60)/Km.MRP2
-  
+
   CL.LI.MRP3.c <- (Vmax.MRP3 / f.in_out.MRP3 * SF.LI.MRP3 * 60)/Km.MRP3
   CL.IN.MRP3.c <- (Vmax.MRP3 / f.in_out.MRP3 * SF.IN.MRP3 * 60)/Km.MRP3
   CL.KI.MRP3.c <- (Vmax.MRP3 / f.in_out.MRP3 * SF.KI.MRP3 * 60)/Km.MRP3
-  
+
   # CL.LI.MRP2.c <- (Vmax.MRP2 * 60 /Km.MRP2)/ f.in_out.MRP2 / pmol_mg.MRP2 / pmolMP_mgP.LI.MRP2 / mgP_mgLI # L/min -> h/mg -> kg liver
   # CL.LI.MRP3.c <- (Vmax.MRP3 * 60 /Km.MRP3)/ f.in_out.MRP3 / pmol_mg.MRP3 / pmolMP_mgP.LI.MRP3 / mgP_mgLI # L/min -> h/mg -> kg liver
-  # 
+  #
   # CL.IN.MRP2.c <- (Vmax.MRP2 * 60 * 1e6 /Km.MRP2)/ f.in_out.MRP2 / pmol_mg.MRP2 / pmolMP_mgP.IN.MRP2 / mgP_mgIN # L/min -> h/mg -> kg intestine
   # CL.IN.MRP3.c <- (Vmax.MRP3 * 60 * 1e6 /Km.MRP3)/ f.in_out.MRP3 / pmol_mg.MRP3 / pmolMP_mgP.IN.MRP3 / mgP_mgIN # L/min -> h/mg -> kg intestine
-  # 
+  #
   # CL.KI.MRP2.c <- (Vmax.MRP2 * 60 * 1e6 /Km.MRP2)/ f.in_out.MRP2 / pmol_mg.MRP2 / pmolMP_mgP.KI.MRP2 / mgP_mgKI # L/min -> h/mg -> kg kidney
   # CL.KI.MRP3.c <- (Vmax.MRP3 * 60 * 1e6 /Km.MRP3)/ f.in_out.MRP3 / pmol_mg.MRP3 / pmolMP_mgP.KI.MRP3 / mgP_mgKI # L/min -> h/mg -> kg kidney
   # 
@@ -532,7 +536,12 @@ showtext_auto()
       CL.IN.MRP2.c = CL.IN.MRP2.c,
       CL.IN.MRP3.c = CL.IN.MRP3.c,
       CL.KI.MRP2.c = CL.KI.MRP2.c,
-      CL.KI.MRP3.c = CL.KI.MRP3.c) 
+      CL.KI.MRP3.c = CL.KI.MRP3.c,
+      Vmax.MRP2.LI.c = Vmax.MRP2.LI.c, 
+      Vmax.MRP2.IN.c = Vmax.MRP2.IN.c,
+      Vmax.MRP3.LI.c = Vmax.MRP3.LI.c, 
+      Km.MRP2 = Km.MRP2, 
+      Km.MRP3 = Km.MRP3) 
   ) %>% as.data.frame()
   
   Parm.rat <- Parm.c.rat %>% 
@@ -540,7 +549,7 @@ showtext_auto()
                  values_to = "Value", 
                  cols = everything())
   
-  # write.csv(Parm.rat, here("Input","Parm.rat.csv"), row.names = FALSE)
+  write.csv(Parm.rat, here("Input","Parm.rat.csv"), row.names = FALSE)
   
 
 # Parameters for human ####
@@ -549,7 +558,7 @@ showtext_auto()
   Human.input <- read_delim(here("Input", "TissueComposition.csv"), 
                           delim = ";",
                           escape_double = FALSE, trim_ws = TRUE) %>%
-    filter(Species == "Human") # tissue composition mainly as R&R composition, unified by Utsey and optimised as per Musther
+    filter(Species == "Human") # tissue composition mainly as R&R composition, unified by Utsey and optimised as per Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
   
   
 Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for all tissues except for adipose and RBCs
@@ -560,7 +569,7 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
 
 
   ## Physiological constants ####
-  # Fractional Tissue volumes (reference: Punt et al. (2020))
+  # Fractional Tissue volumes (reference: Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
   BW = 70  ##{Kg} #  body weight human
 
   FV_ST = 0.000714  # fraction volume of stomach lumen
@@ -582,7 +591,7 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
   Lile <- 156   # cm (Willman et al)
 
 
-  Amp <- 120 # microvilli amplification factor, ref: https://doi.org/10.1016/S0278-6915(00)00136-8; villi and microvilli together amplify the small intestinal surface area by 60–120 times https://doi.org/10.3109/00365521.2014.898326
+  Amp <- 120 # microvilli amplification factor, ref: Desesso et al. (2001) https://doi.org/10.1016/S0278-6915(00)00136-8; villi and microvilli together amplify the small intestinal surface area by 60–120 times https://doi.org/10.3109/00365521.2014.898326
   Ampduo <- 1*Amp
   Ampjej <- 1*Amp #0.7
   Ampile <- 1*Amp #0.5
@@ -596,7 +605,7 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
   Vile = pi*Rile^2*Lile
   TotalV = 2030.254
 
-  FV_SIL = 0.008586 # fractional volume of small intestinal lumen (from Punt et al. 2020)
+  FV_SIL = 0.008586 # fractional volume of small intestinal lumen (reference Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
   FV_duol = 0.095 # calculated (Vduo/TotalV)
   FV_jejl =  0.362 # calculated (Vjej/TotalV)
   FV_ilel = 0.543 # calculated (Vile/TotalV)
@@ -616,7 +625,7 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
 
   VBi <- 100/1000 # L, volume of the bile from the ICRP, vbile is 50-100ml
 
-  # Blood flow humans (reference: Punt et al. (2020))
+  # Blood flow humans (reference: Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
   QC = 389.99  ##{L/h} # cardiac output
   QSIc = pull(Human.input[Human.input$tissue == "Gut", "F_QC"])  # fraction of blood flow to small intestine
   QDuoc = 0.079 # Assuming the same as Rat?
@@ -630,7 +639,7 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
   QSc = 1 - (QSIc + QLc + QRc + QFc) # fraction of blood flow to slowly perfused tissue
 
 
-  # Intestinal fluid flow humans; (reference: Grandoni ; Punt et al. (2020))
+  # Intestinal fluid flow humans; (reference: Grandoni et al . (2019) DOI:  10.5599/admet.638 ; Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
   # Intestinal segment transit time is calculated by the total transit time divided by the intestinal segment length as a proportion of total small intestinal length 
   Tge <- 0.5 # stomach emptying time (h)
   Tsi <- 199.2/60 # small intestine transit time (h)
@@ -644,11 +653,11 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
   ileTR <- 1/Tsiile # (/h)
   lilTR <- 1/11 # large intestinal transit time (/h)
 
-  # Glomerular filtration human: Punt et al. (2020)
-  GFR = 7.5 # L/h Grandoni
+  # Glomerular filtration human: Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307
+  GFR = 7.5 # L/h Grandoni et al . (2019) DOI:  10.5599/admet.638
 
   ## Partition coefficients / fraction unbound / fraction unionised ####
-  # Tissue partitioning (Rodgers and Rowland as coded by kmutsey: https://github.com/metrumresearchgroup/PBPK_PC/blob/master/script/CalcKp_P%26T.R
+  # Tissue partitioning (Rodgers and Rowland as coded by Utsey et al. (2020) DOI: 10.1124/dmd.120.090498: https://github.com/metrumresearchgroup/PBPK_PC/blob/master/script/CalcKp_P%26T.R
   # Assumption that Zearalenone and a-Zearalenol are diprotic acids and Zearalenone glucuronide a monoprotic acid
   # microsomes or S9 (Kilford et al., 2008 based on Halifax and Houston 2006)
   dat_all <- Human.input %>% filter(!tissue %in% c("RBCs", "Adipose", "Plasma"))  #df for all tissues except for adipose, RBCs, and plasma
@@ -668,7 +677,7 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
   BP_ZEN <- 0.67 # Shin et al. 2014 DOI: 10.1080/15287390903212741
   fup_ZEN <- 0.156 # Mukherjee et al. 2014 doi:10.1371/journal.pone.0113632
 
-  P <- 10^(logP_ZEN)   # octonal:water partition coeff
+  P <- 10^(logP_ZEN)   # octanol:water partition coeff
   logP_OW <- 1.115*logP_ZEN - 1.35 #oil:water partition coeff
   P_OW <- 10^(logP_OW)
   # Ka <- 10^(-pKa1_ZEN)
@@ -691,7 +700,7 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
   nms_all <- dat_all$tissue %>% substr(1,2) %>% tolower()
   nms_all <- paste("Kp", nms_all, sep="")
   nms <- c("Kpad",nms_all)
-  Kp_ZEN <- as.list(c(Kp_ad,Kp_all)) #maybe make as dataframe
+  Kp_ZEN <- as.list(c(Kp_ad,Kp_all)) 
   names(Kp_ZEN) <- nms
 
   PSI_ZEN = Kp_ZEN$Kpgu #Intestine:Blood partition coefficient
@@ -720,7 +729,7 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
   BP_aZEL <- 0.67 # assuming the same as ZEN
   fup_aZEL <- 0.156 # assuming the same as ZEN
 
-  P <- 10^(logP_aZEL)   # octonal:water partition coeff
+  P <- 10^(logP_aZEL)   # octanol:water partition coeff
   logP_OW <- 1.115*logP_aZEL - 1.35 #oil:water partition coeff
   P_OW <- 10^(logP_OW)
   # Ka <- 10^(-pKa1_aZEL)
@@ -770,7 +779,7 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
   BP_ZENGLU <- 0.67 # assuming the same as ZEN
   fup_ZENGLU <- 1 / (1 + 10^(0.4485 * logP_ZENGLU - 0.4782)) #Lobell M, Sivarajah V. et al. 2003 doi: 10.1023/b:modi.0000006562.93049.36.
 
-  P <- 10^(logP_ZENGLU)   # octonal:water partition coeff
+  P <- 10^(logP_ZENGLU)   # octanol:water partition coeff
   logP_OW <- 1.115*logP_ZENGLU - 1.35 #oil:water partition coeff
   P_OW <- 10^(logP_OW)
   Ka <- 10^(-pKa_ZENGLU)
@@ -787,7 +796,6 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
   Ka_PR <- (1/fup_ZENGLU - 1 - (P*dat_plas$f_n_l + (0.3*P + 0.7)*dat_plas$f_n_pl)/(1+Y))
   Ka_AP <- (Kpu_bc - (1 + Z)/(1 + Y)*dat_rbc$f_iw - (P*dat_rbc$f_n_l + (0.3*P + 0.7)*dat_rbc$f_n_pl)/(1 + Y)) * (1 + Y)/dat_rbc$f_a_pl/Z
 
-  # Multiply by fup to get Kp humanher than Kpu
   Kp_all <- (dat_all$f_ew + ((1 + X)/(1 + Y))*dat_all$f_iw + ((P*dat_all$f_n_l + (0.3*P + 0.7)*dat_all$f_n_pl))/(1 + Y) + (Ka_PR*dat_all$AR*X)/(1 + Y))*fup_ZENGLU  #non lipid
   Kp_ad <- (dat_ad$f_ew + ((1 + X)/(1 + Y))*dat_ad$f_iw + ((P_OW*dat_ad$f_n_l + (0.3*P_OW + 0.7)*dat_ad$f_n_pl))/(1 + Y) + (Ka_PR*dat_ad$AR*X)/(1 + Y))*fup_ZENGLU #lipid
 
@@ -819,24 +827,24 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
   PappCaco2_ZEN = 10.4 * 1e-6 * 3600 # (cm/s->h) reference: Pfeiffer et al. (2011) DOI 10.1002/mnfr.201000381
   PappCaco2_aZEL = 5.4 * 1e-6 * 3600 # (cm/s->h) reference: Pfeiffer et al. (2011) DOI 10.1002/mnfr.201000381
   
-  Peff.cm.per.hr <- PappCaco2_ZEN #cm/h
+  Peff.cm.per.hr <- PappCaco2_ZEN # cm/h
   
   
   ### Metabolism in small intestine tissue ####
-  S9SI =  35.2 # 35.20 mg/g intestine, From S. A. Peters et al. DOI:10.1007/s40262-015-0351-6
+  S9SI =  35.2 # 35.20 mg/g intestine, reference S. A. Peters et al. DOI:10.1007/s40262-015-0351-6
   
-  conc.HSD.S9I = 1.25 # mg protein/mL Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
+  # conc.HSD.S9I = 1.25 # mg protein/mL Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
   VmaxSI_aZELc = 358.7*1e-6 * 60      # assuming the same as liver; pmol->umol/min->h/mg protein reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
   KmSI_aZEL = 9                   # assuming the same as liver; uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
   VmaxSI_bZELc = 209.3 *1e-6 * 60     # assuming the same as liver; pmol->umol/min->h/mg protein; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
   KmSI_bZEL = 23                   # assuming the same as liver; uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
 
-  conc.UGT.S9I = 0.04 # mg protein/ml Diana DOI: 10.1002/mnfr.202100443
-  VmaxSI_ZENGLUc = 0.49*1e-3 * 60  # nmol->umol/min->h/mg S9; DOI: 10.1002/mnfr.202100443
-  KmSI_ZENGLU = 1.17   # uM; DOI: 10.1002/mnfr.202100443
+  # conc.UGT.S9I = 0.04 # mg protein/ml Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
+  VmaxSI_ZENGLUc = 0.49*1e-3 * 60  # nmol->umol/min->h/mg S9; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
+  KmSI_ZENGLU = 1.17   # uM; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 
-  VmaxSI_aZELGLUc = 6.963*1e-3 * 60 # nmol->umol/min->h/mg s9; DOI: 10.1002/mnfr.202100443
-  KmSI_aZELGLU = 7.426              # uM; DOI: 10.1002/mnfr.202100443
+  VmaxSI_aZELGLUc = 6.963*1e-3 * 60 # nmol->umol/min->h/mg s9; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
+  KmSI_aZELGLU = 7.426              # uM; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 
   # fuincS9I.HSD_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.HSD.S9I*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
   # fuincS9I.UGT_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.UGT.S9I*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
@@ -852,23 +860,23 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
 
   ### Metabolism in liver ####
   S9L = 122                        # liver S9 protein yield, (mg S9 protein/gram liver) references: Moerenhout et al 2024: DOI:10.1021/acs.est.4c06534
-  conc.HSD.S9L = 1.25 # mg protein/mL Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
+  # conc.HSD.S9L = 1.25 # mg protein/mL Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
 
   VmaxL_aZELc = 358.7*1e-6 * 60      # pmol->umol/min->h/mg protein reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
   KmL_aZEL = 9                      # uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
   VmaxL_bZELc = 209.3*1e-6 * 60      # pmol->umol/min->h/mg protein; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004 (post mitochondrial fraction)
   KmL_bZEL = 23                   # uM; reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
 
-  conc.UGT.S9L = 0.2 # mg protein/ml Diana DOI: 10.1002/mnfr.202100443
-  VmaxL_ZENGLUc = 2.97*1e-3 * 60  # umol/h/mg S9; nmol->umol/min->h/mg S9; DOI: 10.1002/mnfr.202100443
-  KmL_ZENGLU = 2.043               # uM; DOI: 10.1002/mnfr.202100443
+  # conc.UGT.S9L = 0.2 # mg protein/ml Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
+  VmaxL_ZENGLUc = 2.97*1e-3 * 60  # umol/h/mg S9; nmol->umol/min->h/mg S9; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
+  KmL_ZENGLU = 2.043               # uM; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 
-  VmaxL_aZELGLUc = 2.983*1e-3 * 60 # umol/h/mg S9; nmol->umol/min->h/mg s9; DOI: 10.1002/mnfr.202100443
-  KmL_aZELGLU = 2.415              # uM; DOI: 10.1002/mnfr.202100443
+  VmaxL_aZELGLUc = 2.983*1e-3 * 60 # umol/h/mg S9; nmol->umol/min->h/mg s9; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
+  KmL_aZELGLU = 2.415              # uM; Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 
-  fuincS9L.HSD_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.HSD.S9L*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
-  fuincS9L.UGT_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.UGT.S9L*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
-  fuincS9L_aZEL <- (f.frac.ionized_aZEL+frac.unionized_aZEL)*(1/(1+conc.UGT.S9L*10^(0.072*logD_aZEL^2+0.067*logD_aZEL-1.126)))
+  # fuincS9L.HSD_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.HSD.S9L*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
+  # fuincS9L.UGT_ZEN <- (f.frac.ionized_ZEN+frac.unionized_ZEN)*(1/(1+conc.UGT.S9L*10^(0.072*logD_ZEN^2+0.067*logD_ZEN-1.126)))
+  # fuincS9L_aZEL <- (f.frac.ionized_aZEL+frac.unionized_aZEL)*(1/(1+conc.UGT.S9L*10^(0.072*logD_aZEL^2+0.067*logD_aZEL-1.126)))
 
   ### Biliary excretion ####
   # specifying the duration of gallbladder emptying (assuming 3 meals per day at 8, 14 and 20h)

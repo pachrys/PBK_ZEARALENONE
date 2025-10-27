@@ -1,4 +1,4 @@
-Author,RatRace,Gender,BW,SubjectNo,GestDay,TestCompound,AdminType,POFormula,PODose,IVBolusDose,IVPerfRate,IVPerfDur,TKParameter,TKValue,SampleCompound,SamplingTime,Tissue,Concentration,Unit,Fraction,Cmin,Cmax
+Author,RatRace,Sex,BW,SubjectNo,GestDay,TestCompound,AdminType,POFormula,PODose,IVBolusDose,IVPerfRate,IVPerfDur,TKParameter,TKValue,SampleCompound,SamplingTime,Tissue,Concentration,Unit,Fraction,Cmin,Cmax
 Shin,Sprague-Dawley,Male,0.26,4,NA,ZEN,IV,NA,NA,NA,NA,NA,t1/2,2.8,NA,NA,NA,NA,h,NA,NA,NA
 Shin,Sprague-Dawley,Male,0.26,4,NA,ZEN,IV,NA,NA,NA,NA,NA,AUC,1696,NA,NA,NA,NA,ng/ml*h,NA,NA,NA
 Shin,Sprague-Dawley,Male,0.26,4,NA,ZEN,IV,NA,NA,NA,NA,NA,CL_tot,5,NA,NA,NA,NA,L/h/kg,NA,NA,NA

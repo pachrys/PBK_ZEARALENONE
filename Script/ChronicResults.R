@@ -115,20 +115,20 @@ C.Pre <- PBK_OUTPUT %>%
 # )
 # 
 # # C_Blood <- 
-# C.Pre_long %>% filter(Tissue == "Blood") %>% 
-#   ggplot() + geom_path(aes(x = Time*365, y = Concentration)) +
-#   facet_wrap(~ Compound, scales = "free") +
-#   CP_theme +
-#   theme(strip.text = element_text(size = 45),
-#         axis.text = element_text(size = 40)) +
-#   ylab("Blood Concentration (ng/ml)") +
-#   xlab("Days")+
-#   theme(legend.position = "bottom",  
-#         legend.title = element_text(size = 35),
-#         legend.text = element_text(size = 35),
-#         legend.key.size = unit(0.5, "lines"),
-#         legend.spacing.y = unit(0, "cm"),
-#         legend.margin = margin(0, 0, 0, 0))
+C.Pre_long %>% filter(Tissue == "Blood") %>%
+  ggplot() + geom_path(aes(x = Time*365, y = Concentration)) +
+  facet_wrap(~ Compound, scales = "free") +
+  CP_theme +
+  theme(strip.text = element_text(size = 45),
+        axis.text = element_text(size = 40)) +
+  ylab("Blood Concentration (ng/ml)") +
+  xlab("Days")+
+  theme(legend.position = "bottom",
+        legend.title = element_text(size = 35),
+        legend.text = element_text(size = 35),
+        legend.key.size = unit(0.5, "lines"),
+        legend.spacing.y = unit(0, "cm"),
+        legend.margin = margin(0, 0, 0, 0))
 # 
 # ggsave(
 #   filename = here(OUTPUT,"BloodC.png"),
