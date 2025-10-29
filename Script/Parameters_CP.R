@@ -52,7 +52,7 @@ showtext_auto()
   FV_duol = 0.183
   FV_jejl = 0.334 # calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
   FV_ilel = 0.483 # calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
-  FV_COL = 0.012 # fractional volume of large intestinal lumen (Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
+  FV_COL = 0.012 # fractional volume of large intestinal lumen (Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307), agrees with the 3g of feces excreted per day in rats from Cavigelli et al. (2005) DOI https:// doi.org/10.1677/joe.1.05935
   
   # FV_L = 0.036  # fractional of liver tissue
   # FV_L_IC = pull(Rat.input[Rat.input$tissue == "Liver", "f_iw"])
@@ -77,10 +77,12 @@ showtext_auto()
   Rduo <- 0.275/2 #diameter / 2 = radius, cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
   Rjej <- 0.4/2   #diameter / 2 = radius, cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
   Rile <- 0.4/2   #diameter / 2 = radius, cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
+  Rcol <- 0.849/2 #diameter / 2 = radius, cm (Bartoli R et al (2016) DOI: DOI: 10.4253/wjge.v5.i5.226)
   
-  Lduo <- 7    #length cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
-  Ljej <- 90   #cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
-  Lile <- 20   #diameter / 2 = radius, cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
+  Lduo <- 7    # length cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
+  Ljej <- 90   # cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
+  Lile <- 20   # cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
+  Lco <- 8.93 # cm Bartoli et al (2013) DOI: 10.4253/wjge.v5.i5.226
   
   Amp <- 120 # microvilli amplification factor, ref: Desesso et al. (2001) https://doi.org/10.1016/S0278-6915(00)00136-8; villi and microvilli together amplify the small intestinal surface area by 60–120 times https://doi.org/10.3109/00365521.2014.898326
   Ampduo <- 1*Amp
@@ -90,7 +92,7 @@ showtext_auto()
   SAduo = 2*pi*Rduo*Lduo*Ampduo #cm2
   SAjej = 2*pi*Rjej*Ljej*Ampjej #cm2
   SAile = 2*pi*Rile*Lile*Ampile #cm2
-  # SAco = 0.034 * 10000 # Desesso 2001
+  SAco = 2*pi*Rcol*Lco
   
   # Blood flow rates (reference: Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
   QC = 4.8  ##{L/h} # cardiac output
@@ -473,7 +475,7 @@ showtext_auto()
       SAduo = SAduo,
       SAjej = SAjej,
       SAile = SAile,
-      # SAco = SAco,
+      SAco = SAco,
       PappCaco2_ZEN = PappCaco2_ZEN,
       S9SI = S9SI,
       VmaxSI_aZELc = VmaxSI_aZELc,

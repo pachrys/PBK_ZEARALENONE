@@ -1,5 +1,554 @@
-#I run the model with 7 days
+# ------------------------------------------------------------------------ ###
+# Script for plotting results 
+# ------------------------------------------------------------------------ ###
 
+
+rm(list=ls()) 
+
+# Packages
+library(here)
+library(tidyverse)
+library(showtext)
+library(plotly)
+font_add(family = "Garamond", regular = "GARA.TTF")
+showtext_auto()
+
+
+
+CP_theme <- theme_minimal() +
+  theme(
+    # plot.background = element_rect(fill = 'white', color = NA),
+    # panel.background = element_rect(fill = 'white', color = NA),
+    axis.title = element_text(size = 44, face = "bold"),
+    axis.text = element_text(size = 40),
+    plot.title = element_text(hjust = 0, size = 48, face = "bold"),
+    plot.margin = margin(0.3, 0.3, 0.3, 0.3, "cm"), 
+    axis.line = element_line(linewidth = 0.1),
+    panel.grid = element_line(linewidth = 0.3),
+    plot.caption = element_text(hjust = 0, size = 40, face= "italic"),
+    plot.title.position = "plot", 
+    plot.caption.position = "plot",
+    legend.position = "none"
+  ) 
+
+# TK processes
+OUTPUT <- here("Output", format(Sys.Date(), "%Y-%m-%d")) #, 
+
+# Results of only portal absorption, including metabolism
+load(here(OUTPUT, "Results_Rat_Papp.RData"))
+Portal <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_Portal <- Portal %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "Portal")
+ggplot(Blood_Portal) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_Portal <- Blood_Portal %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_Portal$Concentration) 
+Portal_Tmax <- ZEN_Blood_Portal$Time[FindTmax] # h
+Portal_Cmax <- max(ZEN_Blood_Portal$Concentration) # ng/ml
+rm(Results.Rat)
+
+# Results of only lymph absorption, including metabolism
+load(here(OUTPUT, "Results_Rat_ONLYLYMPH.RData"))
+Lymph <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_Lymph <- Lymph %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "Lymph")
+ggplot(Blood_Lymph) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_Lymph <- Blood_Lymph %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_Lymph$Concentration) 
+Lymph_Tmax <- ZEN_Blood_Lymph$Time[FindTmax] # h
+Lymph_Cmax <- max(ZEN_Blood_Lymph$Concentration) # ng/ml
+rm(Results.Rat)
+
+# Results of only lymph absorption, including metabolism and EHC
+load(here(OUTPUT, "Results_Rat_LYMPH_EHC.RData"))
+Lymph_EHC <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_Lymph_EHC <- Lymph_EHC %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "Lymph_EHC")
+ggplot(Blood_Lymph_EHC) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_Lymph_EHC <- Blood_Lymph_EHC %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_Lymph_EHC$Concentration) 
+Lymph_EHC_Tmax <- ZEN_Blood_Lymph_EHC$Time[FindTmax] # h
+Lymph_EHC_Cmax <- max(ZEN_Blood_Lymph_EHC$Concentration) # ng/ml
+rm(Results.Rat)
+
+# Results of portal and lymph absorption, including metabolism
+load(here(OUTPUT, "Results_Rat_Papp_Lymph.RData"))
+Portal_Lymph <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_Portal_Lymph <- Portal_Lymph %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "Portal_Lymph")
+ggplot(Blood_Portal_Lymph) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_Portal_Lymph <- Blood_Portal_Lymph %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_Portal_Lymph$Concentration) 
+Portal_Lymph_Tmax <- ZEN_Blood_Portal_Lymph$Time[FindTmax] # h
+Portal_Lymph_Cmax <- max(ZEN_Blood_Portal_Lymph$Concentration) # ng/ml
+rm(Results.Rat)
+
+# Results of portal and lymph absorption, metabolism and biliary excretion
+load(here(OUTPUT, "Results_Rat_Papp_Bile_Lymph.RData"))
+Lymph_Bile <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_Lymph_Bile <- Lymph_Bile %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "Lymph_Bile")
+ggplot(Blood_Lymph_Bile) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_Lymph_Bile <- Blood_Lymph_Bile %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_Lymph_Bile$Concentration) 
+Lymph_Bile_Tmax <- ZEN_Blood_Lymph_Bile$Time[FindTmax] # h
+Lymph_Bile_Cmax <- max(ZEN_Blood_Lymph_Bile$Concentration) # ng/ml
+rm(Results.Rat)
+
+# Results of portal and lymph absorption, metabolism, biliary excretion and hydrolysis
+# EHC and lymph
+load(here(OUTPUT, "Results_Rat_Papp_Bile_Hydro_Lymph.RData"))
+Lymph_Hydro_Bile <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_Lymph_Hydro_Bile <- Lymph_Hydro_Bile %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "Lymph_Hydro_Bile")
+ggplot(Blood_Lymph_Hydro_Bile) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_Lymph_Hydro_Bile <- Blood_Lymph_Hydro_Bile %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_Lymph_Hydro_Bile$Concentration) 
+Lymph_Hydro_Bile_Tmax <- ZEN_Blood_Lymph_Hydro_Bile$Time[FindTmax] # h
+Lymph_Hydro_Bile_Cmax <- max(ZEN_Blood_Lymph_Hydro_Bile$Concentration) # ng/ml
+rm(Results.Rat)
+
+# Results of portal absorption and only liver HSD metabolism
+load(here(OUTPUT, "Results_Rat_NOLymph_NOBile_ONLYLIVERHSD.RData"))
+ONLYLIVERHSD <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_ONLYLIVERHSD <- ONLYLIVERHSD %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "ONLYLIVERHSD")
+ggplot(Blood_ONLYLIVERHSD) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_ONLYLIVERHSD <- Blood_ONLYLIVERHSD %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_ONLYLIVERHSD$Concentration) 
+ONLYLIVERHSD_Tmax <- ZEN_Blood_ONLYLIVERHSD$Time[FindTmax] # h
+ONLYLIVERHSD_Cmax <- max(ZEN_Blood_ONLYLIVERHSD$Concentration) # ng/ml
+rm(Results.Rat)
+
+# Results of portal absorption and only liver UGT metabolism
+load(here(OUTPUT, "Results_Rat_NOLymph_NOBile_ONLYLIVERGLUC.RData"))
+ONLYLIVERGLUC <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_ONLYLIVERGLUC <- ONLYLIVERGLUC %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "ONLYLIVERGLUC")
+ggplot(Blood_ONLYLIVERGLUC) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_ONLYLIVERGLUC <- Blood_ONLYLIVERGLUC %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_ONLYLIVERGLUC$Concentration) 
+ONLYLIVERGLUC_Tmax <- ZEN_Blood_ONLYLIVERGLUC$Time[FindTmax] # h
+ONLYLIVERGLUC_Cmax <- max(ZEN_Blood_ONLYLIVERGLUC$Concentration) # ng/ml
+rm(Results.Rat)
+
+# Results of portal absorption and only liver metabolism
+load(here(OUTPUT, "Results_Rat_NOLymph_NOBile_ONLYLIVERMET.RData"))
+ONLYLIVERMET <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_ONLYLIVERMET <- ONLYLIVERMET %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "ONLYLIVERMET")
+ggplot(Blood_ONLYLIVERMET) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_ONLYLIVERMET <- Blood_ONLYLIVERMET %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_ONLYLIVERMET$Concentration) 
+ONLYLIVERMET_Tmax <- ZEN_Blood_ONLYLIVERMET$Time[FindTmax] # h
+ONLYLIVERMET_Cmax <- max(ZEN_Blood_ONLYLIVERMET$Concentration) # ng/ml
+rm(Results.Rat)
+
+
+# Results of portal absorption, liver metabolism & SI HSD
+load(here(OUTPUT, "Results_Rat_NOLymph_NOBile_LIVERMET_ONLYSIHSD.RData"))
+SIONLYHSD <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_SIONLYHSD <- SIONLYHSD %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "SIONLYHSD")
+ggplot(Blood_SIONLYHSD) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_SIONLYHSD <- Blood_SIONLYHSD %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_SIONLYHSD$Concentration) 
+SIONLYHSD_Tmax <- ZEN_Blood_SIONLYHSD$Time[FindTmax] # h
+SIONLYHSD_Cmax <- max(ZEN_Blood_SIONLYHSD$Concentration) # ng/ml
+rm(Results.Rat)
+
+# Results of portal absorption, liver metabolism & SI UGT
+load(here(OUTPUT, "Results_Rat_NOLymph_NOBile_LIVERMET_ONLYSIUGT.RData"))
+SIONLYUGT <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_SIONLYUGT <- SIONLYUGT %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "SIONLYUGT")
+ggplot(Blood_SIONLYUGT) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_SIONLYUGT <- Blood_SIONLYUGT %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_SIONLYUGT$Concentration) 
+SIONLYUGT_Tmax <- ZEN_Blood_SIONLYUGT$Time[FindTmax] # h
+SIONLYUGT_Cmax <- max(ZEN_Blood_SIONLYUGT$Concentration) # ng/ml
+rm(Results.Rat)
+
+# Results of portal absorption, liver metabolism & SI UGT
+load(here(OUTPUT, "Results_Rat_NOLymph_NOBile_LIVERMET_SIMET.RData"))
+LIVER_SI_MET <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_LIVER_SI_MET <- LIVER_SI_MET %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "LIVER_SI_MET")
+ggplot(Blood_LIVER_SI_MET) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_LIVER_SI_MET <- Blood_LIVER_SI_MET %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_LIVER_SI_MET$Concentration) 
+LIVER_SI_MET_Tmax <- ZEN_Blood_LIVER_SI_MET$Time[FindTmax] # h
+LIVER_SI_MET_Cmax <- max(ZEN_Blood_LIVER_SI_MET$Concentration) # ng/ml
+rm(Results.Rat)
+
+# Results of portal absorption, liver metabolism & SI UGT
+load(here(OUTPUT, "Results_Rat_NOLymph_NOBile_LIVERMET_SIMET_LIMET.RData"))
+LIVER_SI_LI_MET <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_LIVER_SI_LI_MET <- LIVER_SI_LI_MET %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "LIVER_SI_LI_MET")
+ggplot(Blood_LIVER_SI_LI_MET) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_LIVER_SI_LI_MET <- Blood_LIVER_SI_LI_MET %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_LIVER_SI_LI_MET$Concentration) 
+LIVER_SI_LI_MET_Tmax <- ZEN_Blood_LIVER_SI_LI_MET$Time[FindTmax] # h
+LIVER_SI_LI_MET_Cmax <- max(ZEN_Blood_LIVER_SI_LI_MET$Concentration) # ng/ml
+rm(Results.Rat)
+
+# Results of portal absorption, liver, SI and microbial metabolism, biliary excretion
+load(here(OUTPUT, "Results_Rat_NOLymph_LIVERMET_SIMET_LIMET_BILE.RData"))
+FULL_MET_BILE <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_FULL_MET_BILE <- FULL_MET_BILE %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "FULL_MET_BILE")
+ggplot(Blood_FULL_MET_BILE) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_FULL_MET_BILE <- Blood_FULL_MET_BILE %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_FULL_MET_BILE$Concentration) 
+FULL_MET_BILE_Tmax <- ZEN_Blood_FULL_MET_BILE$Time[FindTmax] # h
+FULL_MET_BILE_Cmax <- max(ZEN_Blood_FULL_MET_BILE$Concentration) # ng/ml
+rm(Results.Rat)
+
+
+# Results of portal absorption, liver & SI & microbial metabolism, biliary excretion, GLUC hydrolysis, no lymph
+load(here(OUTPUT, "Results_Rat_NOLymph_LIVERMET_SIMET_LIMET_BILE_HYDRO.RData"))
+FULL_MET_EHC <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_FULL_MET_EHC <- FULL_MET_EHC %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "FULL_MET_EHC")
+ggplot(Blood_FULL_MET_EHC) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_FULL_MET_EHC <- Blood_FULL_MET_EHC %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_FULL_MET_EHC$Concentration) 
+FULL_MET_EHC_Tmax <- ZEN_Blood_FULL_MET_EHC$Time[FindTmax] # h
+FULL_MET_EHC_Cmax <- max(ZEN_Blood_FULL_MET_EHC$Concentration) # ng/ml
+rm(Results.Rat)
+
+
+# Results of portal absorption, liver & SI metabolism, biliary excretion, GLUC hydrolysis, NO microbial metabolism, no lymph
+load(here(OUTPUT, "Results_Rat_LIVERMET_SIMET_EHC_NoMicrobial.RData"))
+EHC_NoMicrob <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_EHC_NoMicrob <- EHC_NoMicrob %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "EHC_NoMicrob")
+ggplot(Blood_EHC_NoMicrob) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_EHC_NoMicrob <- Blood_EHC_NoMicrob %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_EHC_NoMicrob$Concentration) 
+EHC_NoMicrob_Tmax <- ZEN_Blood_EHC_NoMicrob$Time[FindTmax] # h
+EHC_NoMicrob_Cmax <- max(ZEN_Blood_EHC_NoMicrob$Concentration) # ng/ml
+rm(Results.Rat)
+
+
+
+# Results of portal absorption, liver metabolism & SI UGT, biliary excretion, GLUC hydrolysis, lymph
+load(here(OUTPUT, "Results_Rat_LIVERMET_SIMET_LIMET_BILE_HYDRO_LYMPH.RData"))
+FULL_MET_EHC_LYMPH <- Results.Rat$C.Tissues.Rat # 0 Papp, 0 bile, 0 hydro
+Blood_FULL_MET_EHC_LYMPH <- FULL_MET_EHC_LYMPH %>% 
+  filter(Tissue == "Blood") %>% 
+  mutate(Process = "FULL_MET_EHC_LYMPH")
+ggplot(Blood_FULL_MET_EHC_LYMPH) +
+  geom_path(aes(x = Time, y = Concentration)) +
+  facet_wrap(~Compound, scales = "free")
+ZEN_Blood_FULL_MET_EHC_LYMPH <- Blood_FULL_MET_EHC_LYMPH %>% filter(Compound == "ZEN")
+FindTmax <- which.max(ZEN_Blood_FULL_MET_EHC_LYMPH$Concentration) 
+FULL_MET_EHC_LYMPH_Tmax <- ZEN_Blood_FULL_MET_EHC_LYMPH$Time[FindTmax] # h
+FULL_MET_EHC_LYMPH_Cmax <- max(ZEN_Blood_FULL_MET_EHC_LYMPH$Concentration) # ng/ml
+rm(Results.Rat)
+
+
+# Plotting the effect of the lymph
+
+LymphEffect.df <- rbind(Blood_Portal, 
+                        Blood_FULL_MET_EHC,
+                        Blood_Portal_Lymph,
+                        Blood_Lymph_Hydro_Bile)
+
+
+ggplot(data = LymphEffect.df) +
+  geom_path(aes(x = Time, y = Concentration, color = Process)) +
+  facet_wrap(~Compound, scales = "free") +
+  labs(title = "Influence of lymphatic absorption",
+       x = "Time (h)",
+       y = "Concentration (ng/ml)") +
+  scale_color_manual(
+    values = c("FULL_MET_EHC" = "#8631A7", "Lymph_Hydro_Bile" = "#1B85FF", 
+               "Portal" = "#F7D574", "Portal_Lymph" ="#FF5D0D"), # Assign colors to each name
+    labels = c("FULL_MET_EHC" = "Only EHC", "Lymph_Hydro_Bile" = "EHC and Lymph", 
+               "Portal" = "No EHC or Lymph","Portal_Lymph" = "Only Lymph" ) # Custom legend names
+  ) +
+  guides(color = guide_legend(override.aes = list(fill = NA)))+
+  CP_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_text(size = 35),
+        legend.text = element_text(size = 35),
+        legend.key.size = unit(0.5, "lines"),
+        legend.spacing.y = unit(0, "cm"),
+        legend.margin = margin(0, 0, 0, 0),
+        # strip.text.y = element_text(size = 30, angle = 0, face = "bold")  # Use strip.text.y for flipped plots
+        strip.text = element_text(size = 30, angle = 0, face = "bold")
+  )
+ggsave(
+  filename = here(OUTPUT,"Lymphatic.png"),
+  dpi = 600,
+  width = 11,
+  height = 7,
+  units = "cm"
+)
+
+
+LymphEffect2.df <- rbind(Blood_Lymph, 
+                        Blood_Lymph_EHC)
+
+
+ggplot(data = LymphEffect2.df) +
+  geom_path(aes(x = Time, y = Concentration, color = Process)) +
+  facet_wrap(~Compound, scales = "free") +
+  labs(title = "Lymphatic absorption without portal",
+       x = "Time (h)",
+       y = "Concentration (ng/ml)") +
+  scale_color_manual(
+    values = c("Lymph_EHC" = "#1B85FF","Lymph" ="#FF5D0D"), # Assign colors to each name
+    labels = c("Lymph_EHC" = "Lymph and EHC", "Lymph" = "Only Lymph") # Custom legend names
+  ) +
+  guides(color = guide_legend(override.aes = list(fill = NA)))+
+  CP_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_text(size = 35),
+        legend.text = element_text(size = 35),
+        legend.key.size = unit(0.5, "lines"),
+        legend.spacing.y = unit(0, "cm"),
+        legend.margin = margin(0, 0, 0, 0),
+        # strip.text.y = element_text(size = 30, angle = 0, face = "bold")  # Use strip.text.y for flipped plots
+        strip.text = element_text(size = 30, angle = 0, face = "bold")
+  )
+ggsave(
+  filename = here(OUTPUT,"LymphaticOnly.png"),
+  dpi = 600,
+  width = 11,
+  height = 7,
+  units = "cm"
+)
+
+
+
+
+# Plotting the effect of metabolism
+
+LiverMetabolismEffect.df <- rbind(Blood_Portal, 
+                             Blood_ONLYLIVERHSD,
+                             Blood_ONLYLIVERGLUC,
+                             Blood_ONLYLIVERMET)
+
+
+ggplot(data = LiverMetabolismEffect.df) +
+  geom_path(aes(x = Time, y = Concentration, color = Process)) +
+  facet_wrap(~Compound, scales = "free") +
+  labs(title = "Influence of liver metabolism",
+       x = "Time (h)",
+       y = "Concentration (ng/ml)")  +
+  scale_color_manual(
+    values = c("ONLYLIVERGLUC" = "#8631A7", "ONLYLIVERHSD" = "#1B85FF",
+               "Portal" = "#F7D574", "ONLYLIVERMET" ="#FF5D0D"), # Assign colors to each name
+    labels = c("ONLYLIVERGLUC" = "Only Glucuronidation", "ONLYLIVERHSD" = "Only Dehydrogenation",
+               "Portal" = "No metabolism","ONLYLIVERMET" = "Liver metabolism" ) # Custom legend names
+  ) +
+  guides(color = guide_legend(override.aes = list(fill = NA)))+
+  CP_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_text(size = 35),
+        legend.text = element_text(size = 35),
+        legend.key.size = unit(0.5, "lines"),
+        legend.spacing.y = unit(0, "cm"),
+        legend.margin = margin(0, 0, 0, 0),
+        # strip.text.y = element_text(size = 30, angle = 0, face = "bold")  # Use strip.text.y for flipped plots
+        strip.text = element_text(size = 30, angle = 0, face = "bold")
+  )
+ggsave(
+  filename = here(OUTPUT,"LiverMetabolism.png"),
+  dpi = 600,
+  width = 11,
+  height = 7,
+  units = "cm"
+)
+
+
+
+MetabolismEffect.df <- rbind(Blood_Portal,
+                             Blood_ONLYLIVERMET,
+                             Blood_LIVER_SI_MET,
+                             Blood_LIVER_SI_LI_MET 
+                             )
+
+
+ggplot(data = MetabolismEffect.df) +
+  geom_path(aes(x = Time, y = Concentration, color = Process)) +
+  facet_wrap(~Compound, scales = "free") +
+  labs(title = "Influence of metabolism",
+       x = "Time (h)",
+       y = "Concentration (ng/ml)") +
+  scale_color_manual(
+    values = c("Portal" = "#F7D574",
+               "LIVER_SI_LI_MET" = "#8631A7", "LIVER_SI_MET" = "#1B85FF",
+                "ONLYLIVERMET" ="#FF5D0D"), # Assign colors to each name
+    labels = c("Portal" = "No metabolism","LIVER_SI_LI_MET" = "Hepatic, intestinal and microbial metabolism", "LIVER_SI_MET" = "Hepatic and intestinal metabolism",
+               "ONLYLIVERMET" = "Hepatic metabolism" ) # Custom legend names
+  ) +
+  guides(color = guide_legend(override.aes = list(fill = NA)))+
+  CP_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_text(size = 25),
+        legend.text = element_text(size = 25),
+        legend.key.size = unit(0.5, "lines"),
+        legend.spacing.y = unit(0, "cm"),
+        legend.margin = margin(0, 0, 0, 0),
+        # strip.text.y = element_text(size = 30, angle = 0, face = "bold")  # Use strip.text.y for flipped plots
+        strip.text = element_text(size = 30, angle = 0, face = "bold")
+  )
+ggsave(
+  filename = here(OUTPUT,"Metabolism.png"),
+  dpi = 600,
+  width = 15,
+  height = 7,
+  units = "cm"
+)
+
+
+
+
+
+EHCEffect.df <- rbind(Blood_LIVER_SI_LI_MET,
+                      Blood_FULL_MET_BILE,
+                      Blood_FULL_MET_EHC,
+                      Blood_FULL_MET_EHC_LYMPH 
+)
+
+
+ggplot(data = EHCEffect.df) +
+  geom_path(aes(x = Time, y = Concentration, color = Process)) +
+  facet_wrap(~Compound, scales = "free") +
+  labs(title = "",
+       x = "Time (h)",
+       y = "Concentration (ng/ml)") +
+  scale_color_manual(
+    values = c("LIVER_SI_LI_MET" = "#F7D574",
+               "FULL_MET_BILE" = "#1B85FF",
+               "FULL_MET_EHC" = "#8631A7",
+               "FULL_MET_EHC_LYMPH" ="#FF5D0D"), # Assign colors to each name
+    labels = c("LIVER_SI_LI_MET" = "No EHC",
+               "FULL_MET_BILE" = "Biliary excretion",
+               "FULL_MET_EHC" = "EHC",
+               "FULL_MET_EHC_LYMPH" = "EHC and Lymph" ) # Custom legend names
+  ) +
+  guides(color = guide_legend(override.aes = list(fill = NA)))+
+  CP_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_text(size = 35),
+        legend.text = element_text(size = 35),
+        legend.key.size = unit(0.5, "lines"),
+        legend.spacing.y = unit(0, "cm"),
+        legend.margin = margin(0, 0, 0, 0),
+        # strip.text.y = element_text(size = 30, angle = 0, face = "bold")  # Use strip.text.y for flipped plots
+        strip.text = element_text(size = 30, angle = 0, face = "bold")
+  )
+ggsave(
+  filename = here(OUTPUT,"EHC.png"),
+  dpi = 600,
+  width = 11,
+  height = 7,
+  units = "cm"
+)
+
+
+
+
+
+LIEffect.df <- rbind(Blood_EHC_NoMicrob,
+                      Blood_FULL_MET_EHC)
+
+ggplot(data = LIEffect.df) +
+  geom_path(aes(x = Time, y = Concentration, color = Process)) +
+  facet_wrap(~Compound, scales = "free") +
+  labs(title = "Effect of microbial metabolism",
+       x = "Time (h)",
+       y = "Concentration (ng/ml)") +
+  scale_color_manual(
+    values = c("FULL_MET_EHC" = "#8631A7",
+               "EHC_NoMicrob" ="#FF5D0D"), # Assign colors to each name
+    labels = c("FULL_MET_EHC" = "EHC",
+               "EHC_NoMicrob" = "EHC without microbial metabolism" ) # Custom legend names
+  ) +
+  guides(color = guide_legend(override.aes = list(fill = NA)))+
+  CP_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_text(size = 35),
+        legend.text = element_text(size = 35),
+        legend.key.size = unit(0.5, "lines"),
+        legend.spacing.y = unit(0, "cm"),
+        legend.margin = margin(0, 0, 0, 0),
+        # strip.text.y = element_text(size = 30, angle = 0, face = "bold")  # Use strip.text.y for flipped plots
+        strip.text = element_text(size = 30, angle = 0, face = "bold")
+  )
+ggsave(
+  filename = here(OUTPUT,"Microb.png"),
+  dpi = 600,
+  width = 11,
+  height = 7,
+  units = "cm"
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+#I run the model with 7 days
 # Exposure:
 E.df <- data.frame(
   What = c("NOEL", "TDI", 

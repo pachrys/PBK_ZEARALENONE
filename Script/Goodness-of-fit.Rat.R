@@ -37,7 +37,7 @@ OUTPUT <- here("Output", format(Sys.Date(), "%Y-%m-%d")) #,
 dir.create(OUTPUT, recursive = TRUE)
 
 # Input #### 
-load(here(OUTPUT, "Results.Rat.RData"))
+load(here(OUTPUT, "Results_Rat.RData"))
 Select_AdminType <- Results.Rat$Metadata.Run.Rat$Select_AdminType
 Select_Author <- Results.Rat$Metadata.Run.Rat$Select_Author
 BP <- Results.Rat$Metadata.Run.Rat$BP
