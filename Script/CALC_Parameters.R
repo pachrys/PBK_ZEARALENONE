@@ -247,7 +247,9 @@ BASE_PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   pKa1_ZEN <- 7.5 # Molgpka
   pKa2_ZEN <- 7.7 # Molgpka
   BP_ZEN <- 0.67 # Shin et al. 2014 DOI: 10.1080/15287390903212741
-  fup_ZEN <- 0.156 # Mukherjee et al. 2014 doi:10.1371/journal.pone.0113632
+  # fup_ZEN <- 0.156 # Mukherjee et al. 2014 doi:10.1371/journal.pone.0113632
+  fup_ZEN <- 1 / (1 + 10^(0.4485 * logP_ZEN - 0.4782)) #Lobell M, Sivarajah V. et al. 2003 doi: 10.1023/b:modi.0000006562.93049.36.
+  
   
   P <- 10^(logP_ZEN)   # octonal:water partition coeff
   logP_OW <- 1.115*logP_ZEN - 1.35 #oil:water partition coeff
@@ -266,8 +268,13 @@ BASE_PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   Ka_PR <- (1/fup_ZEN - 1 - (P*dat_plas$f_n_l + (0.3*P + 0.7)*dat_plas$f_n_pl)/(1+Y))
   Ka_AP <- (Kpu_bc - (1 + Z)/(1 + Y)*dat_rbc$f_iw - (P*dat_rbc$f_n_l + (0.3*P + 0.7)*dat_rbc$f_n_pl)/(1 + Y)) * (1 + Y)/dat_rbc$f_a_pl/Z
   
-  Kp_all <- (dat_all$f_ew + ((1 + X)/(1 + Y))*dat_all$f_iw + ((P*dat_all$f_n_l + (0.3*P + 0.7)*dat_all$f_n_pl))/(1 + Y) + (Ka_PR*dat_all$AR*X)/(1 + Y))*fup_ZEN  #non lipid
-  Kp_ad <- (dat_ad$f_ew + ((1 + X)/(1 + Y))*dat_ad$f_iw + ((P_OW*dat_ad$f_n_l + (0.3*P_OW + 0.7)*dat_ad$f_n_pl))/(1 + Y) + (Ka_PR*dat_ad$AR*X)/(1 + Y))*fup_ZEN  #lipid
+  Kp_all <- (dat_all$f_ew + 
+               ((1 + X)/(1 + Y))*dat_all$f_iw + 
+               ((P*dat_all$f_n_l + (0.3*P + 0.7)*dat_all$f_n_pl))/(1 + Y) + 
+               (Ka_PR*dat_all$AR*X)/(1 + Y))*fup_ZEN  #non lipid
+  Kp_ad <- (dat_ad$f_ew + ((1 + X)/(1 + Y))*dat_ad$f_iw + 
+              ((P_OW*dat_ad$f_n_l + (0.3*P_OW + 0.7)*dat_ad$f_n_pl))/(1 + Y) +
+              (Ka_PR*dat_ad$AR*X)/(1 + Y))*fup_ZEN  #lipid
   
   nms_all <- dat_all$tissue %>% substr(1,2) %>% tolower()
   nms_all <- paste("Kp", nms_all, sep="")
@@ -284,7 +291,7 @@ BASE_PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   PR_ZEN = (F_Vo.dat$FVHe*Kp_ZEN$Kphe + F_Vo.dat$FVKi*Kp_ZEN$Kpki + F_Vo.dat$FVLu*Kp_ZEN$Kplu + F_Vo.dat$FVSp*Kp_ZEN$Kpsp) /
     (F_Vo.dat$FVHe + F_Vo.dat$FVKi + F_Vo.dat$FVLu + F_Vo.dat$FVSp)
   
-  fut_ZEN <- 1/(1+((1-fup_ZEN)/fup_ZEN)*0.5) #fraction unbound in the tissues
+  fut_ZEN <- 1/(1+((1-fup_ZEN)/fup_ZEN)*0.5) #fraction unbound in the tissues (Poulin and Theil)
   
   pH <- 7.4
   logD_ZEN <- logP_ZEN-log10(1+10^(pH-pKa1_ZEN)+10^(pH-pKa1_ZEN+pH-pKa2_ZEN))
@@ -299,7 +306,9 @@ BASE_PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   pKa1_aZEL <- 7.5 # Molgpka
   pKa2_aZEL <- 7.7 # Molgpka
   BP_aZEL <- 0.67 # assuming the same as ZEN
-  fup_aZEL <- 0.156 # assuming the same as ZEN
+  # fup_aZEL <- 0.156 # assuming the same as ZEN
+  fup_aZEL <- 1 / (1 + 10^(0.4485 * logP_aZEL - 0.4782)) #Lobell M, Sivarajah V. et al. 2003 doi: 10.1023/b:modi.0000006562.93049.36.
+  
   
   P <- 10^(logP_aZEL)   # octonal:water partition coeff
   logP_OW <- 1.115*logP_aZEL - 1.35 #oil:water partition coeff
@@ -349,7 +358,7 @@ BASE_PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   logP_ZENGLU <- 1.145 # Molgpka
   pKa_ZENGLU <- 3 # Molgpka
   BP_ZENGLU <- 0.67 # assuming the same as ZEN
-  fup_ZENGLU <- 1 / (1 + 10^(0.4485 * logP_ZENGLU - 0.4782)) #Lobell M, Sivarajah V. et al. 2003 doi: 10.1023/b:modi.0000006562.93049.36.
+  fup_ZENGLU <- 1 / (1 + 10^(0.3649 * logP_ZENGLU + 0.41678)) #Lobell M, Sivarajah V. et al. 2003 doi: 10.1023/b:modi.0000006562.93049.36.
   
   P <- 10^(logP_ZENGLU)   # octonal:water partition coeff
   logP_OW <- 1.115*logP_ZENGLU - 1.35 #oil:water partition coeff

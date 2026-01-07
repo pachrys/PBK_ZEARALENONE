@@ -48,6 +48,7 @@ showtext_auto()
   FV_Ile = 0.171
   FV_CO = 0.002 # calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 (total volume was 0.238ml)
   
+  
   FV_SIL = 0.014 # fractional volume of small intestinal lumen (Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
   FV_duol = 0.183
   FV_jejl = 0.334 # calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
@@ -73,6 +74,11 @@ showtext_auto()
   FV_B = pull(Rat.input[Rat.input$tissue == "RBCs", "F_Vo"]) + pull(Rat.input[Rat.input$tissue == "Plasma", "F_Vo"])  # fraction of blood
   # FV_S = 0.96 - (FV_SI + FV_L + FV_R + FV_F + FV_B) # fraction of slowly perfused tissue (Bone/Skin/Adipose/Muscle/(brain and testes) (slowly equilibrating tissues with large time constants))
 
+  FV_K = pull(Rat.input[Rat.input$tissue == "Kidney", "F_Vo"])  # fractional of liver tissue
+  FV_K_IC = pull(Rat.input[Rat.input$tissue == "Kidney", "f_iw"])
+  FV_K_EC = pull(Rat.input[Rat.input$tissue == "Kidney", "f_ew"])
+  
+  
   R <- 0.18 #radius small intestine
   Rduo <- 0.275/2 #diameter / 2 = radius, cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
   Rjej <- 0.4/2   #diameter / 2 = radius, cm (Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al)
@@ -86,8 +92,8 @@ showtext_auto()
   
   Amp <- 120 # microvilli amplification factor, ref: Desesso et al. (2001) https://doi.org/10.1016/S0278-6915(00)00136-8; villi and microvilli together amplify the small intestinal surface area by 60–120 times https://doi.org/10.3109/00365521.2014.898326
   Ampduo <- 1*Amp
-  Ampjej <- 1*Amp #0.7
-  Ampile <- 1*Amp #0.5
+  Ampjej <- 0.7*Amp 
+  Ampile <- 0.5*Amp 
   
   SAduo = 2*pi*Rduo*Lduo*Ampduo #cm2
   SAjej = 2*pi*Rjej*Ljej*Ampjej #cm2
@@ -392,13 +398,13 @@ showtext_auto()
   # pmolMP_mgP.KI.MRP2 <- 1.4 # pmol MRP2/mg protein in kidney
   pmolMP_mgP.KI.MRP3 <- 1.40 # pmol MRP3/mg protien in kidney # Fallon 2016 DOI 10.1007/s11095-016-1966-5
   # pmolMP_mgP.KI.MRP3 <- 0.05 # pmol MRP3/mg protien in kidney
-  mgP_mgLI <- 0.18 # mg protein per mg liver
   mgP_mgIN <- 0.133 # mg protein per mg intestine
-  mgP_mgKI <- 0.17 # mg protein per mg kidney
+  mgP_mgLI <- 0.21 # mg protein per mg liver
+  mgP_mgKI <- 0.18 # mg protein per mg kidney
   
   REF.IN.MRP2 <- pmolMP_mgP.IN.MRP2/pmol_mg.MRP2
   REF.LI.MRP2 <- pmolMP_mgP.LI.MRP2/pmol_mg.MRP2
-  REF.KI.MRP2 <- pmolMP_mgP.KI.MRP2/pmol_mg.MRP2
+  # REF.KI.MRP2 <- pmolMP_mgP.KI.MRP2/pmol_mg.MRP2
   
   REF.IN.MRP3 <- pmolMP_mgP.IN.MRP3/pmol_mg.MRP3
   REF.LI.MRP3 <- pmolMP_mgP.LI.MRP3/pmol_mg.MRP3
@@ -406,9 +412,9 @@ showtext_auto()
   
   SF.IN.MRP2 <- mgP_mgIN * REF.IN.MRP2       # (mg protein / mg small intestine) #pmolMP_mgP.IN.MRP2*1e-6*MWMRP2*
   SF.LI.MRP2 <- mgP_mgLI * REF.LI.MRP2       # (mg protein / mg liver) #pmolMP_mgP.LI.MRP2*1e-6*MWMRP2*
-  SF.KI.MRP2 <- mgP_mgLI * REF.KI.MRP2       # (mg protein / mg kidney) #pmolMP_mgP.KI.MRP2*1e-6*MWMRP2*
+  SF.KI.MRP2 <- mgP_mgKI * REF.KI.MRP2       # (mg protein / mg kidney) #pmolMP_mgP.KI.MRP2*1e-6*MWMRP2*
   
-  SF.IN.MRP3 <- mgP_mgLI * REF.IN.MRP3       # (mg protein / mg liver) #pmolMP_mgP.IN.MRP3*1e-6*MWMRP3
+  SF.IN.MRP3 <- mgP_mgIN * REF.IN.MRP3       # (mg protein / mg liver) #pmolMP_mgP.IN.MRP3*1e-6*MWMRP3
   SF.LI.MRP3 <- mgP_mgLI * REF.LI.MRP3       # (mg protein / mg liver) #pmolMP_mgP.LI.MRP3*1e-6*MWMRP3*
   SF.KI.MRP3 <- mgP_mgLI * REF.KI.MRP3       # (mg protein / mg liver) #pmolMP_mgP.KI.MRP3*1e-6*MWMRP3*
   
@@ -417,13 +423,13 @@ showtext_auto()
   Vmax.MRP3.LI.c <- Vmax.MRP3 / f.in_out.MRP3 * SF.LI.MRP3  # umol/min/mg MRP2 * mg MRP2 / mg liver -> umol/min/mg liver
   Vmax.MRP3.IN.c <- Vmax.MRP3 / f.in_out.MRP3 * SF.IN.MRP3  # umol/min/mg MRP2 * mg MRP2 / mg liver -> umol/min/mg liver
   
-  CL.LI.MRP2.c <- (Vmax.MRP2 / f.in_out.MRP2 * SF.LI.MRP2 * 60)/Km.MRP2
-  CL.IN.MRP2.c <- (Vmax.MRP2 / f.in_out.MRP2 * SF.IN.MRP2 * 60)/Km.MRP2
-  CL.KI.MRP2.c <- (Vmax.MRP2 / f.in_out.MRP2 * SF.KI.MRP2 * 60)/Km.MRP2
+  CL.LI.MRP2.c <- (Vmax.MRP2 / f.in_out.MRP2 * SF.LI.MRP2)/Km.MRP2
+  CL.IN.MRP2.c <- (Vmax.MRP2 / f.in_out.MRP2 * SF.IN.MRP2)/Km.MRP2
+  CL.KI.MRP2.c <- (Vmax.MRP2 / f.in_out.MRP2 * SF.KI.MRP2)/Km.MRP2
 
-  CL.LI.MRP3.c <- (Vmax.MRP3 / f.in_out.MRP3 * SF.LI.MRP3 * 60)/Km.MRP3
-  CL.IN.MRP3.c <- (Vmax.MRP3 / f.in_out.MRP3 * SF.IN.MRP3 * 60)/Km.MRP3
-  CL.KI.MRP3.c <- (Vmax.MRP3 / f.in_out.MRP3 * SF.KI.MRP3 * 60)/Km.MRP3
+  CL.LI.MRP3.c <- (Vmax.MRP3 / f.in_out.MRP3 * SF.LI.MRP3)/Km.MRP3
+  CL.IN.MRP3.c <- (Vmax.MRP3 / f.in_out.MRP3 * SF.IN.MRP3)/Km.MRP3
+  CL.KI.MRP3.c <- (Vmax.MRP3 / f.in_out.MRP3 * SF.KI.MRP3)/Km.MRP3
 
   # CL.LI.MRP2.c <- (Vmax.MRP2 * 60 /Km.MRP2)/ f.in_out.MRP2 / pmol_mg.MRP2 / pmolMP_mgP.LI.MRP2 / mgP_mgLI # L/min -> h/mg -> kg liver
   # CL.LI.MRP3.c <- (Vmax.MRP3 * 60 /Km.MRP3)/ f.in_out.MRP3 / pmol_mg.MRP3 / pmolMP_mgP.LI.MRP3 / mgP_mgLI # L/min -> h/mg -> kg liver
@@ -595,8 +601,8 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
 
   Amp <- 120 # microvilli amplification factor, ref: Desesso et al. (2001) https://doi.org/10.1016/S0278-6915(00)00136-8; villi and microvilli together amplify the small intestinal surface area by 60–120 times https://doi.org/10.3109/00365521.2014.898326
   Ampduo <- 1*Amp
-  Ampjej <- 1*Amp #0.7
-  Ampile <- 1*Amp #0.5
+  Ampjej <- 0.7*Amp #0.7
+  Ampile <- 0.5*Amp #0.5
 
   SAduo = 2*pi*Rduo*Lduo*Ampduo #cm2
   SAjej = 2*pi*Rjej*Ljej*Ampjej #cm2
@@ -627,6 +633,12 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
 
   VBi <- 100/1000 # L, volume of the bile from the ICRP, vbile is 50-100ml
 
+  FV_K = pull(Human.input[Human.input$tissue == "Kidney", "F_Vo"])  # fractional of liver tissue
+  FV_K_IC = pull(Human.input[Human.input$tissue == "Kidney", "f_iw"])
+  FV_K_EC = pull(Human.input[Human.input$tissue == "Kidney", "f_ew"])
+  
+  
+  
   # Blood flow humans (reference: Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307)
   QC = 389.99  ##{L/h} # cardiac output
   QSIc = pull(Human.input[Human.input$tissue == "Gut", "F_QC"])  # fraction of blood flow to small intestine
@@ -919,6 +931,24 @@ Human.dat <- Human.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for a
   mgP_mgLI <- 0.18 # mg protein per mg liver
   mgP_mgIN <- 0.133 # mg protein per mg intestine
   mgP_mgKI <- 0.17 # mg protein per mg kidney
+  
+  REF.IN.MRP2 <- pmolMP_mgP.IN.MRP2/pmol_mg.MRP2
+  REF.LI.MRP2 <- pmolMP_mgP.LI.MRP2/pmol_mg.MRP2
+  # REF.KI.MRP2 <- pmolMP_mgP.KI.MRP2/pmol_mg.MRP2
+  
+  
+  REF.IN.MRP3 <- pmolMP_mgP.IN.MRP3/pmol_mg.MRP3
+  REF.LI.MRP3 <- pmolMP_mgP.LI.MRP3/pmol_mg.MRP3
+  REF.KI.MRP3 <- pmolMP_mgP.KI.MRP3/pmol_mg.MRP3
+  
+  SF.IN.MRP2 <- mgP_mgIN * REF.IN.MRP2       # (mg protein / mg small intestine) #pmolMP_mgP.IN.MRP2*1e-6*MWMRP2*
+  SF.LI.MRP2 <- mgP_mgLI * REF.LI.MRP2       # (mg protein / mg liver) #pmolMP_mgP.LI.MRP2*1e-6*MWMRP2*
+  SF.KI.MRP2 <- mgP_mgKI * REF.KI.MRP2       # (mg protein / mg kidney) #pmolMP_mgP.KI.MRP2*1e-6*MWMRP2*
+  
+  SF.IN.MRP3 <- mgP_mgIN * REF.IN.MRP3       # (mg protein / mg liver) #pmolMP_mgP.IN.MRP3*1e-6*MWMRP3
+  SF.LI.MRP3 <- mgP_mgLI * REF.LI.MRP3       # (mg protein / mg liver) #pmolMP_mgP.LI.MRP3*1e-6*MWMRP3*
+  SF.KI.MRP3 <- mgP_mgLI * REF.KI.MRP3       # (mg protein / mg liver) #pmolMP_mgP.KI.MRP3*1e-6*MWMRP3*
+  
 
   CL.LI.MRP2.c <- (Vmax.MRP2 / f.in_out.MRP2 * SF.LI.MRP2 * 60)/Km.MRP2
   CL.IN.MRP2.c <- (Vmax.MRP2 / f.in_out.MRP2 * SF.IN.MRP2 * 60)/Km.MRP2

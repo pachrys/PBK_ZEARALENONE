@@ -248,8 +248,8 @@ R.PBK.model <- function(t, state, parms){
     VmaxL_aZELGLU <- 0.3*VmaxL_aZELGLUc * S9L * VL * 1e3 #/fuincS9L_aZEL 
     
     ### Biliary clearance
-    Bile.fed <- 12.7e-6*60 # L/h
-    Bile.fasted <- 6.35e-6*60 # L/h
+    Bile.fed <- 12.7e-6*60 # L/h or 0.217 L/h
+    Bile.fasted <- 6.35e-6*60 # L/h or 0.117 L/h
     # CL_Bile <- ifelse(t > 3, Bile.fed, Bile.fasted) # 0.00075 L/h; derived from 50 and 70 μl/kg/min -> L/h
     CL_Bile <- ifelse(t > 3 && t < 20, Bile.fed, Bile.fasted) # 0.00075 L/h; derived from 50 and 70 μl/kg/min -> L/h
     # k_Hydro <- 1000
