@@ -576,7 +576,7 @@ R.PBK.model <- function(t, state, parms){
     
     
     ### Lymphatic absorption
-    ka_Lymph <- ifelse(t > 3 && t < 4.5, ka_Lymph, 0) 
+    ka_Lymph <- ifelse(t > 3 && t < 3.5, ka_Lymph, 0) 
     
     
     ## Metabolism
@@ -609,7 +609,7 @@ R.PBK.model <- function(t, state, parms){
     
     ## Biliary clearance
     
-    CL_Bile <- ifelse(t > 3 && t < 20, Bile.fed, Bile.fasted) 
+    CL_Bile <- ifelse(t > 3 && t < 19, Bile.fed, Bile.fasted) 
     
     
     
@@ -670,6 +670,7 @@ R.PBK.model <- function(t, state, parms){
     CB_aZEL = AB_aZEL/VB
     
     CVIle_aZEL <- CIle_aZEL/aZEL_PSI * aZEL_BPR
+    CVJej_aZEL <- CJej_aZEL/aZEL_PSI * aZEL_BPR
     CVL_aZEL <- CL_aZEL/aZEL_PL * aZEL_BPR
     CVF_aZEL <- CF_aZEL/aZEL_PF * aZEL_BPR
     CVR_aZEL <- CR_aZEL/aZEL_PR * aZEL_BPR
@@ -696,9 +697,10 @@ R.PBK.model <- function(t, state, parms){
     CVF_aZEL_gluc <- CF_aZEL_gluc/aZEL_gluc_PF * aZEL_gluc_BPR
     CVR_aZEL_gluc <- CR_aZEL_gluc/aZEL_gluc_PR * aZEL_gluc_BPR
     CVS_aZEL_gluc <- CS_aZEL_gluc/aZEL_gluc_PS * aZEL_gluc_BPR
+   
     ## Differential Equations ----
     
-    OD_ZEN <- - k_GER*AOD_ZEN                                        
+    dAOD_ZEN <- - k_GER*AOD_ZEN                                        
     
     
     ### Zearalenone ----
@@ -909,7 +911,7 @@ R.PBK.model <- function(t, state, parms){
       - ((Vmax_MRP2_IN*CJej_IC_aZEL_gluc*aZEL_gluc_fut) / 
            (Km_MRP2 + (CJej_IC_aZEL_gluc*aZEL_gluc_fut)))
     
-    dAJej_EC_aZEL_gluc <- QJej*(CB_aZEL_gluc-CVJej_aZEL_gluc) 
+    dAJej_EC_aZEL_gluc <- QJej*(CB_aZEL_gluc-CVJej_EC_aZEL_gluc) 
     
     # Liver
     dAL_IC_aZEL_gluc <- ((Vmax_L_aZEL_gluc*CL_aZEL*aZEL_fut) / 
@@ -1216,70 +1218,106 @@ MB.plot <- ggplot(data = MB.df)+
   )+
   ylab("MB / ERROR")
 MB.plot
-# ggsave(
-#   filename = here(OUTPUT,"MB.Rat.png"),
-#   dpi = 600,
-#   width = 11,
-#   height = 7,
-#   units = "cm"
-# )
+ggsave(
+  filename = here(OUTPUT,"MB.Rat.png"),
+  dpi = 600,
+  width = 11,
+  height = 7,
+  units = "cm"
+)
 
-# Tissue concentrations
-C.Pre <- PBK_OUTPUT %>%
-  transmute(Time = time,
-            
-            DuodenumT_ZEN = CDuo_ZEN, DuodenumL_ZEN = CDuoL_ZEN,
-            JejunumT_ZEN = CJej_ZEN, JejunumL_ZEN = CJejL_ZEN,
-            IleumT_ZEN = CIle_ZEN, IleumL_ZEN = CIleL_ZEN,
-            LIntestineL_ZEN = CCOL_ZEN,
-            Liver_ZEN = CL_ZEN, 
-            Fat_ZEN = CF_ZEN, 
-            Rapidly_ZEN = CR_ZEN, Slowly_ZEN = CS_ZEN,
-            Blood_ZEN = CB_ZEN, 
-            
-            DuodenumT_aZEL = 0, DuodenumL_aZEL = 0,
-            JejunumT_aZEL = CJej_aZEL, JejunumL_aZEL = 0,
-            IleumT_aZEL = 0, IleumL_aZEL = 0,
-            LIntestineL_aZEL = 0, 
-            Liver_aZEL = CL_aZEL,
-            Fat_aZEL = CF_aZEL, Rapidly_aZEL = CR_aZEL, Slowly_aZEL = CS_aZEL,
-            Blood_aZEL = CB_aZEL,
-            
-            DuodenumT_ZEN_gluc = 0, DuodenumL_ZEN_gluc = CDuoL_ZEN_gluc,
-            JejunumT_ZEN_gluc = CJej_ZEN_gluc, JejunumL_ZEN_gluc = CJejL_ZEN_gluc,
-            IleumT_ZEN_gluc = 0, IleumL_ZEN_gluc = CIleL_ZEN_gluc,
-            LIntestineL_ZEN_gluc = CCOL_ZEN_gluc, 
-            Liver_ZEN_gluc = CL_ZEN_gluc, 
-            Fat_ZEN_gluc = CF_ZEN_gluc, Rapidly_ZEN_gluc = CR_ZEN_gluc, Slowly_ZEN_gluc = CS_ZEN_gluc,
-            Blood_ZEN_gluc = CB_ZEN_gluc
-  )
+MW_ZEN_gluc <- pull(PhysChem[PhysChem$Substance == "Zearalenone-14O-glucuronide", 
+                        "MolecularWeight"])
+MW_aZEL <- pull(PhysChem[PhysChem$Substance == "a-Zearalenol", 
+                        "MolecularWeight"])
+MW_aZEL_gluc <- pull(PhysChem[PhysChem$Substance == "a-Zearalenol-glucuronide", 
+                         "MolecularWeight"])
 
-C.Pre_long <- C.Pre %>%
-  pivot_longer(names_to = c("Tissue", "Compound"),
-               DuodenumT_ZEN:Blood_ZEN_gluc,
-               values_to = "Concentration",
-               names_sep = "_") %>%
-  mutate(Concentration = ifelse(Compound == "ZEN", Concentration*MW_ZEN, # correct units
-                                ifelse(Compound == "ZEN_gluc",Concentration*MW_ZEN_gluc.c,
-                                       Concentration*MW_aZEL)))
+replacements <- c(
+  "CDuoL" = "Duodenum Lumen",
+  "CDuo"  = "Duodenum",
+  "CIleL" = "Ileum Lumen",
+  "CIle" = "Ileum",
+  "CJejL" = "Jejunum Lumen", 
+  "CJej" = "Jejunum", 
+  "CCOL" = "Colon",
+  "CL" = "Liver", 
+  "CF" = "Fat", 
+  "CR" = "Rapidly perfused", 
+  "CS" = "Slowly perfused",
+  "CBile" = "Bile",
+  "CB" = "Blood", 
+  "_gluc" = "-gluc",
+  "time" = "Time"
+)
 
 
-C.Pre_wide <- C.Pre_long %>%
-  pivot_wider(names_from = "Tissue", values_from = "Concentration") %>%
-  select(c("Compound","Time", 
-           "DuodenumT", "JejunumT", "IleumT", "DuodenumL", "JejunumL", "IleumL", 
-           "LIntestineL", "Liver", "Blood", "Fat", "Rapidly", "Slowly")) %>%
-  # mutate("IntestineL" = (((DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL) + (LIntestineL*VCOL))/(VDuoL+VJejL+VIleL+VCOL))) %>%
-  # mutate("Intestine" = (((SIntestineT*VSI) + (IntestineL*(VSIL+VCOL+VREL)))/(VSI + VSIL+VCOL+VREL))) %>%
-  mutate("Intestine" = ((DuodenumT*VDuo) + (JejunumT*VJej) + (IleumT*VIle))/(# + (DuodenumL*VDuoL) + (JejunumL*VJejL) + (IleumL*VIleL)+ (LIntestineL*VCOL) + (RectumL*VREL)
-    VDuo + VJej + VIle)) %>% #L+VCOL+VRE  +VDuoL+VJejL+VIle
-  # rename("Intestine" = "SIntestineT") %>%
-  select(c("Compound", "Time", "Intestine", "Liver", "Blood", "Fat", "Rapidly", "Slowly")) 
+Concentrations <- PBK_OUTPUT %>% 
+  select(c("time", starts_with("C"))) %>% 
+  set_names(~(.) %>%
+              str_replace_all(replacements)) %>% 
+  pivot_longer( !Time , 
+               names_to = c("Tissue", "Substance"),
+               names_sep = c("_"),
+               values_to = "Concentration") %>% 
+  mutate(Concentration = ifelse(Substance == "ZEN", Concentration*MW_ZEN, # correct units
+                                ifelse(Substance == "ZEN_gluc",Concentration*MW_ZEN_gluc,
+                                       ifelse(Substance == "aZEL", Concentration*MW_aZEL,
+                                              Concentration*MW_aZEL_gluc)
+                                       )))
+
+C.Pre_long <- Concentrations
+
+VSI <- FV_SI*BW 
+VDuo <- VSI*FV_Duo
+VJej <- VSI*FV_Jej
+VIle <- VSI*FV_Ile
+
+Clean.replacements <- c(
+  "CIn" = "Intestine",
+  "CL" = "Liver", 
+  "CF" = "Fat", 
+  "CR" = "Rapidly perfused", 
+  "CS" = "Slowly perfused",
+  "CBile" = "Bile",
+  "CB" = "Blood", 
+  "_gluc" = "-gluc",
+  "time" = "Time"
+)
+
+
+Clean.C <- PBK_OUTPUT %>% 
+  select(c("time", starts_with("C"))) %>% 
+  mutate("CIn_ZEN" = ((CDuo_ZEN*VDuo) + (CJej_ZEN*VJej) + (CIle_ZEN*VIle))/(
+    VDuo + VJej + VIle),
+    "CIn_ZEN_gluc" = ((CJej_ZEN_gluc*VJej))/(
+      VDuo + VJej + VIle),
+    "CIn_aZEL" = ((CJej_aZEL*VJej) + (CIle_aZEL*VIle))/(
+      VDuo + VJej + VIle),
+    "CIn_aZEL_gluc" = ((CJej_aZEL_gluc*VJej))/(
+      VDuo + VJej + VIle),
+    ) %>% 
+  select(!c(starts_with("CDuo"), 
+            starts_with("CIle"), 
+            starts_with("CJej"), 
+            starts_with("CCOL"))) %>% 
+  set_names(~(.) %>%
+              str_replace_all(Clean.replacements)) %>% 
+  pivot_longer( !Time , 
+                names_to = c("Tissue", "Substance"),
+                names_sep = c("_"),
+                values_to = "Concentration") %>% 
+  mutate(Concentration = ifelse(Substance == "ZEN", Concentration*MW_ZEN, # correct units
+                                ifelse(Substance == "ZEN_gluc",Concentration*MW_ZEN_gluc,
+                                       ifelse(Substance == "aZEL", Concentration*MW_aZEL,
+                                              Concentration*MW_aZEL_gluc)
+                                )))
+
 
 # Plot Blood
 CBlood.plot <- C.Pre_long %>% filter(Tissue == "Blood") %>%
   ggplot() + geom_path(aes(x = Time, y = Concentration)) +
-  facet_wrap(~ Compound, scales = "free") +
+  facet_wrap(~ Substance, scales = "free") +
   CP_theme +
   theme(strip.text = element_text(size = 45),
         axis.text = element_text(size = 40)) +
@@ -1292,21 +1330,19 @@ CBlood.plot <- C.Pre_long %>% filter(Tissue == "Blood") %>%
         legend.spacing.y = unit(0, "cm"),
         legend.margin = margin(0, 0, 0, 0))
 CBlood.plot
-# ggsave(
-#   filename = here(OUTPUT,"BloodC.Rat.png"),
-#   dpi = 600,
-#   width = 11,
-#   height = 7,
-#   units = "cm"
-# )
+ggsave(
+  filename = here(OUTPUT,"BloodC.Rat.png"),
+  dpi = 600,
+  width = 11,
+  height = 7,
+  units = "cm"
+)
 
 # Plot all tissues
-C.Tissues <- C.Pre_wide %>% 
-  pivot_longer(Intestine:Slowly, 
-               names_to = "Tissue", values_to = "Concentration")
 
-CTissues.plot <- C.Tissues %>% 
-  ggplot() + geom_path(aes(x = Time, y = Concentration, colour = Compound)) +
+CTissues.plot <- Clean.C %>% 
+  ggplot() + 
+  geom_path(aes(x = Time, y = Concentration, colour = Substance)) +
   scale_color_brewer(palette = "Dark2") +
   facet_wrap(~ Tissue, scales = "free") +
   CP_theme +
@@ -1321,40 +1357,15 @@ CTissues.plot <- C.Tissues %>%
         legend.spacing.y = unit(0, "cm"),
         legend.margin = margin(0, 0, 0, 0))
 CTissues.plot
-# ggsave(
-#   filename = here(OUTPUT,"TissueC.Rat.png"),
-#   dpi = 600,
-#   width = 11,
-#   height = 7,
-#   units = "cm"
-# )
+ggsave(
+  filename = here(OUTPUT,"TissueC.Rat.png"),
+  dpi = 600,
+  width = 11,
+  height = 7,
+  units = "cm"
+)
 
-
-# C.Tissues %>% 
-#   ggplot() + geom_path(aes(x = Time, y = log10(Concentration), colour = Compound)) +
-#   scale_color_brewer(palette = "Dark2") +
-#   facet_wrap(~ Tissue, scales = "free") +
-#   CP_theme +
-#   theme(strip.text = element_text(size = 45),
-#         axis.text = element_text(size = 40)) +
-#   ylab("Concentration log(ng/ml)") +
-#   xlab("Hours")+
-#   theme(legend.position = "bottom",
-#         legend.title = element_text(size = 35),
-#         legend.text = element_text(size = 35),
-#         legend.key.size = unit(0.5, "lines"),
-#         legend.spacing.y = unit(0, "cm"),
-#         legend.margin = margin(0, 0, 0, 0))
-# 
-# ggsave(
-#   filename = here(OUTPUT,"TissueC.log.Rat.png"),
-#   dpi = 600,
-#   width = 11,
-#   height = 7,
-#   units = "cm"
-# )
-
-# write_csv(C.Tissues, here(OUTPUT, "C.Tissues.Rat.csv"))
+write_csv(Clean.C, here(OUTPUT, "C.Tissues.Rat.csv"))
 
 Results.Rat <- list(
   Metadata.Run.Rat = list(Select_AdminType = Select_AdminType,
@@ -1364,13 +1375,13 @@ Results.Rat <- list(
                           IVDOSEmg = IVDOSEmg,
                           IVDOSEumol = IVDOSEumol,
                           timeSeq = timeSeq,
-                          MW_ZEN = 318.37, # molecular weight ZEN
-                          MW_ZEN_gluc.c = 494.493, # molecular weight ZEN_gluc.c
-                          MW_aZEL = 320.4, # molecular weight aZEL
-                          BP = 0.67 # assuming the same for all ZEN, aZEL and ZEN_gluc.c
-  ), 
+                          ZEN_BPR = pull(Kp_fus_BPR_df[Kp_fus_BPR_df$Parameter == "ZEN_BPR", "Value"]),
+                          aZEL_BPR = pull(Kp_fus_BPR_df[Kp_fus_BPR_df$Parameter == "aZEL_BPR", "Value"]),
+                          ZEN_gluc_BPR = pull(Kp_fus_BPR_df[Kp_fus_BPR_df$Parameter == "ZEN_gluc_BPR", "Value"]),
+                          aZEL_gluc_BPR =  pull(Kp_fus_BPR_df[Kp_fus_BPR_df$Parameter == "aZEL_gluc_BPR", "Value"])), 
   Raw.Data.Rat = PBK_OUTPUT,
-  C.Tissues.Rat = C.Tissues,
+  C.Tissues.Rat = Clean.C,
+  C.All.Rat = C.Pre_long,
   Plots = list(MB.plot, CBlood.plot, CTissues.plot)
 )
 

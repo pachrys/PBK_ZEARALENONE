@@ -37,10 +37,14 @@ OUTPUT <- here("Output", format(Sys.Date(), "%Y-%m-%d")) #,
 dir.create(OUTPUT, recursive = TRUE)
 
 # Input #### 
-load(here(OUTPUT, "Results_Rat.RData"))
+load(here(OUTPUT, "Results.Rat.RData"))
 Select_AdminType <- Results.Rat$Metadata.Run.Rat$Select_AdminType
 Select_Author <- Results.Rat$Metadata.Run.Rat$Select_Author
-BP <- Results.Rat$Metadata.Run.Rat$BP
+
+ZEN_BPR = Results.Rat$Metadata.Run.Rat$ZEN_BPR[[1]]
+aZEL_BPR = Results.Rat$Metadata.Run.Rat$aZEL_BPR[[1]]
+ZEN_gluc_BPR = Results.Rat$Metadata.Run.Rat$ZEN_gluc_BPR[[1]]
+
 
 # load(here(OUTPUT, "RawData_PBK.Rat.RData"))
 Predicted.data <- Results.Rat$C.Tissues.Rat
@@ -58,23 +62,23 @@ Obs <- Observed.data %>%
   mutate(Time = as.numeric(Time), 
          Concentration = as.numeric(Concentration),
          Concentration = ifelse(Tissue == "Plasma",
-                               Concentration * BP, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
+                               Concentration * ZEN_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BPR
          Cmin = ifelse(Tissue == "Plasma",
-                                Cmin * BP, Cmin),
+                                Cmin *ZEN_BPR, Cmin),
          Cmax = ifelse(Tissue == "Plasma",
-                       Cmax * BP, Cmax),
+                       Cmax * ZEN_BPR, Cmax),
          Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
 
 if(Select_Author == "Videmann"){
   Cobs <- Obs %>%
     filter(Tissue %in% c("Blood", "Intestine", "Liver"))
-  Cpre <- Predicted.data %>% filter(Compound == "ZEN", 
+  Cpre <- Predicted.data %>% filter(Substance == "ZEN", 
                                     Tissue %in% c("Blood", "Intestine", "Liver")) 
 }else{
   Cobs <- Obs %>% filter(Tissue == "Blood")
-  Cpre <- Predicted.data %>% filter(Compound == "ZEN", 
+  Cpre <- Predicted.data %>% filter(Substance == "ZEN", 
                                     Tissue == "Blood")%>% 
-    select(Compound, Time, Concentration) #%>% rename("Blood" = "Concentratio")
+    select(Substance, Time, Concentration) #%>% rename("Blood" = "Concentratio")
 }
 
 
@@ -175,12 +179,12 @@ if(Select_Author == "Videmann"){
     mutate(Time = as.numeric(Time), 
            Concentration = as.numeric(Concentration),
            Concentration = ifelse(Tissue == "Plasma",
-                                  Concentration * BP, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
+                                  Concentration * ZEN_gluc_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
            Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
   
   Cobs.glu <- Obs.glu %>%
       filter(Tissue %in% c("Blood", "Intestine", "Liver"))
-  Cpre.glu <- Predicted.data %>% filter(Compound == "ZENGLU", 
+  Cpre.glu <- Predicted.data %>% filter(Substance == "ZEN-gluc", 
                                         Tissue %in% c("Blood", "Intestine", "Liver")) 
   
   PredvsObsBlood.GLU <- ggplot() +
@@ -388,7 +392,7 @@ if(Select_Author == "Videmann"){
 #             Urine_ZENGLU = AUR_ZENGLU)
 # 
 # A.Pre_long <- A.Pre %>%
-#   pivot_longer(names_to = c("Tissue", "Compound"),
+#   pivot_longer(names_to = c("Tissue", "Substance"),
 #                DuodenumT_ZEN:Urine_ZENGLU,
 #                values_to = "Amount",
 #                names_sep = "_")
@@ -396,7 +400,7 @@ if(Select_Author == "Videmann"){
 # 
 # Plot.A.Pre <- A.Pre_long %>%
 #   ggplot() +
-#   geom_path(aes(x = Time, y = Amount, colour = Compound), linewidth = 0.5) +
+#   geom_path(aes(x = Time, y = Amount, colour = Substance), linewidth = 0.5) +
 #   facet_wrap(~Tissue, scales = "free")+
 #   # theme_minimal() +
 #   CP_theme +
@@ -415,7 +419,7 @@ if(Select_Author == "Videmann"){
 # 
 # Plot.C.Pre <- C.Pre_long %>%
 #   ggplot() +
-#   geom_path(aes(x = Time, y = Concentration, colour = Compound), linewidth = 0.5) +
+#   geom_path(aes(x = Time, y = Concentration, colour = Substance), linewidth = 0.5) +
 #   facet_wrap(~Tissue, scales = "free")+
 #   theme_minimal() +
 #   # CP_theme +
@@ -435,7 +439,7 @@ if(Select_Author == "Videmann"){
 # C_Blood <- C.Pre_long %>%
 #   filter(Tissue == "Blood") %>%
 #   ggplot()+
-#   geom_path(aes(x = Time, y = Concentration, colour = Compound), linewidth = 0.5) +
+#   geom_path(aes(x = Time, y = Concentration, colour = Substance), linewidth = 0.5) +
 #   theme_minimal()+
 #   # CP_theme +
 #   ylab("Blood Concentration (ng/ml)") +
