@@ -36,7 +36,7 @@ OUTPUT <- here("Output", format(Sys.Date(), "%Y-%m-%d")) #,
 # format(Sys.time(), "%H-%M-%S"))
 dir.create(OUTPUT, recursive = TRUE)
 
-# Input #### 
+# Input ---- 
 load(here(OUTPUT, "Results.Rat.RData"))
 Select_AdminType <- Results.Rat$Metadata.Run.Rat$Select_AdminType
 Select_Author <- Results.Rat$Metadata.Run.Rat$Select_Author
@@ -44,10 +44,11 @@ Select_Author <- Results.Rat$Metadata.Run.Rat$Select_Author
 ZEN_BPR = Results.Rat$Metadata.Run.Rat$ZEN_BPR[[1]]
 aZEL_BPR = Results.Rat$Metadata.Run.Rat$aZEL_BPR[[1]]
 ZEN_gluc_BPR = Results.Rat$Metadata.Run.Rat$ZEN_gluc_BPR[[1]]
+aZEL_gluc_BPR = Results.Rat$Metadata.Run.Rat$aZEL_gluc_BPR[[1]]
 
 
 # load(here(OUTPUT, "RawData_PBK.Rat.RData"))
-Predicted.data <- Results.Rat$C.Tissues.Rat
+Predicted.data <- Results.Rat$C.Tissues.Rat %>% filter(Time >= 0.04)
 Observed.data <- read.csv(here("Input", "ObservedData.Rat.csv"), header=1)
 
 Obs <- Observed.data %>%
@@ -56,9 +57,12 @@ Obs <- Observed.data %>%
            TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
            Author == Select_Author,
            SampleCompound == "ZEN") %>% 
-  select(c("Author", "Sex","Tissue", "SamplingTime", "Concentration", "Cmin", "Cmax")) %>%
+  select(c("Author", "Sex",
+           "Tissue", "SamplingTime", 
+           "Concentration","Concentration_cumulative", 
+           "Cmin", "Cmax")) %>%
   rename(Time = SamplingTime) %>%
-  na.omit() %>% 
+  # na.omit() %>% 
   mutate(Time = as.numeric(Time), 
          Concentration = as.numeric(Concentration),
          Concentration = ifelse(Tissue == "Plasma",
@@ -82,7 +86,12 @@ if(Select_Author == "Videmann"){
 }
 
 
-# Plots
+# Plots ---- 
+
+## ZEN ----
+
+### Blood ----
+
 if(Select_Author == "Videmann"){
   
   ggplot(
@@ -129,6 +138,8 @@ ggsave(
   units = "cm"
 )
 
+### All Tissues ----
+
 if(Select_Author == "Videmann"){
 
   PredvsObsAll <- ggplot(data = Cobs,
@@ -162,6 +173,60 @@ if(Select_Author == "Videmann"){
   )
 
 }else{print("only blood this time")}
+
+### Urine ----
+
+
+if(Select_Author == "Videmann"){
+  
+  Cobs_urine <- Obs %>%
+    filter(Tissue == "Urine")
+  Cpre_urine <- Predicted.data %>% filter(Substance == "ZEN", 
+                                    Tissue == "Urine") 
+  
+  ggplot(
+    data = filter(Cobs_urine),
+    aes(x = Time, y = Concentration_cumulative)) +
+    geom_point(aes(color = Sex),size = 1) +
+    scale_color_manual(values = c("#008475", "#8631A7")) +
+    geom_path(data = filter(Cpre_urine, Tissue == "Urine"),
+              aes(Time, Concentration)) +
+    labs(title = "Zearalenone Urine concentrations",
+         x = "Time (h)",
+         y = "Concentration (ng/ml)") +
+    guides(color = guide_legend(override.aes = list(fill = NA))) +
+    CP_theme
+  
+}else{
+  
+  ggplot(
+    data = Cobs, #filter(Cobs, Tissue == "Urine"),
+    aes(x = Time, y = Concentration)) +
+    geom_ribbon(aes(ymin = Cmin, ymax = Cmax, fill = Sex),
+                alpha = 0.3, color = NA) +
+    scale_fill_manual(values = c("#008475", "#8631A7"))+
+    geom_point(aes(color = Sex),size = 1) +
+    scale_color_manual(values = c("#008475", "#8631A7")) +
+    geom_path(data = Cpre, #filter(Cpre, Tissue == "Urine"),
+              aes(Time, Concentration)) +
+    labs(title = "Zearalenone Urine concentrations",
+         x = "Time (h)",
+         y = "Concentration (ng/ml)") +
+    guides(color = guide_legend(override.aes = list(fill = NA))) +
+    CP_theme
+  
+}
+
+ggsave(
+  filename = here(OUTPUT,"PredvsObsUrine.png"),
+  dpi = 600,
+  width = 11,
+  height = 7,
+  units = "cm"
+)
+
+
+
 
 ## ZEN0GLUC ##
 
@@ -236,7 +301,159 @@ if(Select_Author == "Videmann"){
 
 }else{ print("Only ZEN nothing else ;)")}
 
-# Regression lines ####
+
+## a-ZEL ##
+
+if(Select_Author == "Videmann"){
+  
+  Obs.aZEL <- Observed.data %>%
+    filter(AdminType == Select_AdminType,
+           Sex != "Pregnant.F", #pregnancy not included yet
+           TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
+           Author == Select_Author,
+           SampleCompound == "a_ZEL")   %>% 
+    select(c("Author", "Sex","Tissue", "SamplingTime", "Concentration")) %>% #, "Cmin", "Cmax"
+    rename(Time = SamplingTime) %>%
+    na.omit() %>% 
+    mutate(Time = as.numeric(Time), 
+           Concentration = as.numeric(Concentration),
+           Concentration = ifelse(Tissue == "Plasma",
+                                  Concentration * aZEL_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
+           Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
+  
+  Cobs.aZEL <- Obs.aZEL %>%
+    filter(Tissue %in% c("Blood", "Intestine", "Liver"))
+  Cpre.aZEL <- Predicted.data %>% filter(Substance == "aZEL", 
+                                        Tissue %in% c("Blood", "Intestine", "Liver")) 
+  
+  PredvsObsBlood.aZEL <- ggplot() +
+    geom_point(data = filter(Cobs.aZEL, Tissue == "Blood"),
+               aes(Time, Concentration, color = Sex)) +
+    geom_path(data = filter(Cpre.aZEL, Tissue == "Blood"),
+              aes(Time, Concentration)) +
+    labs(title = "a-Zearalenol blood concentrations",
+         x = "Time (h)",
+         y = "Concentration (ng/ml)")+
+    # theme_minimal() +
+    CP_theme + 
+    theme(strip.text = element_text(size = 45))
+  PredvsObsBlood.aZEL
+  ggsave(
+    filename = here(OUTPUT,"PredvsObsBloodaZEL.png"),
+    dpi = 600,
+    width = 11,
+    height = 7,
+    units = "cm"
+  )
+  
+  PredvsObsAll.aZEL <- ggplot() +
+    geom_point(data = Cobs.aZEL,
+               aes(Time, Concentration, color = Sex)) +
+    facet_wrap(~Tissue, scales = "free")+
+    geom_path(data = Cpre.glu,
+              aes(Time, Concentration)) +
+    facet_wrap(~Tissue, scales = "free")+
+    labs(title = "a-Zearalenol concentrations",
+         x = "Time (h)",
+         y = "Concentration (ng/ml)")+
+    # theme_minimal() +
+    CP_theme +
+    guides(color = guide_legend(
+      override.aes = list(shape = c(4, 5),
+                          color = c("blueviolet", "darkblue")
+      ))
+    ) +
+    theme(strip.text = element_text(size = 45))
+  PredvsObsAll.aZEL
+  ggsave(
+    filename = here(OUTPUT,"PredvsObsAllaZEL.png"),
+    dpi = 600,
+    width = 11,
+    height = 7,
+    units = "cm"
+  )
+  
+}else{ print("Only ZEN nothing else ;)")}
+
+
+
+## a-ZEL glucuronide##
+
+if(Select_Author == "Videmann"){
+  
+  Obs.aZEL_gluc <- Observed.data %>%
+    filter(AdminType == Select_AdminType,
+           Sex != "Pregnant.F", #pregnancy not included yet
+           TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
+           Author == Select_Author,
+           SampleCompound == "a_ZEL_glu")   %>% 
+    select(c("Author", "Sex","Tissue", "SamplingTime", "Concentration")) %>% #, "Cmin", "Cmax"
+    rename(Time = SamplingTime) %>%
+    na.omit() %>% 
+    mutate(Time = as.numeric(Time), 
+           Concentration = as.numeric(Concentration),
+           Concentration = ifelse(Tissue == "Plasma",
+                                  Concentration * aZEL_gluc_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
+           Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
+  
+  Cobs.aZEL_gluc <- Obs.aZEL_gluc %>%
+    filter(Tissue %in% c("Blood", "Intestine", "Liver"))
+  Cpre.aZEL_gluc <- Predicted.data %>% filter(Substance == "aZEL-gluc", 
+                                         Tissue %in% c("Blood", "Intestine", "Liver")) 
+  
+  PredvsObsBlood.aZEL_gluc <- ggplot() +
+    geom_point(data = filter(Cobs.aZEL_gluc, Tissue == "Blood"),
+               aes(Time, Concentration, color = Sex)) +
+    geom_path(data = filter(Cpre.aZEL_gluc, Tissue == "Blood"),
+              aes(Time, Concentration)) +
+    labs(title = "a-Zearalenol glucuronide blood concentrations",
+         x = "Time (h)",
+         y = "Concentration (ng/ml)")+
+    # theme_minimal() +
+    CP_theme + 
+    theme(strip.text = element_text(size = 45))
+  PredvsObsBlood.aZEL_gluc
+  ggsave(
+    filename = here(OUTPUT,"PredvsObsBloodaZEL_gluc.png"),
+    dpi = 600,
+    width = 11,
+    height = 7,
+    units = "cm"
+  )
+  
+  PredvsObsAll.aZEL_gluc <- ggplot() +
+    geom_point(data = Cobs.aZEL_gluc,
+               aes(Time, Concentration, color = Sex)) +
+    facet_wrap(~Tissue, scales = "free")+
+    geom_path(data = Cpre.aZEL_gluc,
+              aes(Time, Concentration)) +
+    facet_wrap(~Tissue, scales = "free")+
+    labs(title = "a-Zearalenol glucuronide concentrations",
+         x = "Time (h)",
+         y = "Concentration (ng/ml)")+
+    # theme_minimal() +
+    CP_theme +
+    guides(color = guide_legend(
+      override.aes = list(shape = c(4, 5),
+                          color = c("blueviolet", "darkblue")
+      ))
+    ) +
+    theme(strip.text = element_text(size = 45))
+  PredvsObsAll.aZEL_gluc
+  ggsave(
+    filename = here(OUTPUT,"PredvsObsAllaZEL_gluc.png"),
+    dpi = 600,
+    width = 11,
+    height = 7,
+    units = "cm"
+  )
+  
+}else{ print("Only ZEN nothing else ;)")}
+
+
+
+
+# Regression lines ----
 # 
 # Cobs <- Cobs %>% filter(Tissue == "Blood")
 # Cpre <- Cpre %>% filter(Tissue == "Blood")
@@ -341,148 +558,3 @@ if(Select_Author == "Videmann"){
          width = 9,height = 7, units = "cm")
 
   }
-
-# 
-# # Plot model predictions ####
-# 
-# A.Pre <- PBK_OUTPUT %>%
-#   transmute(Time = time,
-#             DuodenumT_ZEN = ADuo_ZEN,
-#             DuodenumL_ZEN = ADuoL_ZEN,
-#             JejunumT_ZEN = AJej_ZEN,
-#             JejunumL_ZEN = AJejL_ZEN,
-#             IleumT_ZEN = AIle_ZEN,
-#             IleumL_ZEN = AIleL_ZEN,
-#             LIntestineL_ZEN = ACOL_ZEN,
-#             Feces_ZEN = AFE_ZEN,
-#             Liver_ZEN = AL_ZEN,
-#             Fat_ZEN = AF_ZEN,
-#             Rapidly_ZEN = AR_ZEN,
-#             Slowly_ZEN = AS_ZEN,
-#             Blood_ZEN = AB_ZEN,
-#             Urine_ZEN = AUR_ZEN,
-#             DuodenumT_aZEL = 0,
-#             DuodenumL_aZEL = 0,
-#             JejunumT_aZEL = AJej_aZEL,
-#             JejunumL_aZEL = 0,
-#             IleumT_aZEL = 0,
-#             IleumL_aZEL = 0,
-#             LIntestineL_aZEL = ACOL_aZEL,
-#             Feces_aZEL = AFE_aZEL,
-#             Liver_aZEL = AL_aZEL,
-#             Fat_aZEL = AF_aZEL,
-#             Rapidly_aZEL = AR_aZEL,
-#             Slowly_aZEL = AS_aZEL,
-#             Blood_aZEL = AB_aZEL,
-#             Urine_aZEL = AUR_aZEL,
-#             DuodenumT_ZENGLU = 0,
-#             DuodenumL_ZENGLU = ADuoL_ZENGLU,
-#             JejunumT_ZENGLU = AJej_IC_ZENGLU + AJej_EC_ZENGLU,#AJej_ZENGLU,
-#             JejunumL_ZENGLU = AJejL_ZENGLU,
-#             IleumT_ZENGLU = 0,
-#             IleumL_ZENGLU = AIleL_ZENGLU,
-#             LIntestineL_ZENGLU = ACOL_ZENGLU,
-#             Feces_ZENGLU = AFE_ZENGLU,
-#             Liver_ZENGLU = AL_IC_ZENGLU + AL_EC_ZENGLU, #AL_ZENGLU,
-#             Bile_ZENGLU = ABile_ZENGLU,
-#             Fat_ZENGLU = AF_ZENGLU,
-#             Rapidly_ZENGLU = AR_ZENGLU,
-#             Slowly_ZENGLU = AS_ZENGLU,
-#             Blood_ZENGLU = AB_ZENGLU,
-#             Urine_ZENGLU = AUR_ZENGLU)
-# 
-# A.Pre_long <- A.Pre %>%
-#   pivot_longer(names_to = c("Tissue", "Substance"),
-#                DuodenumT_ZEN:Urine_ZENGLU,
-#                values_to = "Amount",
-#                names_sep = "_")
-# 
-# 
-# Plot.A.Pre <- A.Pre_long %>%
-#   ggplot() +
-#   geom_path(aes(x = Time, y = Amount, colour = Substance), linewidth = 0.5) +
-#   facet_wrap(~Tissue, scales = "free")+
-#   # theme_minimal() +
-#   CP_theme +
-#   theme(strip.text = element_text(size = 45),
-#         axis.text = element_text(size = 40)) +
-#   ylab("Tissue Amount (umol)") +
-#   xlab("Time (hours)")
-# print(Plot.A.Pre)
-# ggsave(
-#   filename = here(OUTPUT,"AmountAll.png"),
-#   dpi = 600,
-#   width = 11,
-#   height = 7,
-#   units = "cm"
-# )
-# 
-# Plot.C.Pre <- C.Pre_long %>%
-#   ggplot() +
-#   geom_path(aes(x = Time, y = Concentration, colour = Substance), linewidth = 0.5) +
-#   facet_wrap(~Tissue, scales = "free")+
-#   theme_minimal() +
-#   # CP_theme +
-#   # theme(strip.text = element_text(size = 45),
-#   #       axis.text = element_text(size = 40)) +
-#   ylab("Tissue Concentration (ng/ml)") +
-#   xlab("Time (hours)")
-# print(Plot.C.Pre)
-# ggsave(
-#   filename = here(OUTPUT,"ConcentrationAll.png"),
-#   dpi = 600,
-#   width = 11,
-#   height = 7,
-#   units = "cm"
-# )
-# 
-# C_Blood <- C.Pre_long %>%
-#   filter(Tissue == "Blood") %>%
-#   ggplot()+
-#   geom_path(aes(x = Time, y = Concentration, colour = Substance), linewidth = 0.5) +
-#   theme_minimal()+
-#   # CP_theme +
-#   ylab("Blood Concentration (ng/ml)") +
-#   xlab("Time (hours)")
-# print(C_Blood)
-# ggsave(
-#   filename = here(OUTPUT,"C_Blood.png"),
-#   dpi = 600,
-#   width = 11,
-#   height = 7,
-#   units = "cm"
-# )
-# 
-# 
-# 
-# C_ZEN <- max(C.Pre$Blood_ZEN)/MWZEN * 1000 #* 1000
-# C_aZEL <- max(C.Pre$Blood_aZEL)/MWZEN * 1000 #* 1000
-# 
-# 
-# # Mass Balance ####
-# MB.df <- PBK_OUTPUT %>% select(time, ATotal, ACalculated, MB)  # change days to years if needed
-# ATOTAL <- ODOSEumol + IVDOSEumol
-# MB.df$MB <- (ATOTAL- MB.df$ACalculated) + 1
-# MB.df$MB <- round(MB.df$MB, 10) # rounding significance points
-# # MB.df$ERROR <- (ATOTAL - MB.df$ACalculated) / MB.df$ACalculated * 100
-# MB.df$ERROR <- (MB.df$ATotal - MB.df$ACalculated) / MB.df$ACalculated * 100
-# MB.df$ERROR <- round(MB.df$ERROR, 10) # rounding significance points
-# MB_plot <- ggplot(data = MB.df)+
-#   geom_line(aes(x = time, y = ERROR, color = "ERROR")) +
-#   geom_line(aes(x = time, y = MB, color = "MB")) +
-#   scale_color_manual(values = c("ERROR" = "blue", "MB" = "black"),
-#                      name = NULL) +
-#   # ylim(0,1) +
-#   theme_minimal() +
-#   theme(axis.text = element_text(size = 10),
-#         axis.title = element_text(size = 12)
-#   )+
-#   ylab("MB / ERROR")
-# print(MB_plot)
-# ggsave(
-#   filename = here(OUTPUT,"MB_plot.png"),
-#   dpi = 600,
-#   width = 11,
-#   height = 7,
-#   units = "cm"
-# )
