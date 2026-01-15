@@ -327,20 +327,26 @@ S9SI <- 1                                              # small intestinal S9 pro
 # Assuming the same as liver
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
 Vmax_SI_aZEL.c <- 32*1e-6   *21            # umol/min/mg protein; from pmol-> umol
-Km_SI_aZEL <- 592                                            # uM 
+Km_SI_aZEL <- 592                                           # uM 
 Vmax_SI_bZEL.c <- 72*1e-6    *21                 # umol/min/mg protein; from pmol-> umol
 Km_SI_bZEL <- 21                                             # uM 
 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 S9F <- 1                                                      # correcting for the alamethicin permeabilisation of the membrane which increases the glucuronidation; Reference: I. Kiiski et al. 2021 https://doi.org/10.1016/j.ejps.2020.105677
-Vmax_SI_ZEN_gluc.c <-  8.617*1e-3   *15.5             # umol/min/mg protein; from pmol-> umol 
+Vmax_SI_ZEN_gluc.c <-  8.617*1e-3   *15.5             # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                       # uM 0.3
-Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5  /10 # umol/min/mg protein; from pmol-> umol
+Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5   # umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                      # uM
 
 # Glucuronide hydrolysis by gmGUS
 k_Hydro <- 10
+Vmax_Hydro_ZEN_gluc <-1.12e8/PhysChem$MolecularWeight[3]*1e-3 #ng->nmol -> umol/h
+Km_Hydro_ZEN_gluc <- 822/PhysChem$MolecularWeight[3] #ng->nmol ->umol/ml->L
+Vmax_Hydro_aZEL_gluc <-1.12e8/PhysChem$MolecularWeight[4]*1e-6 #ng->nmol ->umol/h
+Km_Hydro_aZEL_gluc <- 822/PhysChem$MolecularWeight[4] #ng->nmol ->umol/ml->L
+
+
 
 #### Liver ----
 
@@ -348,16 +354,16 @@ S9L <- 1                                                # liver S9 protein yield
 
 # Hydrolysis
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-Vmax_L_aZEL.c <- 32*1e-6  *112.7 *100               # pmol->umol/min/mg protein
+Vmax_L_aZEL.c <- 32*1e-6  *112.7 *1000               # pmol->umol/min/mg protein
 Km_L_aZEL <- 592                                         # uM
-Vmax_L_bZEL.c <- 72*1e-6   *112.7            # pmol->umol/min/mg protein   
+Vmax_L_bZEL.c <- 72*1e-6   *112.7  *100        # pmol->umol/min/mg protein   
 Km_L_bZEL <- 21                                               # uM
 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 Vmax_L_ZEN_gluc.c <- 7.029*1e-3    *46              # nmol->umol/min/mg S9
 Km_L_ZEN_gluc <- 6.753                                        # uM
-Vmax_L_aZEL_gluc.c <- 6.963*1e-3    *46             # nmol->umol/min/mg S9
+Vmax_L_aZEL_gluc.c <- 6.963*1e-3    *46    /10         # nmol->umol/min/mg S9
 Km_L_aZEL_gluc <- 7.426                                       # uM 0.87
 
 
@@ -374,7 +380,7 @@ Bile.fasted <- 6.35e-6 * 60                                   # L/h
 
 ##### Constants ----
 Vmax_MRP2.c <- 3366e-6                                      # umol/min/mg MRP2; pmol -> umol
-Km_MRP2 <- 78.9/10                                               # uM
+Km_MRP2 <- 78.9/5                                               # uM
 Vmax_MRP3.c <- 986.2e-6                                      # umol/min/mg MRP3; pmol -> umol
 Km_MRP3 <- 5.7*10                                              # uM
 Vmax_BCRP.c <- 2470e-6                    
@@ -492,6 +498,10 @@ Other_params <- tibble(
   Vmax_SI_aZEL_gluc.c = Vmax_SI_aZEL_gluc.c,
   Km_SI_aZEL_gluc = Km_SI_aZEL_gluc,
   k_Hydro = k_Hydro,
+  Vmax_Hydro_ZEN_gluc = Vmax_Hydro_ZEN_gluc,
+  Km_Hydro_ZEN_gluc = Km_Hydro_ZEN_gluc,
+  Vmax_Hydro_aZEL_gluc = Vmax_Hydro_aZEL_gluc,
+  Km_Hydro_aZEL_gluc = Km_Hydro_aZEL_gluc,
   S9L = S9L,
   Vmax_L_aZEL.c = Vmax_L_aZEL.c,
   Km_L_aZEL = Km_L_aZEL,
@@ -740,10 +750,14 @@ R.PBK.model <- function(t, state, parms){
     
     dAIleL_ZEN <- + k_jej*AJejL_ZEN - k_ile*AIleL_ZEN +  
       - CLile_ZEN*CIleL_ZEN - ka_Lymph*AIleL_ZEN +  
-      + k_Hydro*AIleL_ZEN_gluc 
+      + ((Vmax_Hydro_ZEN_gluc*CIleL_ZEN_gluc) / 
+           (Km_Hydro_ZEN_gluc + (CIleL_ZEN_gluc)))
+      # + k_Hydro*AIleL_ZEN_gluc 
     
     dACOL_ZEN <- + k_ile*AIleL_ZEN - k_CO*ACOL_ZEN +
-      + k_Hydro*ACOL_ZEN_gluc 
+      + ((Vmax_Hydro_ZEN_gluc*CCOL_ZEN_gluc) / 
+           (Km_Hydro_ZEN_gluc + (CCOL_ZEN_gluc)))
+      # + k_Hydro*ACOL_ZEN_gluc 
     
     # Small intestinal tissue 
     dADuo_ZEN <- CLduo_ZEN*CDuoL_ZEN + QDuo*(CB_ZEN-CVDuo_ZEN) 
@@ -808,10 +822,14 @@ R.PBK.model <- function(t, state, parms){
            (Km_BCRP + (CJej_IC_ZEN_gluc*ZEN_gluc_fut))) 
     
     dAIleL_ZEN_gluc <- k_jej*AJejL_ZEN_gluc - k_ile*AIleL_ZEN_gluc +
-      - k_Hydro*AIleL_ZEN_gluc
+      - ((Vmax_Hydro_ZEN_gluc*CIleL_ZEN_gluc) / 
+           (Km_Hydro_ZEN_gluc + (CIleL_ZEN_gluc)))
+      # - k_Hydro*AIleL_ZEN_gluc
     
     dACOL_ZEN_gluc <- k_ile*AIleL_ZEN_gluc - k_CO*ACOL_ZEN_gluc +
-      - k_Hydro*ACOL_ZEN_gluc  
+      - ((Vmax_Hydro_ZEN_gluc*CCOL_ZEN_gluc) / 
+           (Km_Hydro_ZEN_gluc + (CCOL_ZEN_gluc)))
+          # - k_Hydro*ACOL_ZEN_gluc  
     
     # Small Intestinal tissue
     dAJej_IC_ZEN_gluc <- ((Vmax_SI_ZEN_gluc*CJej_ZEN*ZEN_fut) / 
@@ -875,10 +893,14 @@ R.PBK.model <- function(t, state, parms){
     # Intestinal lumen
     dAIleL_aZEL <- - k_ile*AIleL_aZEL +  
       - CLile_aZEL*CIleL_aZEL - ka_Lymph*AIleL_aZEL +  
-      + k_Hydro*AIleL_aZEL_gluc 
+      + ((Vmax_Hydro_aZEL_gluc*CIleL_ZEN_gluc) / 
+           (Km_Hydro_aZEL_gluc + (CIleL_ZEN_gluc)))
+      # + k_Hydro*AIleL_aZEL_gluc 
     
     dACOL_aZEL <- + k_ile*AIleL_aZEL - k_CO*ACOL_aZEL +
-      + k_Hydro*ACOL_aZEL_gluc  
+      + ((Vmax_Hydro_aZEL_gluc*CCOL_ZEN_gluc) / 
+           (Km_Hydro_aZEL_gluc + (CCOL_ZEN_gluc)))
+      # + k_Hydro*ACOL_aZEL_gluc  
     
     # Small intestinal tissue 
     dAJej_aZEL <- ((Vmax_SI_aZEL*CJej_ZEN*ZEN_fut) / 
@@ -934,11 +956,15 @@ R.PBK.model <- function(t, state, parms){
            (Km_BCRP + (CJej_IC_aZEL_gluc*aZEL_gluc_fut))) 
     
     dAIleL_aZEL_gluc <- k_jej*AJejL_aZEL_gluc - k_ile*AIleL_aZEL_gluc +
-      - k_Hydro*AIleL_aZEL_gluc
+      - ((Vmax_Hydro_aZEL_gluc*CIleL_ZEN_gluc) / 
+           (Km_Hydro_aZEL_gluc + (CIleL_ZEN_gluc)))
+    # - k_Hydro*AIleL_aZEL_gluc
     
     dACOL_aZEL_gluc <- k_ile*AIleL_aZEL_gluc +
       - k_CO*ACOL_aZEL_gluc +
-      - k_Hydro*ACOL_aZEL_gluc  
+      - ((Vmax_Hydro_aZEL_gluc*CCOL_ZEN_gluc) / 
+           (Km_Hydro_aZEL_gluc + (CCOL_ZEN_gluc)))
+      # - k_Hydro*ACOL_aZEL_gluc  
     
     # Small Intestinal tissue
     dAJej_IC_aZEL_gluc <- ((Vmax_SI_aZEL_gluc*CJej_aZEL*aZEL_fut) / 
