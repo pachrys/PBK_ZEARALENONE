@@ -326,7 +326,7 @@ S9SI <- 1                                              # small intestinal S9 pro
 # Hydrolysis
 # Assuming the same as liver
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-Vmax_SI_aZEL.c <- 32*1e-6   *21        *10     # umol/min/mg protein; from pmol-> umol
+Vmax_SI_aZEL.c <- 32*1e-6   *21            # umol/min/mg protein; from pmol-> umol
 Km_SI_aZEL <- 592                                            # uM 
 Vmax_SI_bZEL.c <- 72*1e-6    *21                 # umol/min/mg protein; from pmol-> umol
 Km_SI_bZEL <- 21                                             # uM 
@@ -336,7 +336,7 @@ Km_SI_bZEL <- 21                                             # uM
 S9F <- 1                                                      # correcting for the alamethicin permeabilisation of the membrane which increases the glucuronidation; Reference: I. Kiiski et al. 2021 https://doi.org/10.1016/j.ejps.2020.105677
 Vmax_SI_ZEN_gluc.c <-  8.617*1e-3   *15.5             # umol/min/mg protein; from pmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                       # uM 0.3
-Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5  # umol/min/mg protein; from pmol-> umol
+Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5  /10 # umol/min/mg protein; from pmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                      # uM
 
 # Glucuronide hydrolysis by gmGUS
@@ -375,7 +375,7 @@ Bile.fasted <- 6.35e-6 * 60                                   # L/h
 ##### Constants ----
 Vmax_MRP2.c <- 3366e-6                                      # umol/min/mg MRP2; pmol -> umol
 Km_MRP2 <- 78.9                                               # uM
-Vmax_MRP3.c <- 986.2e-6                                        # umol/min/mg MRP3; pmol -> umol
+Vmax_MRP3.c <- 986.2e-6                                      # umol/min/mg MRP3; pmol -> umol
 Km_MRP3 <- 5.7                                              # uM
 Vmax_BCRP.c <- 2470e-6                    
 Km_BCRP <- 676.4
@@ -422,13 +422,13 @@ REF_LI_BCRP <- pmolMP_mgP_LI_BCRP / pmol_mg_BCRP
 
 # Scaling factor
 SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2     # mg MRP2 / mg small intestine
-SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2    # mg MRP2 / mg liver
+SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *100   # mg MRP2 / mg liver
 SF_KI_MRP2 <- 0#mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2          # mg MRP2 / mg liver
 
 SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3     # mg MRP3 / mg liver 
 
 SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP     # mg BCRP / mg liver 
-SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP     # mg BCRP / mg liver 
+SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *100     # mg BCRP / mg liver 
 
 ## Collect all parameters ----
 Kp_fus_BPR_df <- as.data.frame(Kp_fus_BPR_df) %>%
