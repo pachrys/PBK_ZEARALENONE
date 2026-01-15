@@ -48,8 +48,20 @@ aZEL_gluc_BPR = Results.Rat$Metadata.Run.Rat$aZEL_gluc_BPR[[1]]
 
 
 # load(here(OUTPUT, "RawData_PBK.Rat.RData"))
-Predicted.data <- Results.Rat$C.Tissues.Rat %>% filter(Time >= 0.04)
+Predicted.data <- Results.Rat$C.Tissues.Rat %>% filter(Time >= 0.01)
 Observed.data <- read.csv(here("Input", "ObservedData.Rat.csv"), header=1)
+
+Predicted.urine <- Results.Rat$Raw.Data.Rat %>% filter(time >= 0.01) %>% 
+  select(c("time", starts_with("AUR"))) %>% 
+  rename("Time" = time) %>% 
+  set_names(~(.) %>%
+              str_replace_all("_gluc", "-gluc"))%>% 
+  pivot_longer( !Time , 
+                names_to = c("Tissue", "Substance"),
+                names_sep = c("_"),
+                values_to = "Amount")
+
+
 
 Obs <- Observed.data %>%
   filter(AdminType == Select_AdminType,
@@ -60,7 +72,8 @@ Obs <- Observed.data %>%
   select(c("Author", "Sex",
            "Tissue", "SamplingTime", 
            "Concentration","Concentration_cumulative", 
-           "Cmin", "Cmax")) %>%
+           "Cmin", "Cmax",
+           "Cumulative_Amount_umol")) %>%
   rename(Time = SamplingTime) %>%
   # na.omit() %>% 
   mutate(Time = as.numeric(Time), 
@@ -179,35 +192,34 @@ if(Select_Author == "Videmann"){
 
 if(Select_Author == "Videmann"){
   
-  Cobs_urine <- Obs %>%
+  
+  Aobs_urine <- Obs %>%
     filter(Tissue == "Urine")
-  Cpre_urine <- Predicted.data %>% filter(Substance == "ZEN", 
-                                    Tissue == "Urine") 
+  Apre_urine <- Predicted.urine %>% filter(Substance == "ZEN") 
   
   ggplot(
-    data = filter(Cobs_urine),
-    aes(x = Time, y = Concentration_cumulative)) +
+    data = filter(Aobs_urine),
+    aes(x = Time, y = Cumulative_Amount_umol)) +
     geom_point(aes(color = Sex),size = 1) +
     scale_color_manual(values = c("#008475", "#8631A7")) +
-    geom_path(data = filter(Cpre_urine, Tissue == "Urine"),
-              aes(Time, Concentration)) +
-    labs(title = "Zearalenone Urine concentrations",
+    geom_path(data = filter(Apre_urine, Tissue == "AUR"),
+              aes(Time, Amount)) +
+    labs(title = "Cumulative Amount of Zearalenone in urine",
          x = "Time (h)",
-         y = "Concentration (ng/ml)") +
+         y = "Amount (umol)") +
     guides(color = guide_legend(override.aes = list(fill = NA))) +
     CP_theme
+  
+  ggsave(
+    filename = here(OUTPUT,"PredvsObsUrine_ZEN.png"),
+    dpi = 600,
+    width = 11,
+    height = 7,
+    units = "cm")
   
 }else{
   
 }
-
-ggsave(
-  filename = here(OUTPUT,"PredvsObsUrine_ZEN.png"),
-  dpi = 600,
-  width = 11,
-  height = 7,
-  units = "cm"
-)
 
 
 
@@ -225,7 +237,8 @@ if(Select_Author == "Videmann"){
            Author == Select_Author,
            SampleCompound == "ZEN_glu")   %>% 
     select(c("Author", "Sex","Tissue", "SamplingTime", 
-             "Concentration","Concentration_cumulative")) %>% #, "Cmin", "Cmax"
+             "Concentration","Concentration_cumulative",
+             "Cumulative_Amount_umol")) %>% #, "Cmin", "Cmax"
     rename(Time = SamplingTime) %>%
     # na.omit() %>% 
     mutate(Time = as.numeric(Time), 
@@ -294,38 +307,39 @@ if(Select_Author == "Videmann"){
 
 if(Select_Author == "Videmann"){
   
-  Cobs_urine.GLU <- Obs.glu %>%
+  
+  Aobs_urine.GLU  <- Obs.glu %>%
     filter(Tissue == "Urine")
-  Cpre_urine.GLU <- Predicted.data %>% filter(Substance == "ZEN-gluc", 
-                                          Tissue == "Urine") 
+  Apre_urine.GLU <- Predicted.urine %>% filter(Substance == "ZEN-gluc") 
   
   ggplot(
-    data = filter(Cobs_urine.GLU),
-    aes(x = Time, y = Concentration_cumulative)) +
+    data = filter(Aobs_urine.GLU),
+    aes(x = Time, y = Cumulative_Amount_umol)) +
     geom_point(aes(color = Sex),size = 1) +
     scale_color_manual(values = c("#008475", "#8631A7")) +
-    geom_path(data = filter(Cpre_urine.GLU, Tissue == "Urine"),
-              aes(Time, Concentration)) +
-    labs(title = "Zearalenone glucuronide Urine concentrations",
+    geom_path(data = filter(Apre_urine.GLU, Tissue == "AUR"),
+              aes(Time, Amount)) +
+    labs(title = "Cumulative Amount of Zearalenone glucuronide in urine",
          x = "Time (h)",
-         y = "Concentration (ng/ml)") +
+         y = "Amount (umol)") +
     guides(color = guide_legend(override.aes = list(fill = NA))) +
     CP_theme
   
-}else{
+  ggsave(
+    filename = here(OUTPUT,"PredvsObsUrine_ZEN-GLUC.png"),
+    dpi = 600,
+    width = 11,
+    height = 7,
+    units = "cm")
   
+  
+}else{
+  print("No Urine")
 }
 
-ggsave(
-  filename = here(OUTPUT,"PredvsObsUrine_ZEN-GLUC.png"),
-  dpi = 600,
-  width = 11,
-  height = 7,
-  units = "cm"
-)
 
 
-## a-ZEL ##
+## a-ZEL ----
 
 if(Select_Author == "Videmann"){
   
@@ -336,7 +350,8 @@ if(Select_Author == "Videmann"){
            Author == Select_Author,
            SampleCompound == "a_ZEL")  %>% 
     select(c("Author", "Sex","Tissue", "SamplingTime", 
-             "Concentration", "Concentration_cumulative")) %>% #, "Cmin", "Cmax"
+             "Concentration", "Concentration_cumulative",
+             "Cumulative_Amount_umol")) %>% #, "Cmin", "Cmax"
     rename(Time = SamplingTime) %>%
     # na.omit() %>% 
     mutate(Time = as.numeric(Time), 
@@ -385,35 +400,35 @@ if(Select_Author == "Videmann"){
 
 if(Select_Author == "Videmann"){
   
-  Cobs_urine.aZEL <- Obs.aZEL %>%
+  Aobs_urine.aZEL  <- Obs.aZEL %>%
     filter(Tissue == "Urine")
-  Cpre_urine.aZEL <- Predicted.data %>% filter(Substance == "aZEL", 
-                                          Tissue == "Urine") 
+  Apre_urine.aZEL <- Predicted.urine %>% filter(Substance == "aZEL") 
   
   ggplot(
-    data = filter(Cobs_urine.aZEL),
-    aes(x = Time, y = Concentration_cumulative)) +
+    data = filter(Aobs_urine.aZEL),
+    aes(x = Time, y = Cumulative_Amount_umol)) +
     geom_point(aes(color = Sex),size = 1) +
     scale_color_manual(values = c("#008475", "#8631A7")) +
-    geom_path(data = filter(Cpre_urine.aZEL, Tissue == "Urine"),
-              aes(Time, Concentration)) +
-    labs(title = "aZearalenol Urine concentrations",
+    geom_path(data = filter(Apre_urine.aZEL, Tissue == "AUR"),
+              aes(Time, Amount)) +
+    labs(title = "Cumulative Amount of a-Zearalenol in urine",
          x = "Time (h)",
-         y = "Concentration (ng/ml)") +
+         y = "Amount (umol)") +
     guides(color = guide_legend(override.aes = list(fill = NA))) +
     CP_theme
   
+  ggsave(
+    filename = here(OUTPUT,"PredvsObsUrine_aZEL.png"),
+    dpi = 600,
+    width = 11,
+    height = 7,
+    units = "cm")
+  
+  
 }else{
+  print("No Urine")
   
 }
-
-ggsave(
-  filename = here(OUTPUT,"PredvsObsUrine_aZEL.png"),
-  dpi = 600,
-  width = 11,
-  height = 7,
-  units = "cm"
-)
 
 
 
@@ -428,7 +443,8 @@ if(Select_Author == "Videmann"){
            Author == Select_Author,
            SampleCompound == "a_ZEL_glu")   %>% 
     select(c("Author", "Sex","Tissue", "SamplingTime", 
-             "Concentration", "Concentration_cumulative")) %>% #, "Cmin", "Cmax"
+             "Concentration", "Concentration_cumulative",
+             "Cumulative_Amount_umol")) %>% #, "Cmin", "Cmax"
     rename(Time = SamplingTime) %>%
     # na.omit() %>% 
     mutate(Time = as.numeric(Time), 
@@ -477,35 +493,35 @@ if(Select_Author == "Videmann"){
 
 if(Select_Author == "Videmann"){
   
-  Cobs_urine.aZEL_gluc <- Obs.aZEL_gluc %>%
+  Aobs_urine.aZEL_gluc  <- Obs.aZEL_gluc %>%
     filter(Tissue == "Urine")
-  Cpre_urine.aZEL_gluc <- Predicted.data %>% filter(Substance == "aZEL-gluc", 
-                                               Tissue == "Urine") 
+  Apre_urine.aZEL_gluc <- Predicted.urine %>% filter(Substance == "aZEL-gluc") 
   
   ggplot(
-    data = filter(Cobs_urine.aZEL_gluc),
-    aes(x = Time, y = Concentration_cumulative)) +
+    data = filter(Aobs_urine.aZEL_gluc),
+    aes(x = Time, y = Cumulative_Amount_umol)) +
     geom_point(aes(color = Sex),size = 1) +
     scale_color_manual(values = c("#008475", "#8631A7")) +
-    geom_path(data = filter(Cpre_urine.aZEL_gluc, Tissue == "Urine"),
-              aes(Time, Concentration)) +
-    labs(title = "aZearalenol glucuronide Urine concentrations",
+    geom_path(data = filter(Apre_urine.aZEL_gluc, Tissue == "AUR"),
+              aes(Time, Amount)) +
+    labs(title = "Cumulative Amount of a-Zearalenol glucuronide in urine",
          x = "Time (h)",
-         y = "Concentration (ng/ml)") +
+         y = "Amount (umol)") +
     guides(color = guide_legend(override.aes = list(fill = NA))) +
     CP_theme
   
+  ggsave(
+    filename = here(OUTPUT,"PredvsObsUrine_aZEL-GLUC.png"),
+    dpi = 600,
+    width = 11,
+    height = 7,
+    units = "cm")
+  
 }else{
+  print("No Urine")
   
 }
 
-ggsave(
-  filename = here(OUTPUT,"PredvsObsUrine_aZEL-GLUC.png"),
-  dpi = 600,
-  width = 11,
-  height = 7,
-  units = "cm"
-)
 
 
 
