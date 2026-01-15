@@ -374,11 +374,11 @@ Bile.fasted <- 6.35e-6 * 60                                   # L/h
 
 ##### Constants ----
 Vmax_MRP2.c <- 3366e-6                                      # umol/min/mg MRP2; pmol -> umol
-Km_MRP2 <- 78.9                                               # uM
+Km_MRP2 <- 78.9/10                                               # uM
 Vmax_MRP3.c <- 986.2e-6                                      # umol/min/mg MRP3; pmol -> umol
-Km_MRP3 <- 5.7                                              # uM
+Km_MRP3 <- 5.7*10                                              # uM
 Vmax_BCRP.c <- 2470e-6                    
-Km_BCRP <- 676.4
+Km_BCRP <- 676.4/10
 
 ##### IVIVE ----
 # Inside-out (active) fraction of transporter in in vitro system vesicles
@@ -422,13 +422,13 @@ REF_LI_BCRP <- pmolMP_mgP_LI_BCRP / pmol_mg_BCRP
 
 # Scaling factor
 SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2     # mg MRP2 / mg small intestine
-SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *100   # mg MRP2 / mg liver
+SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2    # mg MRP2 / mg liver
 SF_KI_MRP2 <- 0#mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2          # mg MRP2 / mg liver
 
 SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3     # mg MRP3 / mg liver 
 
 SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP     # mg BCRP / mg liver 
-SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *100     # mg BCRP / mg liver 
+SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP      # mg BCRP / mg liver 
 
 ## Collect all parameters ----
 Kp_fus_BPR_df <- as.data.frame(Kp_fus_BPR_df) %>%
