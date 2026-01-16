@@ -79,11 +79,11 @@ Obs <- Observed.data %>%
   mutate(Time = as.numeric(Time), 
          Concentration = as.numeric(Concentration),
          Concentration = ifelse(Tissue == "Plasma",
-                               Concentration * ZEN_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BPR
+                               Concentration / ZEN_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by dividing with BPR
          Cmin = ifelse(Tissue == "Plasma",
-                                Cmin *ZEN_BPR, Cmin),
+                                Cmin/ZEN_BPR, Cmin),
          Cmax = ifelse(Tissue == "Plasma",
-                       Cmax * ZEN_BPR, Cmax),
+                       Cmax / ZEN_BPR, Cmax),
          Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
 
 if(Select_Author == "Videmann"){
@@ -244,7 +244,7 @@ if(Select_Author == "Videmann"){
     mutate(Time = as.numeric(Time), 
            Concentration = as.numeric(Concentration),
            Concentration = ifelse(Tissue == "Plasma",
-                                  Concentration * ZEN_gluc_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
+                                  Concentration / ZEN_gluc_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
            Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
   
   Cobs.glu <- Obs.glu %>%
@@ -357,7 +357,7 @@ if(Select_Author == "Videmann"){
     mutate(Time = as.numeric(Time), 
            Concentration = as.numeric(Concentration),
            Concentration = ifelse(Tissue == "Plasma",
-                                  Concentration * aZEL_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
+                                  Concentration / aZEL_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
            Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
   
   Cobs.aZEL <- Obs.aZEL %>%
@@ -450,7 +450,7 @@ if(Select_Author == "Videmann"){
     mutate(Time = as.numeric(Time), 
            Concentration = as.numeric(Concentration),
            Concentration = ifelse(Tissue == "Plasma",
-                                  Concentration * aZEL_gluc_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
+                                  Concentration / aZEL_gluc_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
            Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
   
   Cobs.aZEL_gluc <- Obs.aZEL_gluc %>%

@@ -310,7 +310,7 @@ rm(Kp_fus_BPR)
 
 # Apparent permebility accross the intestinal membrane
 # Reference: Pfeiffer et al. (2011) DOI 10.1002/mnfr.201000381
-PappCaco2_ZEN <- 10.4 * 1e-6                                  # cm/s 
+PappCaco2_ZEN <- 10.4 * 1e-6     *10                             # cm/s 
 PappCaco2_aZEL <- 5.4 * 1e-6                                # cm/s
 
 # Absorption to (& release from) the lymph
@@ -326,24 +326,24 @@ S9SI <- 1                                              # small intestinal S9 pro
 # Hydrolysis
 # Assuming the same as liver
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-Vmax_SI_aZEL.c <- 32*1e-6   *21            # umol/min/mg protein; from pmol-> umol
+Vmax_SI_aZEL.c <- 32*1e-6   *15.5 #21            # umol/min/mg protein; from pmol-> umol
 Km_SI_aZEL <- 592                                           # uM 
-Vmax_SI_bZEL.c <- 72*1e-6    *21                 # umol/min/mg protein; from pmol-> umol
+Vmax_SI_bZEL.c <- 72*1e-6    *15.5 #21                 # umol/min/mg protein; from pmol-> umol
 Km_SI_bZEL <- 21                                             # uM 
 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 S9F <- 1                                                      # correcting for the alamethicin permeabilisation of the membrane which increases the glucuronidation; Reference: I. Kiiski et al. 2021 https://doi.org/10.1016/j.ejps.2020.105677
-Vmax_SI_ZEN_gluc.c <-  8.617*1e-3   *15.5             # umol/min/mg protein; from nmol-> umol 
+Vmax_SI_ZEN_gluc.c <-  8.617*1e-3   *15.5  *0.3           # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                       # uM 0.3
-Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5   # umol/min/mg protein; from nmol-> umol
+Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5 *0.3  # umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                      # uM
 
 # Glucuronide hydrolysis by gmGUS
 k_Hydro <- 10
-Vmax_Hydro_ZEN_gluc <-1.12e8/PhysChem$MolecularWeight[3]*1e-3 #ng->nmol -> umol/h
+Vmax_Hydro_ZEN_gluc <-1.12e8/PhysChem$MolecularWeight[3]*1e-6#6 #ng->nmol -> umol/h
 Km_Hydro_ZEN_gluc <- 822/PhysChem$MolecularWeight[3] #ng->nmol ->umol/ml->L
-Vmax_Hydro_aZEL_gluc <-1.12e8/PhysChem$MolecularWeight[4]*1e-6 #ng->nmol ->umol/h
+Vmax_Hydro_aZEL_gluc <-1.12e8/PhysChem$MolecularWeight[4]*1e-7 #ng->nmol ->umol/h
 Km_Hydro_aZEL_gluc <- 822/PhysChem$MolecularWeight[4] #ng->nmol ->umol/ml->L
 
 
@@ -354,16 +354,16 @@ S9L <- 1                                                # liver S9 protein yield
 
 # Hydrolysis
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-Vmax_L_aZEL.c <- 32*1e-6  *112.7 *1000               # pmol->umol/min/mg protein
+Vmax_L_aZEL.c <- 32*1e-6  *46#*112.7 #*10#0             # pmol->umol/min/mg protein
 Km_L_aZEL <- 592                                         # uM
-Vmax_L_bZEL.c <- 72*1e-6   *112.7  *100        # pmol->umol/min/mg protein   
+Vmax_L_bZEL.c <- 72*1e-6   *46 #*112.7  #*100        # pmol->umol/min/mg protein   
 Km_L_bZEL <- 21                                               # uM
 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
-Vmax_L_ZEN_gluc.c <- 7.029*1e-3    *46              # nmol->umol/min/mg S9
+Vmax_L_ZEN_gluc.c <- 7.029*1e-3    *46     *0.87         # nmol->umol/min/mg S9
 Km_L_ZEN_gluc <- 6.753                                        # uM
-Vmax_L_aZEL_gluc.c <- 6.963*1e-3    *46    /10         # nmol->umol/min/mg S9
+Vmax_L_aZEL_gluc.c <- 6.963*1e-3    *46    *0.87/10         # nmol->umol/min/mg S9
 Km_L_aZEL_gluc <- 7.426                                       # uM 0.87
 
 
@@ -428,7 +428,7 @@ REF_LI_BCRP <- pmolMP_mgP_LI_BCRP / pmol_mg_BCRP
 
 # Scaling factor
 SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2     # mg MRP2 / mg small intestine
-SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2    # mg MRP2 / mg liver
+SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2   # mg MRP2 / mg liver
 SF_KI_MRP2 <- 0#mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2          # mg MRP2 / mg liver
 
 SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3     # mg MRP3 / mg liver 
@@ -641,13 +641,6 @@ R.PBK.model <- function(t, state, parms){
     
     CL_Bile <- ifelse(t > 3, 1, Bile.fasted) # ifelse(t > 3 && t < 19, Bile.fed, Bile.fasted) 
     
-    ## fut
-    
-    # ZEN_fut <- 1
-    # aZEL_fut <- 1
-    # ZEN_gluc_fut <- 1
-    # aZEL_gluc_fut <- 1
-
     ## Tissue Concentrations ----
     
     ### Zearalenone ----
@@ -733,6 +726,12 @@ R.PBK.model <- function(t, state, parms){
     CVR_aZEL_gluc <- CR_aZEL_gluc/aZEL_gluc_PR * aZEL_gluc_BPR
     CVS_aZEL_gluc <- CS_aZEL_gluc/aZEL_gluc_PS * aZEL_gluc_BPR
    
+    
+    ## IV Perf ----
+    if(t<=6){DoseOn=1} else{DoseOn=0}
+    
+    IV = IVDOSEumol*DoseOn         # ug, PFOA oral dose
+    
     ## Differential Equations ----
     
     dAOD_ZEN <- - k_GER*AOD_ZEN                                        
@@ -792,7 +791,7 @@ R.PBK.model <- function(t, state, parms){
     dAF_ZEN <- QF*(CB_ZEN-CVF_ZEN) 
     
     # Blood
-    dAB_ZEN <- - (QSI + QL + QR + QS + QF)*CB_ZEN +  
+    dAB_ZEN <- IV - (QSI + QL + QR + QS + QF)*CB_ZEN +  
       + (QSI + QL)*CVL_ZEN + 
       + QF*CVF_ZEN + QR*CVR_ZEN + QS*CVS_ZEN + 
       - GFR*CB_ZEN*ZEN_fup +
@@ -1183,7 +1182,6 @@ names(Parameters) <- Parameters_df$Parameter
 MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone", 
                         "MolecularWeight"])
 
-
 ## Exposure ---- 
 
 Select_AdminType <- "PO" # IV
@@ -1201,7 +1199,7 @@ ODOSEumol <- ((ODOSEmg*1000)/MW_ZEN)*BW                       # μmol
 
 # IV dose
 IVDOSEmg <- if(Select_AdminType != "IV"){0
-}else if(Select_Author == "Shin"){8
+}else if(Select_Author == "Shin"){1.13#8
 }else if(Select_Author == "Q.Lu"){6.65}
 
 IVDOSEumol <-((IVDOSEmg*1000)/MW_ZEN)*BW                      # μmol
@@ -1210,7 +1208,7 @@ names(ODOSEumol) <- "ODOSEumol"
 names(IVDOSEumol) <- "IVDOSEumol"
 parm.c <- c(Parameters, c(ODOSEumol, IVDOSEumol))
 
-timeSeq <- seq(0, 24, by=1/60)                                # per minute
+timeSeq <- seq(0, 24, by=0.1)                                # per minute
 
 
 ## Initials ----
@@ -1224,7 +1222,7 @@ A_init <- c(
   AR_ZEN = 0,
   AS_ZEN = 0,
   AF_ZEN = 0, 
-  AB_ZEN = ifelse(Select_AdminType != "PO", ODOSEumol, 0), 
+  AB_ZEN = 0, #ifelse(Select_AdminType != "PO", IVOSEumol, 0), 
   AUR_ZEN = 0, 
   AFE_ZEN = 0, 
   
@@ -1263,6 +1261,8 @@ A_init <- c(
   AFE_aZEL_gluc = 0
   
   )
+
+
 
 ## Run the model ----
 PBK.out <- lsoda(y = A_init,
