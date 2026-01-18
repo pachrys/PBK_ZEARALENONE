@@ -266,6 +266,7 @@ calc_Kp_fus <- function(logP, pKa1, pka2, BPR, Rat.input, F_Vo.dat){
                           PF = PF, 
                           PS = PS, 
                           PR = PR,
+                          PK = Kp$Kpki,
                           fup = fup,
                           fut = fut,
                           BPR = BPR))
@@ -310,7 +311,7 @@ rm(Kp_fus_BPR)
 
 # Apparent permebility accross the intestinal membrane
 # Reference: Pfeiffer et al. (2011) DOI 10.1002/mnfr.201000381
-PappCaco2_ZEN <- 10.4 * 1e-6     *10                             # cm/s 
+PappCaco2_ZEN <- 10.4 * 1e-6                                  # cm/s 
 PappCaco2_aZEL <- 5.4 * 1e-6                                # cm/s
 
 # Absorption to (& release from) the lymph
@@ -326,25 +327,25 @@ S9SI <- 1                                              # small intestinal S9 pro
 # Hydrolysis
 # Assuming the same as liver
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-Vmax_SI_aZEL.c <- 32*1e-6   *15.5 #21            # umol/min/mg protein; from pmol-> umol
+Vmax_SI_aZEL.c <- 32*1e-6   *15.5# umol/min/mg protein; from pmol-> umol
 Km_SI_aZEL <- 592                                           # uM 
-Vmax_SI_bZEL.c <- 72*1e-6    *15.5 #21                 # umol/min/mg protein; from pmol-> umol
+Vmax_SI_bZEL.c <- 72*1e-6    *15.5            # umol/min/mg protein; from pmol-> umol
 Km_SI_bZEL <- 21                                             # uM 
 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 S9F <- 1                                                      # correcting for the alamethicin permeabilisation of the membrane which increases the glucuronidation; Reference: I. Kiiski et al. 2021 https://doi.org/10.1016/j.ejps.2020.105677
-Vmax_SI_ZEN_gluc.c <-  8.617*1e-3   *15.5  *0.3           # umol/min/mg protein; from nmol-> umol 
+Vmax_SI_ZEN_gluc.c <-  8.617*1e-3   *15.5   *0.3         # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                       # uM 0.3
-Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5 *0.3  # umol/min/mg protein; from nmol-> umol
+Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5   *0.3# umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                      # uM
 
 # Glucuronide hydrolysis by gmGUS
 k_Hydro <- 10
-Vmax_Hydro_ZEN_gluc <-1.12e8/PhysChem$MolecularWeight[3]*1e-6#6 #ng->nmol -> umol/h
-Km_Hydro_ZEN_gluc <- 822/PhysChem$MolecularWeight[3] #ng->nmol ->umol/ml->L
-Vmax_Hydro_aZEL_gluc <-1.12e8/PhysChem$MolecularWeight[4]*1e-7 #ng->nmol ->umol/h
-Km_Hydro_aZEL_gluc <- 822/PhysChem$MolecularWeight[4] #ng->nmol ->umol/ml->L
+Vmax_Hydro_ZEN_gluc <-1.12e8/PhysChem$MolecularWeight[3] *1e-5#ng->nmol -> umol/h
+Km_Hydro_ZEN_gluc <- 822/PhysChem$MolecularWeight[3] * 1e2 #ng->nmol ->umol/ml->L
+Vmax_Hydro_aZEL_gluc <-1.12e8/PhysChem$MolecularWeight[4] *3e-6 #ng->nmol ->umol/h
+Km_Hydro_aZEL_gluc <- 822/PhysChem$MolecularWeight[4] * 1e2 #ng->nmol ->umol/ml->L
 
 
 
@@ -354,16 +355,16 @@ S9L <- 1                                                # liver S9 protein yield
 
 # Hydrolysis
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-Vmax_L_aZEL.c <- 32*1e-6  *46#*112.7 #*10#0             # pmol->umol/min/mg protein
+Vmax_L_aZEL.c <- 32*1e-6  *46             # pmol->umol/min/mg protein
 Km_L_aZEL <- 592                                         # uM
-Vmax_L_bZEL.c <- 72*1e-6   *46 #*112.7  #*100        # pmol->umol/min/mg protein   
+Vmax_L_bZEL.c <- 72*1e-6   *46         # pmol->umol/min/mg protein   
 Km_L_bZEL <- 21                                               # uM
 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
-Vmax_L_ZEN_gluc.c <- 7.029*1e-3    *46     *0.87         # nmol->umol/min/mg S9
+Vmax_L_ZEN_gluc.c <- 7.029*1e-3    *46     *0.6         # nmol->umol/min/mg S9
 Km_L_ZEN_gluc <- 6.753                                        # uM
-Vmax_L_aZEL_gluc.c <- 6.963*1e-3    *46    *0.87/10         # nmol->umol/min/mg S9
+Vmax_L_aZEL_gluc.c <- 6.963*1e-3    *46    *0.6         # nmol->umol/min/mg S9
 Km_L_aZEL_gluc <- 7.426                                       # uM 0.87
 
 
@@ -380,11 +381,11 @@ Bile.fasted <- 6.35e-6 * 60                                   # L/h
 
 ##### Constants ----
 Vmax_MRP2.c <- 3366e-6                                      # umol/min/mg MRP2; pmol -> umol
-Km_MRP2 <- 78.9/5                                               # uM
+Km_MRP2 <- 78.9                                               # uM
 Vmax_MRP3.c <- 986.2e-6                                      # umol/min/mg MRP3; pmol -> umol
-Km_MRP3 <- 5.7*10                                              # uM
+Km_MRP3 <- 5.7#*10                                              # uM
 Vmax_BCRP.c <- 2470e-6                    
-Km_BCRP <- 676.4/10
+Km_BCRP <- 676.4
 
 ##### IVIVE ----
 # Inside-out (active) fraction of transporter in in vitro system vesicles
@@ -427,14 +428,14 @@ REF_IN_BCRP <- pmolMP_mgP_IN_BCRP / pmol_mg_BCRP
 REF_LI_BCRP <- pmolMP_mgP_LI_BCRP / pmol_mg_BCRP
 
 # Scaling factor
-SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2     # mg MRP2 / mg small intestine
-SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2   # mg MRP2 / mg liver
-SF_KI_MRP2 <- 0#mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2          # mg MRP2 / mg liver
+SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2 #/100  # mg MRP2 / mg small intestine
+SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *20 #*5  # mg MRP2 / mg liver
+SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2         # mg MRP2 / mg liver
 
-SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3     # mg MRP3 / mg liver 
+SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3    # mg MRP3 / mg liver 
 
-SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP     # mg BCRP / mg liver 
-SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP      # mg BCRP / mg liver 
+SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP  #/100   # mg BCRP / mg liver 
+SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *25 #*10    # mg BCRP / mg liver 
 
 ## Collect all parameters ----
 Kp_fus_BPR_df <- as.data.frame(Kp_fus_BPR_df) %>%
@@ -641,6 +642,9 @@ R.PBK.model <- function(t, state, parms){
     
     CL_Bile <- ifelse(t > 3, 1, Bile.fasted) # ifelse(t > 3 && t < 19, Bile.fed, Bile.fasted) 
     
+    # ZEN_gluc_fut <-1
+    # aZEL_gluc_fut <-1
+    # 
     ## Tissue Concentrations ----
     
     ### Zearalenone ----
@@ -669,7 +673,7 @@ R.PBK.model <- function(t, state, parms){
     CDuoL_ZEN_gluc = ADuoL_ZEN_gluc/VDuoL
     CJejL_ZEN_gluc <- AJejL_ZEN_gluc/VJejL
     CIleL_ZEN_gluc <- AIleL_ZEN_gluc/VIleL 
-    CCOL_ZEN_gluc <- ACOL_ZEN_gluc/VCOL 
+    CCOL_ZEN_gluc <- ACOL_ZEN_gluc/VCOL #*0.000000001
     CJej_IC_ZEN_gluc <- AJej_IC_ZEN_gluc/VJej_IC
     CJej_EC_ZEN_gluc <- AJej_EC_ZEN_gluc/VJej_EC
     CL_IC_ZEN_gluc <- AL_IC_ZEN_gluc/VL_IC
@@ -709,7 +713,7 @@ R.PBK.model <- function(t, state, parms){
     CDuoL_aZEL_gluc = ADuoL_aZEL_gluc/VDuoL
     CJejL_aZEL_gluc <- AJejL_aZEL_gluc/VJejL
     CIleL_aZEL_gluc <- AIleL_aZEL_gluc/VIleL 
-    CCOL_aZEL_gluc <- ACOL_aZEL_gluc/VCOL 
+    CCOL_aZEL_gluc <- ACOL_aZEL_gluc/VCOL #*0.01
     CJej_IC_aZEL_gluc <- AJej_IC_aZEL_gluc/VJej_IC
     CJej_EC_aZEL_gluc <- AJej_EC_aZEL_gluc/VJej_EC
     CL_IC_aZEL_gluc <- AL_IC_aZEL_gluc/VL_IC
@@ -876,13 +880,13 @@ R.PBK.model <- function(t, state, parms){
       + (QSI + QL)*CVL_EC_ZEN_gluc + 
       + QF*CVF_ZEN_gluc + QR*CVR_ZEN_gluc + QS*CVS_ZEN_gluc +
       - GFR*CB_ZEN_gluc*ZEN_gluc_fup +
-      - ((Vmax_MRP2_KI*CB_ZEN_gluc*ZEN_gluc_fup) / 
-           (Km_MRP2 + (CB_ZEN_gluc*ZEN_gluc_fup)))
+      - ((Vmax_MRP2_KI*CB_ZEN_gluc*ZEN_gluc_fut) / 
+           (Km_MRP2 + (CB_ZEN_gluc*ZEN_gluc_fut)))
     
     # Urine
     dAUR_ZEN_gluc <- GFR*CB_ZEN_gluc*ZEN_gluc_fup + 
-      ((Vmax_MRP2_KI*CB_ZEN_gluc*ZEN_gluc_fup) / 
-         (Km_MRP2 + (CB_ZEN_gluc*ZEN_gluc_fup)))
+      ((Vmax_MRP2_KI*CB_ZEN_gluc*ZEN_gluc_fut) / 
+         (Km_MRP2 + (CB_ZEN_gluc*ZEN_gluc_fut)))
     
     # Feces
     dAFE_ZEN_gluc <- k_CO*ACOL_ZEN_gluc 
@@ -1011,13 +1015,13 @@ R.PBK.model <- function(t, state, parms){
       + (QSI + QL)*CVL_EC_aZEL_gluc + 
       + QF*CVF_aZEL_gluc + QR*CVR_aZEL_gluc + QS*CVS_aZEL_gluc +
       - GFR*CB_aZEL_gluc*aZEL_gluc_fup +
-      - ((Vmax_MRP2_KI*CB_aZEL_gluc*aZEL_gluc_fup) / 
-           (Km_MRP2 + (CB_aZEL_gluc*aZEL_gluc_fup)))
+      - ((Vmax_MRP2_KI*CB_aZEL_gluc*aZEL_gluc_fut) / 
+           (Km_MRP2 + (CB_aZEL_gluc*aZEL_gluc_fut)))
     
     # Urine
     dAUR_aZEL_gluc <- GFR*CB_aZEL_gluc*aZEL_gluc_fup + 
-      ((Vmax_MRP2_KI*CB_aZEL_gluc*aZEL_gluc_fup) / 
-         (Km_MRP2 + (CB_aZEL_gluc*aZEL_gluc_fup)))
+      ((Vmax_MRP2_KI*CB_aZEL_gluc*aZEL_gluc_fut) / 
+         (Km_MRP2 + (CB_aZEL_gluc*aZEL_gluc_fut)))
     
     # Feces
     dAFE_aZEL_gluc <- k_CO*ACOL_aZEL_gluc 
@@ -1208,7 +1212,7 @@ names(ODOSEumol) <- "ODOSEumol"
 names(IVDOSEumol) <- "IVDOSEumol"
 parm.c <- c(Parameters, c(ODOSEumol, IVDOSEumol))
 
-timeSeq <- seq(0, 24, by=0.1)                                # per minute
+timeSeq <- seq(0, 24, by=1/60)                                # per minute
 
 
 ## Initials ----
