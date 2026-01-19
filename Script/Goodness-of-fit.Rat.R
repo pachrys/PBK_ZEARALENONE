@@ -45,13 +45,13 @@ ZEN_BPR = Results.Rat$Metadata.Run.Rat$ZEN_BPR[[1]]
 aZEL_BPR = Results.Rat$Metadata.Run.Rat$aZEL_BPR[[1]]
 ZEN_gluc_BPR = Results.Rat$Metadata.Run.Rat$ZEN_gluc_BPR[[1]]
 aZEL_gluc_BPR = Results.Rat$Metadata.Run.Rat$aZEL_gluc_BPR[[1]]
-
+IVDOSEmg = Results.Rat$Metadata.Run.Rat$IVDOSEmg
 
 # load(here(OUTPUT, "RawData_PBK.Rat.RData"))
-Predicted.data <- Results.Rat$C.Tissues.Rat %>% filter(Time >= 0.01)
+Predicted.data <- Results.Rat$C.Tissues.Rat %>% filter(Time >= 0.01)#001)
 Observed.data <- read.csv(here("Input", "ObservedData.Rat.csv"), header=1)
 
-Predicted.urine <- Results.Rat$Raw.Data.Rat %>% filter(time >= 0.01) %>% 
+Predicted.urine <- Results.Rat$Raw.Data.Rat %>% filter(time >= 0.005) %>% 
   select(c("time", starts_with("AUR"))) %>% 
   rename("Time" = time) %>% 
   set_names(~(.) %>%
@@ -68,10 +68,12 @@ Obs <- Observed.data %>%
            Sex != "Pregnant.F", #pregnancy not included
            TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
            Author == Select_Author,
-           SampleCompound == "ZEN") %>% 
+           SampleCompound == "ZEN"#,
+         # IVBolusDose == IVDOSEmg
+         ) %>% 
   select(c("Author", "Sex",
-           "Tissue", "SamplingTime", 
-           "Concentration","Concentration_cumulative", 
+           "Tissue", "SamplingTime",
+           "Concentration","Concentration_cumulative",
            "Cmin", "Cmax",
            "Cumulative_Amount_umol")) %>%
   rename(Time = SamplingTime) %>%

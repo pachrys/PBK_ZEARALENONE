@@ -327,7 +327,7 @@ S9SI <- 1                                              # small intestinal S9 pro
 # Hydrolysis
 # Assuming the same as liver
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-Vmax_SI_aZEL.c <- 32*1e-6   *15.5# umol/min/mg protein; from pmol-> umol
+Vmax_SI_aZEL.c <- 32*1e-6   *15.5 # umol/min/mg protein; from pmol-> umol
 Km_SI_aZEL <- 592                                           # uM 
 Vmax_SI_bZEL.c <- 72*1e-6    *15.5            # umol/min/mg protein; from pmol-> umol
 Km_SI_bZEL <- 21                                             # uM 
@@ -337,15 +337,15 @@ Km_SI_bZEL <- 21                                             # uM
 S9F <- 1                                                      # correcting for the alamethicin permeabilisation of the membrane which increases the glucuronidation; Reference: I. Kiiski et al. 2021 https://doi.org/10.1016/j.ejps.2020.105677
 Vmax_SI_ZEN_gluc.c <-  8.617*1e-3   *15.5   *0.3         # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                       # uM 0.3
-Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5   *0.3       # umol/min/mg protein; from nmol-> umol
+Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5   *0.3    *1e6   # umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                      # uM
 
 # Glucuronide hydrolysis by gmGUS
 k_Hydro <- 10
-Vmax_Hydro_ZEN_gluc <-1.12e8/PhysChem$MolecularWeight[3] *1e-5#ng->nmol -> umol/h
-Km_Hydro_ZEN_gluc <- 822/PhysChem$MolecularWeight[3] * 1e2 #ng->nmol ->umol/ml->L
-Vmax_Hydro_aZEL_gluc <-1.12e8/PhysChem$MolecularWeight[4] *3e-6 #ng->nmol ->umol/h
-Km_Hydro_aZEL_gluc <- 822/PhysChem$MolecularWeight[4] * 1e2 #ng->nmol ->umol/ml->L
+Vmax_Hydro_ZEN_gluc <-1.12e8/PhysChem$MolecularWeight[3] *0.7e-5#ng->nmol -> umol/h
+Km_Hydro_ZEN_gluc <- 822/PhysChem$MolecularWeight[3] * 1e2#3 #ng->nmol ->umol/ml->L
+Vmax_Hydro_aZEL_gluc <-1.12e8/PhysChem$MolecularWeight[4] *1e-6 #ng->nmol ->umol/h
+Km_Hydro_aZEL_gluc <- 822/PhysChem$MolecularWeight[4] * 1e2#3 #ng->nmol ->umol/ml->L
 
 
 
@@ -429,13 +429,13 @@ REF_LI_BCRP <- pmolMP_mgP_LI_BCRP / pmol_mg_BCRP
 
 # Scaling factor
 SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2 # mg MRP2 / mg small intestine
-SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *20   # mg MRP2 / mg liver
+SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *10#20   # mg MRP2 / mg liver
 SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2         # mg MRP2 / mg liver
 
-SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3    # mg MRP3 / mg liver 
+SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3  /2  # mg MRP3 / mg liver 
 
 SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP    # mg BCRP / mg liver 
-SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *25    # mg BCRP / mg liver 
+SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *10#25    # mg BCRP / mg liver 
 
 ## Collect all parameters ----
 Kp_fus_BPR_df <- as.data.frame(Kp_fus_BPR_df) %>%
@@ -1188,8 +1188,8 @@ MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone",
 
 ## Exposure ---- 
 
-Select_AdminType <- "IV" # IV
-Select_Author <- "Q.Lu" # Shin # Q.Lu # Videmann 
+Select_AdminType <- "PO" # IV # PO
+Select_Author <- "Videmann" # Shin # Q.Lu # Videmann 
 
 BW <- if(Select_Author == "Shin"){0.26
 }else if(Select_Author == "Q.Lu"){0.2
@@ -1203,7 +1203,7 @@ ODOSEumol <- ((ODOSEmg*1000)/MW_ZEN)*BW                       # μmol
 
 # IV dose
 IVDOSEmg <- if(Select_AdminType != "IV"){0
-}else if(Select_Author == "Shin"){1.13#8
+}else if(Select_Author == "Shin"){4 #2 # 4 #8#1.13#8
 }else if(Select_Author == "Q.Lu"){6.65}
 
 IVDOSEumol <-((IVDOSEmg*1000)/MW_ZEN)*BW                      # μmol
@@ -1212,7 +1212,7 @@ names(ODOSEumol) <- "ODOSEumol"
 names(IVDOSEumol) <- "IVDOSEumol"
 parm.c <- c(Parameters, c(ODOSEumol, IVDOSEumol))
 
-timeSeq <- seq(0, 24, by=1/60)                                # per minute
+timeSeq <- seq(0, 24, by=1/100)                                # per minute
 
 
 ## Initials ----
