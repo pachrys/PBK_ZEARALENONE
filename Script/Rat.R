@@ -337,7 +337,7 @@ Km_SI_bZEL <- 21                                             # uM
 S9F <- 1                                                      # correcting for the alamethicin permeabilisation of the membrane which increases the glucuronidation; Reference: I. Kiiski et al. 2021 https://doi.org/10.1016/j.ejps.2020.105677
 Vmax_SI_ZEN_gluc.c <-  8.617*1e-3   *15.5   *0.3         # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                       # uM 0.3
-Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5   *0.3# umol/min/mg protein; from nmol-> umol
+Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5   *0.3       # umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                      # uM
 
 # Glucuronide hydrolysis by gmGUS
@@ -383,7 +383,7 @@ Bile.fasted <- 6.35e-6 * 60                                   # L/h
 Vmax_MRP2.c <- 3366e-6                                      # umol/min/mg MRP2; pmol -> umol
 Km_MRP2 <- 78.9                                               # uM
 Vmax_MRP3.c <- 986.2e-6                                      # umol/min/mg MRP3; pmol -> umol
-Km_MRP3 <- 5.7#*10                                              # uM
+Km_MRP3 <- 5.7                                              # uM
 Vmax_BCRP.c <- 2470e-6                    
 Km_BCRP <- 676.4
 
@@ -428,14 +428,14 @@ REF_IN_BCRP <- pmolMP_mgP_IN_BCRP / pmol_mg_BCRP
 REF_LI_BCRP <- pmolMP_mgP_LI_BCRP / pmol_mg_BCRP
 
 # Scaling factor
-SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2 #/100  # mg MRP2 / mg small intestine
-SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *20 #*5  # mg MRP2 / mg liver
+SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2 # mg MRP2 / mg small intestine
+SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *20   # mg MRP2 / mg liver
 SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2         # mg MRP2 / mg liver
 
 SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3    # mg MRP3 / mg liver 
 
-SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP  #/100   # mg BCRP / mg liver 
-SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *25 #*10    # mg BCRP / mg liver 
+SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP    # mg BCRP / mg liver 
+SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *25    # mg BCRP / mg liver 
 
 ## Collect all parameters ----
 Kp_fus_BPR_df <- as.data.frame(Kp_fus_BPR_df) %>%
@@ -732,9 +732,9 @@ R.PBK.model <- function(t, state, parms){
    
     
     ## IV Perf ----
-    if(t<=6){DoseOn=1} else{DoseOn=0}
-    
-    IV = IVDOSEumol*DoseOn         # ug, PFOA oral dose
+    # if(t<=6){DoseOn=1} else{DoseOn=0}
+    # 
+    # IV = IVDOSEumol*DoseOn         # ug, PFOA oral dose
     
     ## Differential Equations ----
     
@@ -795,7 +795,7 @@ R.PBK.model <- function(t, state, parms){
     dAF_ZEN <- QF*(CB_ZEN-CVF_ZEN) 
     
     # Blood
-    dAB_ZEN <- IV - (QSI + QL + QR + QS + QF)*CB_ZEN +  
+    dAB_ZEN <-  - (QSI + QL + QR + QS + QF)*CB_ZEN + #IV 
       + (QSI + QL)*CVL_ZEN + 
       + QF*CVF_ZEN + QR*CVR_ZEN + QS*CVS_ZEN + 
       - GFR*CB_ZEN*ZEN_fup +
@@ -1188,8 +1188,8 @@ MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone",
 
 ## Exposure ---- 
 
-Select_AdminType <- "PO" # IV
-Select_Author <- "Videmann" # Shin # Q.Lu # Videmann 
+Select_AdminType <- "IV" # IV
+Select_Author <- "Q.Lu" # Shin # Q.Lu # Videmann 
 
 BW <- if(Select_Author == "Shin"){0.26
 }else if(Select_Author == "Q.Lu"){0.2
@@ -1226,7 +1226,7 @@ A_init <- c(
   AR_ZEN = 0,
   AS_ZEN = 0,
   AF_ZEN = 0, 
-  AB_ZEN = 0, #ifelse(Select_AdminType != "PO", IVOSEumol, 0), 
+  AB_ZEN = ifelse(Select_AdminType != "PO", IVDOSEumol, 0), 
   AUR_ZEN = 0, 
   AFE_ZEN = 0, 
   
