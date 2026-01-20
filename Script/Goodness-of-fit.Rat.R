@@ -11,6 +11,7 @@ library(here)
 library(tidyverse)
 library(showtext)
 library(plotly)
+library(readxl)
 font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
@@ -49,8 +50,17 @@ IVDOSEmg = Results.Rat$Metadata.Run.Rat$IVDOSEmg
 
 # load(here(OUTPUT, "RawData_PBK.Rat.RData"))
 Predicted.data <- Results.Rat$C.Tissues.Rat %>% filter(Time >= 0.01)#001)
-Observed.data <- read.csv(here("Input", "ObservedData.Rat.csv"), header=1)
-
+Observed.data <- read_excel("Input/GoodnessOfFit.Rat.xlsx", 
+                            col_types = c("text", "text", "text", 
+                                          "numeric", "numeric", "text", "text", 
+                                          "text", "text", "text", "text", "text", 
+                                          "text", "text", "text", "numeric", 
+                                          "text", "numeric", "numeric", "numeric", 
+                                          "numeric", "numeric", "numeric", 
+                                          "numeric", "numeric", "numeric", 
+                                          "numeric", "numeric", "numeric", 
+                                          "text"))
+  
 Predicted.urine <- Results.Rat$Raw.Data.Rat %>% filter(time >= 0.005) %>% 
   select(c("time", starts_with("AUR"))) %>% 
   rename("Time" = time) %>% 
@@ -73,9 +83,10 @@ Obs <- Observed.data %>%
          ) %>% 
   select(c("Author", "Sex",
            "Tissue", "SamplingTime",
-           "Concentration","Concentration_cumulative",
+           "Concentration",
            "Cmin", "Cmax",
-           "Cumulative_Amount_umol")) %>%
+           "A_cum_umol", "A_cum_min_umol", "A_cum_max_umol"
+           )) %>%
   rename(Time = SamplingTime) %>%
   # na.omit() %>% 
   mutate(Time = as.numeric(Time), 
@@ -87,6 +98,7 @@ Obs <- Observed.data %>%
          Cmax = ifelse(Tissue == "Plasma",
                        Cmax / ZEN_BPR, Cmax),
          Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
+
 
 if(Select_Author == "Videmann"){
   Cobs <- Obs %>%
@@ -201,7 +213,10 @@ if(Select_Author == "Videmann"){
   
   ggplot(
     data = filter(Aobs_urine),
-    aes(x = Time, y = Cumulative_Amount_umol)) +
+    aes(x = Time, y = A_cum_umol)) +
+    geom_ribbon(aes(ymin = A_cum_min_umol, ymax = A_cum_max_umol, fill = Sex),
+                alpha = 0.3, color = NA) +
+    scale_fill_manual(values = c("#008475", "#8631A7"))+
     geom_point(aes(color = Sex),size = 1) +
     scale_color_manual(values = c("#008475", "#8631A7")) +
     geom_path(data = filter(Apre_urine, Tissue == "AUR"),
@@ -238,25 +253,38 @@ if(Select_Author == "Videmann"){
            TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
            Author == Select_Author,
            SampleCompound == "ZEN_glu")   %>% 
-    select(c("Author", "Sex","Tissue", "SamplingTime", 
-             "Concentration","Concentration_cumulative",
-             "Cumulative_Amount_umol")) %>% #, "Cmin", "Cmax"
+    select(c("Author", "Sex",
+             "Tissue", "SamplingTime",
+             "Concentration",
+             "Cmin", "Cmax",
+             "A_cum_umol", "A_cum_min_umol", "A_cum_max_umol")) %>% #
     rename(Time = SamplingTime) %>%
     # na.omit() %>% 
     mutate(Time = as.numeric(Time), 
            Concentration = as.numeric(Concentration),
            Concentration = ifelse(Tissue == "Plasma",
-                                  Concentration / ZEN_gluc_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
+                                  Concentration / ZEN_gluc_BPR, Concentration),
+           Cmin = ifelse(Tissue == "Plasma",
+                                  Cmin / ZEN_gluc_BPR, Cmin),
+           Cmax = ifelse(Tissue == "Plasma",
+                         Cmin / ZEN_gluc_BPR, Cmax),
+           # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
            Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
   
   Cobs.glu <- Obs.glu %>%
-      filter(Tissue %in% c("Blood", "Intestine", "Liver"))
+      filter(Tissue %in% c("Blood","Intestine", "Liver"))
   Cpre.glu <- Predicted.data %>% filter(Substance == "ZEN-gluc", 
                                         Tissue %in% c("Blood", "Intestine", "Liver")) 
   
-  PredvsObsBlood.GLU <- ggplot() +
-    geom_point(data = filter(Cobs.glu, Tissue == "Blood"),
-               aes(Time, Concentration, color = Sex)) +
+  PredvsObsBlood.GLU <- 
+    ggplot(
+      data = filter(Cobs.glu, Tissue == "Blood"),
+      aes(x = Time, y = Concentration)) +
+    geom_ribbon(aes(ymin = Cmin, ymax = Cmax, fill = Sex),
+                alpha = 0.3, color = NA) +
+    scale_fill_manual(values = c("#008475", "#8631A7"))+
+    geom_point(aes(color = Sex),size = 1) +
+    scale_color_manual(values = c("#008475", "#8631A7")) +
     geom_path(data = filter(Cpre.glu, Tissue == "Blood"),
               aes(Time, Concentration)) +
     labs(title = "Zearalenone glucuronide blood concentrations",
@@ -275,11 +303,14 @@ if(Select_Author == "Videmann"){
   )
   
   ### All tissues ----
-  
-  PredvsObsAll.GLU <- ggplot() +
-    geom_point(data = Cobs.glu,
-               aes(Time, Concentration, color = Sex)) +
+  PredvsObsAll.GLU <- ggplot(data = Cobs.glu,
+                         aes(x = Time, y = Concentration)) +
     facet_wrap(~Tissue, scales = "free")+
+    geom_ribbon(aes(ymin = Cmin, ymax = Cmax, fill = Sex),
+                alpha = 0.3, color = NA) +
+    scale_fill_manual(values = c("#008475", "#8631A7"))+
+    geom_point(aes(color = Sex),size = 1) +
+    scale_color_manual(values = c("#008475", "#8631A7"))+
     geom_path(data = Cpre.glu,
               aes(Time, Concentration)) +
     facet_wrap(~Tissue, scales = "free")+
@@ -316,7 +347,10 @@ if(Select_Author == "Videmann"){
   
   ggplot(
     data = filter(Aobs_urine.GLU),
-    aes(x = Time, y = Cumulative_Amount_umol)) +
+    aes(x = Time, y = A_cum_umol)) +
+    geom_ribbon(aes(ymin = A_cum_min_umol, ymax = A_cum_max_umol, fill = Sex),
+                alpha = 0.3, color = NA) +
+    scale_fill_manual(values = c("#008475", "#8631A7"))+
     geom_point(aes(color = Sex),size = 1) +
     scale_color_manual(values = c("#008475", "#8631A7")) +
     geom_path(data = filter(Apre_urine.GLU, Tissue == "AUR"),
@@ -351,9 +385,11 @@ if(Select_Author == "Videmann"){
            TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
            Author == Select_Author,
            SampleCompound == "a_ZEL")  %>% 
-    select(c("Author", "Sex","Tissue", "SamplingTime", 
-             "Concentration", "Concentration_cumulative",
-             "Cumulative_Amount_umol")) %>% #, "Cmin", "Cmax"
+    select(c("Author", "Sex",
+             "Tissue", "SamplingTime",
+             "Concentration",
+             "Cmin", "Cmax",
+             "A_cum_umol", "A_cum_min_umol", "A_cum_max_umol")) %>% #, "Cmin", "Cmax"
     rename(Time = SamplingTime) %>%
     # na.omit() %>% 
     mutate(Time = as.numeric(Time), 
@@ -363,16 +399,19 @@ if(Select_Author == "Videmann"){
            Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
   
   Cobs.aZEL <- Obs.aZEL %>%
-    filter(Tissue %in% c("Blood", "Intestine", "Liver"))
+    filter(Tissue %in% c("Intestine", "Liver"))
   Cpre.aZEL <- Predicted.data %>% filter(Substance == "aZEL", 
-                                        Tissue %in% c("Blood", "Intestine", "Liver")) 
+                                        Tissue %in% c("Intestine", "Liver")) 
   
   ### All tissues ----
-  
-  PredvsObsAll.aZEL <- ggplot() +
-    geom_point(data = Cobs.aZEL,
-               aes(Time, Concentration, color = Sex)) +
+  PredvsObsAll.aZEL <- ggplot(data = Cobs.aZEL,
+                             aes(x = Time, y = Concentration)) +
     facet_wrap(~Tissue, scales = "free")+
+    geom_ribbon(aes(ymin = Cmin, ymax = Cmax, fill = Sex),
+                alpha = 0.3, color = NA) +
+    scale_fill_manual(values = c("#008475", "#8631A7"))+
+    geom_point(aes(color = Sex),size = 1) +
+    scale_color_manual(values = c("#008475", "#8631A7"))+
     geom_path(data = Cpre.aZEL,
               aes(Time, Concentration)) +
     facet_wrap(~Tissue, scales = "free")+
@@ -408,7 +447,10 @@ if(Select_Author == "Videmann"){
   
   ggplot(
     data = filter(Aobs_urine.aZEL),
-    aes(x = Time, y = Cumulative_Amount_umol)) +
+    aes(x = Time, y = A_cum_umol)) +
+    geom_ribbon(aes(ymin = A_cum_min_umol, ymax = A_cum_max_umol, fill = Sex),
+                alpha = 0.3, color = NA) +
+    scale_fill_manual(values = c("#008475", "#8631A7"))+
     geom_point(aes(color = Sex),size = 1) +
     scale_color_manual(values = c("#008475", "#8631A7")) +
     geom_path(data = filter(Apre_urine.aZEL, Tissue == "AUR"),
@@ -444,9 +486,11 @@ if(Select_Author == "Videmann"){
            TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
            Author == Select_Author,
            SampleCompound == "a_ZEL_glu")   %>% 
-    select(c("Author", "Sex","Tissue", "SamplingTime", 
-             "Concentration", "Concentration_cumulative",
-             "Cumulative_Amount_umol")) %>% #, "Cmin", "Cmax"
+    select(c("Author", "Sex",
+             "Tissue", "SamplingTime",
+             "Concentration",
+             "Cmin", "Cmax",
+             "A_cum_umol", "A_cum_min_umol", "A_cum_max_umol")) %>% #, "Cmin", "Cmax"
     rename(Time = SamplingTime) %>%
     # na.omit() %>% 
     mutate(Time = as.numeric(Time), 
@@ -456,16 +500,19 @@ if(Select_Author == "Videmann"){
            Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
   
   Cobs.aZEL_gluc <- Obs.aZEL_gluc %>%
-    filter(Tissue %in% c("Blood", "Intestine", "Liver"))
+    filter(Tissue %in% c("Intestine", "Liver"))
   Cpre.aZEL_gluc <- Predicted.data %>% filter(Substance == "aZEL-gluc", 
-                                         Tissue %in% c("Blood", "Intestine", "Liver")) 
+                                         Tissue %in% c("Intestine", "Liver")) 
   
   ### All tissues ----
-  
-  PredvsObsAll.aZEL_gluc <- ggplot() +
-    geom_point(data = Cobs.aZEL_gluc,
-               aes(Time, Concentration, color = Sex)) +
+  PredvsObsAll.aZEL_gluc <- ggplot(data = Cobs.aZEL_gluc,
+                              aes(x = Time, y = Concentration)) +
     facet_wrap(~Tissue, scales = "free")+
+    geom_ribbon(aes(ymin = Cmin, ymax = Cmax, fill = Sex),
+                alpha = 0.3, color = NA) +
+    scale_fill_manual(values = c("#008475", "#8631A7"))+
+    geom_point(aes(color = Sex),size = 1) +
+    scale_color_manual(values = c("#008475", "#8631A7"))+
     geom_path(data = Cpre.aZEL_gluc,
               aes(Time, Concentration)) +
     facet_wrap(~Tissue, scales = "free")+
@@ -501,7 +548,10 @@ if(Select_Author == "Videmann"){
   
   ggplot(
     data = filter(Aobs_urine.aZEL_gluc),
-    aes(x = Time, y = Cumulative_Amount_umol)) +
+    aes(x = Time, y = A_cum_umol)) +
+    geom_ribbon(aes(ymin = A_cum_min_umol, ymax = A_cum_max_umol, fill = Sex),
+                alpha = 0.3, color = NA) +
+    scale_fill_manual(values = c("#008475", "#8631A7"))+
     geom_point(aes(color = Sex),size = 1) +
     scale_color_manual(values = c("#008475", "#8631A7")) +
     geom_path(data = filter(Apre_urine.aZEL_gluc, Tissue == "AUR"),
