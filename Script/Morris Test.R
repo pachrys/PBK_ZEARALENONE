@@ -30,8 +30,8 @@
     )
   
   # Set output storage directory
-  # OUTPUT <- here("Output", format(Sys.Date(), "%Y-%m-%d"), format(Sys.time(), "%H-%M-%S"))
-  # dir.create(OUTPUT, recursive = TRUE)
+  OUTPUT <- here("Output", format(Sys.Date(), "%Y-%m-%d"), format(Sys.time(), "%H-%M-%S"))
+  dir.create(OUTPUT, recursive = TRUE)
 
   # Model Code
   source(here("Script", "PBK_model_rat.R"))
@@ -96,7 +96,7 @@
     
     
     PBK.out <- lsoda(y = A_init,
-                     times = seq(0, 24,by=1/10),
+                     times = seq(0, 24,by=1/100),
                      func =  R.PBK.model,
                      parms = P)
     
@@ -157,7 +157,7 @@
   Morris.design <- list(type = "oat", levels = 6, grid.jump = 3)
   
   # Repetitions
-  Morris.r <- 3 #50
+  Morris.r <- 50
   
   # Morris test function
   Experience <- morris(model =  NULL, 
@@ -213,9 +213,9 @@
   mu = mu.star = sigma = NULL
 
   # Tell morris y for each model output
-  for (i in (1:length(CB_ZEN.sim.results.morris[,1])))
+  for (i in (1:length(sim.results.morris[,1])))
   {
-    tell(Experience, CB_ZEN.sim.results.morris[i,])
+    tell(Experience, sim.results.morris[i,])
     mu = rbind( mu, apply(Experience$ee, 2, mean, na.rm = TRUE))
     mu.star = rbind( mu.star, apply(Experience$ee, 2, function(x) mean(abs(x), na.rm = TRUE)))
     sigma = rbind( sigma, apply(Experience$ee, 2, sd, na.rm = TRUE))
@@ -224,7 +224,7 @@
   plot(Experience)
   
   # Save mu.star, mu, sigma, scaled indices and global indices
-  rownames( mu.star ) = rownames( mu ) = rownames( sigma ) = row.names(CB_ZEN.sim.results.morris)
+  rownames( mu.star ) = rownames( mu ) = rownames( sigma ) = row.names(sim.results.morris)
   
   mu.star_scale = mu.star/apply(mu.star, 1, mean, na.rm=TRUE) 
   sigma_scale = sigma/apply(sigma, 1, mean, na.rm=TRUE)
@@ -250,14 +250,14 @@
     IGlobal = IGlobal
   )
   
-  save(Morris.indices, file = here("CB_ZEN.Morris.indices.RData"))
+  save(Morris.indices, file = here("Morris.indices.RData"))
   
   
   # PLOT MORRIS RESULTS ####
   # ---------------------------------------------------------------------------- #
-  
-  ggplot(IGlobal) +
-    aes(x = IGlobal_mu.star, y = IGlobal_sigma, label = rownames(IGlobal)) +
-    # xlim (min,2.5) + #to zoom in/out, determine max value
-    # ylim (min,2.5) + #to zoom in/out, determine max value
-    geom_point()
+
+  ggplot(IGlobal, aes(x = IGlobal_mu.star, y = IGlobal_sigma, label = parm_names)) +
+    geom_point() +
+    geom_text(aes(label=ifelse(IGlobal_mu.star>2.5,as.character(parm_names),'')),hjust=0,vjust=0) +
+    xlim (2.5,20) + #to zoom in/out, determine max value
+    ylim (2.5,20) 
