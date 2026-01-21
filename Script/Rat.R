@@ -96,6 +96,9 @@ FV_R <- pull(Rat.input[Rat.input$tissue == "Heart", "F_Vo"]) +
   pull(Rat.input[Rat.input$tissue == "Kidney", "F_Vo"]) +
   pull(Rat.input[Rat.input$tissue == "Spleen", "F_Vo"]) +
   pull(Rat.input[Rat.input$tissue == "Lung", "F_Vo"])              # rapidly perfused tissues
+FV_R_gluc <- pull(Rat.input[Rat.input$tissue == "Heart", "F_Vo"]) +
+  pull(Rat.input[Rat.input$tissue == "Spleen", "F_Vo"]) +
+  pull(Rat.input[Rat.input$tissue == "Lung", "F_Vo"])              # rapidly perfused tissues
 FV_F <- pull(Rat.input[Rat.input$tissue == "Adipose", "F_Vo"])     # fat tissue
 FV_B <- pull(Rat.input[Rat.input$tissue == "RBCs", "F_Vo"]) + 
   pull(Rat.input[Rat.input$tissue == "Plasma", "F_Vo"])            # blood
@@ -148,8 +151,11 @@ QJejc <- 0.680                                                  # fraction of sm
 QIlec <- 0.241                                                  # fraction of small intestinal flow rate that goes to the ileum; Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
 
 QLc <- pull(Rat.input[Rat.input$tissue == "Liver", "F_QC"])     # liver  
+QKc <- pull(Rat.input[Rat.input$tissue == "Kidney", "F_QC"])    # kidney
 QRc <- pull(Rat.input[Rat.input$tissue == "Heart", "F_QC"]) +
   pull(Rat.input[Rat.input$tissue == "Kidney", "F_QC"]) +
+  pull(Rat.input[Rat.input$tissue == "Spleen", "F_QC"])         # rapidly perfused tissues
+QRc_gluc <- pull(Rat.input[Rat.input$tissue == "Heart", "F_QC"]) +
   pull(Rat.input[Rat.input$tissue == "Spleen", "F_QC"])         # rapidly perfused tissues
 QFc <- pull(Rat.input[Rat.input$tissue == "Adipose", "F_QC"])   # fat
 
@@ -248,6 +254,7 @@ calc_Kp_fus <- function(logP, pKa1, pka2, BPR, Rat.input, F_Vo.dat){
   PSI <- Kp$Kpgu                                            # Intestine:Blood partition coefficient
   PL <- Kp$Kpli                                             # Liver:Blood partition coefficient
   PF <- Kp$Kpad                                             # Adipose:Blood partition coefficient
+  PK <- Kp$Kpki
   PS <- (
     F_Vo.dat$FVBo*Kp$Kpbo + F_Vo.dat$FVBr*Kp$Kpbr +
       F_Vo.dat$FVMu*Kp$Kpmu + F_Vo.dat$FVSk*Kp$Kpsk
@@ -260,13 +267,20 @@ calc_Kp_fus <- function(logP, pKa1, pka2, BPR, Rat.input, F_Vo.dat){
   ) /
     (F_Vo.dat$FVHe + F_Vo.dat$FVKi + 
        F_Vo.dat$FVLu + F_Vo.dat$FVSp)                       # Rapidly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
+  PR_gluc <- (
+    F_Vo.dat$FVHe*Kp$Kphe +  
+      F_Vo.dat$FVLu*Kp$Kplu + F_Vo.dat$FVSp*Kp$Kpsp
+  ) /
+    (F_Vo.dat$FVHe + F_Vo.dat$FVKi + 
+       F_Vo.dat$FVLu + F_Vo.dat$FVSp)                       # Rapidly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
   
   Kp_fus_BPR <- as.list(c(PSI = PSI, 
                           PL = PL, 
                           PF = PF, 
+                          PK = PK,
                           PS = PS, 
                           PR = PR,
-                          PK = Kp$Kpki,
+                          PR_gluc= PR_gluc,
                           fup = fup,
                           fut = fut,
                           BPR = BPR))
@@ -429,13 +443,13 @@ REF_LI_BCRP <- pmolMP_mgP_LI_BCRP / pmol_mg_BCRP
 
 # Scaling factor
 SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2 # mg MRP2 / mg small intestine
-SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *10#20   # mg MRP2 / mg liver
-SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2         # mg MRP2 / mg liver
+SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *10  #20   # mg MRP2 / mg liver
+SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2 /1.5        # mg MRP2 / mg liver
 
-SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3  /2  # mg MRP3 / mg liver 
+SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3  /1.5 # mg MRP3 / mg liver 
 
-SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP    # mg BCRP / mg liver 
-SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *10#25    # mg BCRP / mg liver 
+SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP      # mg BCRP / mg liver 
+SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *10  #25    # mg BCRP / mg liver 
 
 ## Collect all parameters ----
 Kp_fus_BPR_df <- as.data.frame(Kp_fus_BPR_df) %>%
@@ -461,6 +475,7 @@ Other_params <- tibble(
   FV_L_IC = FV_L_IC,
   FV_L_EC = FV_L_EC,
   FV_R = FV_R,
+  FV_R_gluc = FV_R_gluc, 
   FV_F = FV_F,
   FV_B = FV_B,
   FV_K = FV_K,
@@ -477,7 +492,9 @@ Other_params <- tibble(
   QJejc = QJejc,
   QIlec = QIlec,
   QLc = QLc,
+  QKc = QKc,
   QRc = QRc,
+  QRc_gluc = QRc_gluc,
   QFc = QFc,
   k_GER = k_GER,
   k_duo = k_duo,
@@ -566,10 +583,13 @@ R.PBK.model <- function(t, state, parms){
     VL_IC <- FV_L_IC*VL
     VL_EC <- FV_L_EC*VL
     
-    VR <- FV_R*BW  
+    VR <- FV_R*BW 
+    VR_gluc <- FV_R_gluc*BW
     VF <- FV_F*BW  
     VB <- FV_B*BW   
     VS <- (0.96*BW) - (VSI + VL + VR + VF + VB)                        # fraction of slowly perfused tissue (Bone/Skin/Adipose/Muscle/(brain and testes) (slowly equilibrating tissues with large time constants))
+    VS_gluc <- (0.96*BW) - (VSI + VL + VR_gluc + VF + VB)                        # fraction of slowly perfused tissue (Bone/Skin/Adipose/Muscle/(brain and testes) (slowly equilibrating tissues with large time constants))
+    
     
     # For MRP3 kidney excretion use only
     VK <- FV_K*BW
@@ -587,9 +607,12 @@ R.PBK.model <- function(t, state, parms){
     QIle <- QSI*QIlec
     
     QL <- QLc*QC  
+    QK <- QKc*QC
     QR <- QRc*QC  
+    QR_gluc <- QRc_gluc*QC
     QF <- QFc*QC
     QS <- QC - (QSI + QL + QR + QF) 
+    QS_gluc <- QC - (QSI + QL + QR_gluc + QF) 
     
     
     # Kinetic
@@ -633,14 +656,14 @@ R.PBK.model <- function(t, state, parms){
     Vmax_MRP2_IN <- Vmax_MRP2.c * 60 * SF_IN_MRP2 * VSI * 1e6    # umol/min/mg intestine; scaling: umol/min->h/mg MRP2 * mg MRP2 / mg liver -> whole intestine (kg)  
     
     Vmax_MRP3_LI <- Vmax_MRP3.c * 60 * SF_LI_MRP3 * VL * 1e6      # umol/min/mg liver; scaling: umol/min->h/mg MRP3 * mg MRP3 / mg liver -> whole liver (kg)
-    Vmax_MRP2_KI <- Vmax_MRP2.c * 60 * SF_KI_MRP2 * VB * 1e6      # umol/min/mg kidney; scaling: umol/min->h/mg MRP3 * mg MRP3 / mg liver -> whole VK_IC (kg)
+    Vmax_MRP2_KI <- Vmax_MRP2.c * 60 * SF_KI_MRP2 * VK * 1e6      # umol/min/mg kidney; scaling: umol/min->h/mg MRP3 * mg MRP3 / mg liver -> whole VK_IC (kg)
     
     Vmax_BCRP_IN <- Vmax_BCRP.c * 60 * SF_LI_BCRP * VSI * 1e6      # umol/min/mg liver; scaling: umol/min->h/mg BCRP * mg BCRP / mg liver -> whole liver (kg)
     Vmax_BCRP_LI <- Vmax_BCRP.c * 60 * SF_LI_BCRP * VL * 1e6      # umol/min/mg liver; scaling: umol/min->h/mg BCRP * mg BCRP / mg liver -> whole liver (kg)
     
     ## Biliary clearance
     
-    CL_Bile <- ifelse(t > 3, 1, Bile.fasted) # ifelse(t > 3 && t < 19, Bile.fed, Bile.fasted) 
+    CL_Bile <- ifelse(t > 3, 1, Bile.fasted) # ifelse(t > 3 && t < 19, Bile.fed, Bile.fasted) 1
     
     # ZEN_gluc_fut <-1
     # aZEL_gluc_fut <-1
@@ -673,21 +696,23 @@ R.PBK.model <- function(t, state, parms){
     CDuoL_ZEN_gluc = ADuoL_ZEN_gluc/VDuoL
     CJejL_ZEN_gluc <- AJejL_ZEN_gluc/VJejL
     CIleL_ZEN_gluc <- AIleL_ZEN_gluc/VIleL 
-    CCOL_ZEN_gluc <- ACOL_ZEN_gluc/VCOL #*0.000000001
+    CCOL_ZEN_gluc <- ACOL_ZEN_gluc/VCOL 
     CJej_IC_ZEN_gluc <- AJej_IC_ZEN_gluc/VJej_IC
     CJej_EC_ZEN_gluc <- AJej_EC_ZEN_gluc/VJej_EC
     CL_IC_ZEN_gluc <- AL_IC_ZEN_gluc/VL_IC
     CL_EC_ZEN_gluc <- AL_EC_ZEN_gluc/VL_EC
     CBile_ZEN_gluc <- ABile_ZEN_gluc/VBile
-    CR_ZEN_gluc <- AR_ZEN_gluc/VR
-    CS_ZEN_gluc <- AS_ZEN_gluc/VS
+    CK_ZEN_gluc <- AK_ZEN_gluc/VK
+    CR_ZEN_gluc <- AR_ZEN_gluc/VR_gluc
+    CS_ZEN_gluc <- AS_ZEN_gluc/VS_gluc
     CF_ZEN_gluc <- AF_ZEN_gluc/VF
     CB_ZEN_gluc <- AB_ZEN_gluc/VB
     
     CVJej_EC_ZEN_gluc <- CJej_EC_ZEN_gluc/ZEN_gluc_PSI * ZEN_gluc_BPR
     CVL_EC_ZEN_gluc <- CL_EC_ZEN_gluc/ZEN_gluc_PL * ZEN_gluc_BPR
+    CVK_ZEN_gluc <- CK_ZEN_gluc/ZEN_gluc_PK * ZEN_gluc_BPR
     CVF_ZEN_gluc <- CF_ZEN_gluc/ZEN_gluc_PF * ZEN_gluc_BPR
-    CVR_ZEN_gluc <- CR_ZEN_gluc/ZEN_gluc_PR * ZEN_gluc_BPR
+    CVR_ZEN_gluc <- CR_ZEN_gluc/ZEN_gluc_PR_gluc * ZEN_gluc_BPR
     CVS_ZEN_gluc <- CS_ZEN_gluc/ZEN_gluc_PS * ZEN_gluc_BPR
     
     ### α-Zearalenol ----
@@ -713,21 +738,23 @@ R.PBK.model <- function(t, state, parms){
     CDuoL_aZEL_gluc = ADuoL_aZEL_gluc/VDuoL
     CJejL_aZEL_gluc <- AJejL_aZEL_gluc/VJejL
     CIleL_aZEL_gluc <- AIleL_aZEL_gluc/VIleL 
-    CCOL_aZEL_gluc <- ACOL_aZEL_gluc/VCOL #*0.01
+    CCOL_aZEL_gluc <- ACOL_aZEL_gluc/VCOL
     CJej_IC_aZEL_gluc <- AJej_IC_aZEL_gluc/VJej_IC
     CJej_EC_aZEL_gluc <- AJej_EC_aZEL_gluc/VJej_EC
     CL_IC_aZEL_gluc <- AL_IC_aZEL_gluc/VL_IC
     CL_EC_aZEL_gluc <- AL_EC_aZEL_gluc/VL_EC
+    CK_aZEL_gluc <- AK_aZEL_gluc/VK
     CBile_aZEL_gluc <- ABile_aZEL_gluc/VBile
-    CR_aZEL_gluc <- AR_aZEL_gluc/VR
-    CS_aZEL_gluc <- AS_aZEL_gluc/VS
+    CR_aZEL_gluc <- AR_aZEL_gluc/VR_gluc
+    CS_aZEL_gluc <- AS_aZEL_gluc/VS_gluc
     CF_aZEL_gluc <- AF_aZEL_gluc/VF
     CB_aZEL_gluc <- AB_aZEL_gluc/VB
     
     CVJej_EC_aZEL_gluc <- CJej_EC_aZEL_gluc/aZEL_gluc_PSI * aZEL_gluc_BPR
     CVL_EC_aZEL_gluc <- CL_EC_aZEL_gluc/aZEL_gluc_PL * aZEL_gluc_BPR
     CVF_aZEL_gluc <- CF_aZEL_gluc/aZEL_gluc_PF * aZEL_gluc_BPR
-    CVR_aZEL_gluc <- CR_aZEL_gluc/aZEL_gluc_PR * aZEL_gluc_BPR
+    CVK_aZEL_gluc <- CK_aZEL_gluc/aZEL_gluc_PK * aZEL_gluc_BPR
+    CVR_aZEL_gluc <- CR_aZEL_gluc/aZEL_gluc_PR_gluc * aZEL_gluc_BPR
     CVS_aZEL_gluc <- CS_aZEL_gluc/aZEL_gluc_PS * aZEL_gluc_BPR
    
     
@@ -867,27 +894,34 @@ R.PBK.model <- function(t, state, parms){
       - CL_Bile*CBile_ZEN_gluc 
     
     # Rapidly Perfused 
-    dAR_ZEN_gluc <- QR*(CB_ZEN_gluc-CVR_ZEN_gluc)
+    dAR_ZEN_gluc <- QR_gluc*(CB_ZEN_gluc-CVR_ZEN_gluc)
     
     # Slowly Perfused 
-    dAS_ZEN_gluc <- QS*(CB_ZEN_gluc-CVS_ZEN_gluc)
+    dAS_ZEN_gluc <- QS_gluc*(CB_ZEN_gluc-CVS_ZEN_gluc)
     
     # Fat
     dAF_ZEN_gluc <- QF*(CB_ZEN_gluc-CVF_ZEN_gluc) 
     
     # Blood
-    dAB_ZEN_gluc <- - (QSI + QL + QR + QS + QF)*CB_ZEN_gluc +   
+    dAB_ZEN_gluc <- - (QSI + QL + QK + QR_gluc + QS_gluc + QF)*CB_ZEN_gluc +   
       + (QSI + QL)*CVL_EC_ZEN_gluc + 
-      + QF*CVF_ZEN_gluc + QR*CVR_ZEN_gluc + QS*CVS_ZEN_gluc +
-      - GFR*CB_ZEN_gluc*ZEN_gluc_fup +
-      - ((Vmax_MRP2_KI*CB_ZEN_gluc*ZEN_gluc_fut) / 
-           (Km_MRP2 + (CB_ZEN_gluc*ZEN_gluc_fut)))
+      + QF*CVF_ZEN_gluc + QK*CVK_ZEN_gluc + QR_gluc*CVR_ZEN_gluc + QS_gluc*CVS_ZEN_gluc +
+      - GFR*CB_ZEN_gluc*ZEN_gluc_fup #+
+      # - ((Vmax_MRP2_KI*CB_ZEN_gluc*ZEN_gluc_fut) / 
+      #      (Km_MRP2 + (CB_ZEN_gluc*ZEN_gluc_fut)))
+    
+    dAK_ZEN_gluc <- QK*(CB_ZEN_gluc-CVK_ZEN_gluc) +
+      + GFR*CB_ZEN_gluc*ZEN_gluc_fup +
+      - ((Vmax_MRP2_KI*CK_ZEN_gluc*ZEN_gluc_fut) / 
+         (Km_MRP2 + (CK_ZEN_gluc*ZEN_gluc_fut)))
     
     # Urine
-    dAUR_ZEN_gluc <- GFR*CB_ZEN_gluc*ZEN_gluc_fup + 
-      ((Vmax_MRP2_KI*CB_ZEN_gluc*ZEN_gluc_fut) / 
-         (Km_MRP2 + (CB_ZEN_gluc*ZEN_gluc_fut)))
-    
+    dAUR_ZEN_gluc <- ((Vmax_MRP2_KI*CK_ZEN_gluc*ZEN_gluc_fut) / 
+         (Km_MRP2 + (CK_ZEN_gluc*ZEN_gluc_fut)))
+    # dAUR_ZEN_gluc <- GFR*CB_ZEN_gluc*ZEN_gluc_fup + 
+    #   ((Vmax_MRP2_KI*CB_ZEN_gluc*ZEN_gluc_fut) / 
+    #      (Km_MRP2 + (CB_ZEN_gluc*ZEN_gluc_fut)))
+    # 
     # Feces
     dAFE_ZEN_gluc <- k_CO*ACOL_ZEN_gluc 
     
@@ -1002,26 +1036,33 @@ R.PBK.model <- function(t, state, parms){
       - CL_Bile*CBile_aZEL_gluc 
     
     # Rapidly Perfused 
-    dAR_aZEL_gluc <- QR*(CB_aZEL_gluc-CVR_aZEL_gluc)
+    dAR_aZEL_gluc <- QR_gluc*(CB_aZEL_gluc-CVR_aZEL_gluc)
     
     # Slowly Perfused 
-    dAS_aZEL_gluc <- QS*(CB_aZEL_gluc-CVS_aZEL_gluc)
+    dAS_aZEL_gluc <- QS_gluc*(CB_aZEL_gluc-CVS_aZEL_gluc)
     
     # Fat
     dAF_aZEL_gluc <- QF*(CB_aZEL_gluc-CVF_aZEL_gluc) 
     
     # Blood
-    dAB_aZEL_gluc <- - (QSI + QL + QR + QS + QF)*CB_aZEL_gluc +   
+    dAB_aZEL_gluc <- - (QSI + QL + QK + QR_gluc + QS_gluc + QF)*CB_aZEL_gluc +   
       + (QSI + QL)*CVL_EC_aZEL_gluc + 
-      + QF*CVF_aZEL_gluc + QR*CVR_aZEL_gluc + QS*CVS_aZEL_gluc +
-      - GFR*CB_aZEL_gluc*aZEL_gluc_fup +
-      - ((Vmax_MRP2_KI*CB_aZEL_gluc*aZEL_gluc_fut) / 
-           (Km_MRP2 + (CB_aZEL_gluc*aZEL_gluc_fut)))
+      + QF*CVF_aZEL_gluc + QK*CVK_aZEL_gluc + QR_gluc*CVR_aZEL_gluc + QS_gluc*CVS_aZEL_gluc +
+      - GFR*CB_aZEL_gluc*aZEL_gluc_fup #+
+      # - ((Vmax_MRP2_KI*CB_aZEL_gluc*aZEL_gluc_fut) / 
+      #      (Km_MRP2 + (CB_aZEL_gluc*aZEL_gluc_fut)))
+    
+    dAK_aZEL_gluc <- QK*(CB_aZEL_gluc-CVK_aZEL_gluc) + 
+      + GFR*CB_aZEL_gluc*aZEL_gluc_fup +
+      - ((Vmax_MRP2_KI*CK_aZEL_gluc*aZEL_gluc_fut) / 
+           (Km_MRP2 + (CK_aZEL_gluc*aZEL_gluc_fut)))
     
     # Urine
-    dAUR_aZEL_gluc <- GFR*CB_aZEL_gluc*aZEL_gluc_fup + 
-      ((Vmax_MRP2_KI*CB_aZEL_gluc*aZEL_gluc_fut) / 
-         (Km_MRP2 + (CB_aZEL_gluc*aZEL_gluc_fut)))
+    dAUR_aZEL_gluc <- ((Vmax_MRP2_KI*CK_aZEL_gluc*aZEL_gluc_fut) / 
+                         (Km_MRP2 + (CK_aZEL_gluc*aZEL_gluc_fut)))
+    # dAUR_aZEL_gluc <- GFR*CB_aZEL_gluc*aZEL_gluc_fup + 
+    #   ((Vmax_MRP2_KI*CB_aZEL_gluc*aZEL_gluc_fut) / 
+    #      (Km_MRP2 + (CB_aZEL_gluc*aZEL_gluc_fut)))
     
     # Feces
     dAFE_aZEL_gluc <- k_CO*ACOL_aZEL_gluc 
@@ -1051,6 +1092,7 @@ R.PBK.model <- function(t, state, parms){
       AS_ZEN_gluc +
       AF_ZEN_gluc + 
       AB_ZEN_gluc + 
+      AK_ZEN_gluc +
       AUR_ZEN_gluc + 
       AFE_ZEN_gluc +
       
@@ -1072,6 +1114,7 @@ R.PBK.model <- function(t, state, parms){
       AS_aZEL_gluc +
       AF_aZEL_gluc +
       AB_aZEL_gluc +
+      AK_aZEL_gluc +
       AUR_aZEL_gluc +
       AFE_aZEL_gluc 
     
@@ -1104,6 +1147,7 @@ R.PBK.model <- function(t, state, parms){
       dAS_ZEN_gluc,
       dAF_ZEN_gluc,
       dAB_ZEN_gluc,
+      dAK_ZEN_gluc,
       dAUR_ZEN_gluc,
       dAFE_ZEN_gluc ,
       
@@ -1125,6 +1169,7 @@ R.PBK.model <- function(t, state, parms){
       dAS_aZEL_gluc,
       dAF_aZEL_gluc,
       dAB_aZEL_gluc,
+      dAK_aZEL_gluc,
       dAUR_aZEL_gluc,
       dAFE_aZEL_gluc 
     ),
@@ -1148,6 +1193,7 @@ R.PBK.model <- function(t, state, parms){
       CS_ZEN_gluc = CS_ZEN_gluc,
       CF_ZEN_gluc = CF_ZEN_gluc,
       CB_ZEN_gluc = CB_ZEN_gluc,
+      CK_ZEN_gluc = CK_ZEN_gluc,
       CUrine_ZEN_gluc = AUR_ZEN_gluc/VUrine,
       
       CIleL_aZEL = CIleL_aZEL, CCOL_aZEL = CCOL_aZEL,
@@ -1168,6 +1214,7 @@ R.PBK.model <- function(t, state, parms){
       CS_aZEL_gluc = CS_aZEL_gluc,
       CF_aZEL_gluc = CF_aZEL_gluc,
       CB_aZEL_gluc = CB_aZEL_gluc,
+      CK_aZEL_gluc = CK_aZEL_gluc,
       CUrine_aZEL_gluc = AUR_aZEL_gluc/VUrine
       
       ))
@@ -1212,7 +1259,7 @@ names(ODOSEumol) <- "ODOSEumol"
 names(IVDOSEumol) <- "IVDOSEumol"
 parm.c <- c(Parameters, c(ODOSEumol, IVDOSEumol))
 
-timeSeq <- seq(0, 24, by=1/100)                                # per minute
+timeSeq <- seq(0, 24, by=1/10)                                # per minute
 
 
 ## Initials ----
@@ -1240,6 +1287,7 @@ A_init <- c(
   AS_ZEN_gluc = 0,
   AF_ZEN_gluc = 0, 
   AB_ZEN_gluc = 0, 
+  AK_ZEN_gluc = 0,
   AUR_ZEN_gluc = 0, 
   AFE_ZEN_gluc = 0,
   
@@ -1261,6 +1309,7 @@ A_init <- c(
   AS_aZEL_gluc = 0,
   AF_aZEL_gluc = 0,
   AB_aZEL_gluc = 0,
+  AK_aZEL_gluc = 0,
   AUR_aZEL_gluc = 0,
   AFE_aZEL_gluc = 0
   
@@ -1328,6 +1377,7 @@ replacements <- c(
   "CS" = "Slowly perfused",
   "CBile" = "Bile",
   "CB" = "Blood", 
+  "CK" = "Kidney",
   "_gluc" = "-gluc",
   "time" = "Time"
 )
@@ -1369,6 +1419,7 @@ Clean.replacements <- c(
   "CS" = "Slowly perfused",
   "CBile" = "Bile",
   "CB" = "Blood", 
+  "CK" = "Kidney",
   "CUrine" = "Urine",
   "_gluc" = "-gluc",
   "time" = "Time"
