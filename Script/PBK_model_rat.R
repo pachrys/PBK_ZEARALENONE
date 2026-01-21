@@ -81,17 +81,17 @@ R.PBK.model <- function(t, state, parms){
     Vmax_SI_aZEL <- Vmax_SI_aZEL.c * 60 * S9SI * VJej * 1e3            # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     Vmax_SI_bZEL <- Vmax_SI_bZEL.c * 60 * S9SI * VJej * 1e3            # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     Vmax_SI_ZEN_gluc <- Vmax_SI_ZEN_gluc.c * 60 * 
-      S9F * S9SI * VJej * 1e3                                          # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
+      S9SI * VJej * 1e3                                          # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     Vmax_SI_aZEL_gluc <- Vmax_SI_aZEL_gluc.c * 60 * 
-      S9F * S9SI * VJej  * 1e3                                         # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
+      S9SI * VJej  * 1e3                                         # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     
     ### Liver
     Vmax_L_aZEL <- Vmax_L_aZEL.c * 60 * S9L * VL * 1e3                 # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
     Vmax_L_bZEL <- Vmax_L_bZEL.c * 60 * S9L * VL * 1e3                 # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
     Vmax_L_ZEN_gluc <- Vmax_L_ZEN_gluc.c * 60 * 
-      S9F * S9L * VL * 1e3                                             # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
+      S9L * VL * 1e3                                             # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
     Vmax_L_aZEL_gluc <- Vmax_L_aZEL_gluc.c * 60 *
-      S9F * S9L * VL * 1e3                                             # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
+      S9L * VL * 1e3                                             # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
     
     
     ## Active transport
