@@ -40,6 +40,7 @@ dir.create(OUTPUT, recursive = TRUE)
 # Input ---- 
 load(here(OUTPUT, "Results.Rat.RData"))
 Select_AdminType <- Results.Rat$Metadata.Run.Rat$Select_AdminType
+# Select_AdminType <- "IV.PERF"
 Select_Author <- Results.Rat$Metadata.Run.Rat$Select_Author
 
 ZEN_BPR = Results.Rat$Metadata.Run.Rat$ZEN_BPR[[1]]
@@ -53,7 +54,7 @@ Predicted.data <- Results.Rat$C.Tissues.Rat %>% filter(Time >= 0.01)#001)
 Observed.data <- read_excel("Input/GoodnessOfFit.Rat.xlsx", 
                             col_types = c("text", "text", "text", 
                                           "numeric", "numeric", "text", "text", 
-                                          "text", "text", "text", "text", "text", 
+                                          "text", "numeric", "numeric", "numeric", "numeric", 
                                           "text", "text", "text", "numeric", 
                                           "text", "numeric", "numeric", "numeric", 
                                           "numeric", "numeric", "numeric", 
@@ -75,10 +76,10 @@ Predicted.urine <- Results.Rat$Raw.Data.Rat %>% filter(time >= 0.005) %>%
 
 Obs <- Observed.data %>%
   filter(AdminType == Select_AdminType,
-           Sex != "Pregnant.F", #pregnancy not included
-           TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
-           Author == Select_Author,
-           SampleCompound == "ZEN"#,
+         TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
+         Author == Select_Author,
+         SampleCompound == "ZEN"#,
+         # IVPerfRate == IVDOSEmg
          # IVBolusDose == IVDOSEmg
          ) %>% 
   select(c("Author", "Sex",
@@ -92,11 +93,11 @@ Obs <- Observed.data %>%
   mutate(Time = as.numeric(Time), 
          Concentration = as.numeric(Concentration),
          Concentration = ifelse(Tissue == "Plasma",
-                               Concentration / ZEN_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by dividing with BPR
+                               Concentration * ZEN_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by dividing with BPR
          Cmin = ifelse(Tissue == "Plasma",
-                                Cmin/ZEN_BPR, Cmin),
+                                Cmin * ZEN_BPR, Cmin),
          Cmax = ifelse(Tissue == "Plasma",
-                       Cmax / ZEN_BPR, Cmax),
+                       Cmax * ZEN_BPR, Cmax),
          Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
 
 
@@ -109,7 +110,8 @@ if(Select_Author == "Videmann"){
   Cobs <- Obs %>% filter(Tissue == "Blood")
   Cpre <- Predicted.data %>% filter(Substance == "ZEN", 
                                     Tissue == "Blood")%>% 
-    select(Substance, Time, Concentration) #%>% rename("Blood" = "Concentratio")
+    select(Substance, Time, Concentration) #%>% 
+    # filter(Time <= 6) #rename("Blood" = "Concentratio")
 }
 
 
@@ -263,11 +265,11 @@ if(Select_Author == "Videmann"){
     mutate(Time = as.numeric(Time), 
            Concentration = as.numeric(Concentration),
            Concentration = ifelse(Tissue == "Plasma",
-                                  Concentration / ZEN_gluc_BPR, Concentration),
+                                  Concentration * ZEN_gluc_BPR, Concentration),
            Cmin = ifelse(Tissue == "Plasma",
-                                  Cmin / ZEN_gluc_BPR, Cmin),
+                                  Cmin * ZEN_gluc_BPR, Cmin),
            Cmax = ifelse(Tissue == "Plasma",
-                         Cmin / ZEN_gluc_BPR, Cmax),
+                         Cmax * ZEN_gluc_BPR, Cmax),
            # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
            Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
   
@@ -496,7 +498,7 @@ if(Select_Author == "Videmann"){
     mutate(Time = as.numeric(Time), 
            Concentration = as.numeric(Concentration),
            Concentration = ifelse(Tissue == "Plasma",
-                                  Concentration / aZEL_gluc_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
+                                  Concentration * aZEL_gluc_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
            Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
   
   Cobs.aZEL_gluc <- Obs.aZEL_gluc %>%
