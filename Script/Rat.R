@@ -349,9 +349,9 @@ Km_SI_bZEL <- 21                                             # uM
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 S9F <- 1                                                      # correcting for the alamethicin permeabilisation of the membrane which increases the glucuronidation; Reference: I. Kiiski et al. 2021 https://doi.org/10.1016/j.ejps.2020.105677
-Vmax_SI_ZEN_gluc.c <-  8.617*1e-3   *15.5   *0.3         # umol/min/mg protein; from nmol-> umol 
+Vmax_SI_ZEN_gluc.c <-  8.617*1e-3   *15.5           # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                       # uM 0.3
-Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5   *0.3    *1e6   # umol/min/mg protein; from nmol-> umol
+Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5     *1e6   # umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                      # uM
 
 # Glucuronide hydrolysis by gmGUS
@@ -376,9 +376,9 @@ Km_L_bZEL <- 21                                               # uM
 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
-Vmax_L_ZEN_gluc.c <- 7.029*1e-3    *46     *0.6         # nmol->umol/min/mg S9
+Vmax_L_ZEN_gluc.c <- 7.029*1e-3    *46              # nmol->umol/min/mg S9
 Km_L_ZEN_gluc <- 6.753                                        # uM
-Vmax_L_aZEL_gluc.c <- 6.963*1e-3    *46    *0.6         # nmol->umol/min/mg S9
+Vmax_L_aZEL_gluc.c <- 6.963*1e-3    *46             # nmol->umol/min/mg S9
 Km_L_aZEL_gluc <- 7.426                                       # uM 0.87
 
 
@@ -395,11 +395,11 @@ Bile.fasted <- 6.35e-6 * 60                                   # L/h
 
 ##### Constants ----
 Vmax_MRP2.c <- 3366e-6                                      # umol/min/mg MRP2; pmol -> umol
-Km_MRP2 <- 78.9                                               # uM
+Km_MRP2 <- 78.9 #/2 #/10                                             # uM
 Vmax_MRP3.c <- 986.2e-6                                      # umol/min/mg MRP3; pmol -> umol
-Km_MRP3 <- 5.7                                              # uM
+Km_MRP3 <- 5.7                                        # uM
 Vmax_BCRP.c <- 2470e-6                    
-Km_BCRP <- 676.4
+Km_BCRP <- 676.4 #/100
 
 ##### IVIVE ----
 # Inside-out (active) fraction of transporter in in vitro system vesicles
@@ -444,9 +444,9 @@ REF_LI_BCRP <- pmolMP_mgP_LI_BCRP / pmol_mg_BCRP
 # Scaling factor
 SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2 # mg MRP2 / mg small intestine
 SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *10  #20   # mg MRP2 / mg liver
-SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2 /1.5        # mg MRP2 / mg liver
+SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2 *10       # mg MRP2 / mg liver
 
-SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3  /1.5 # mg MRP3 / mg liver 
+SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3 /10 # mg MRP3 / mg liver 
 
 SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP      # mg BCRP / mg liver 
 SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *10  #25    # mg BCRP / mg liver 
@@ -663,7 +663,7 @@ R.PBK.model <- function(t, state, parms){
     
     ## Biliary clearance
     
-    CL_Bile <- ifelse(t > 3, 1, Bile.fasted) # ifelse(t > 3 && t < 19, Bile.fed, Bile.fasted) 1
+    CL_Bile <- ifelse(t > 2.5, 1, Bile.fasted) # ifelse(t > 3 && t < 19, Bile.fed, Bile.fasted) 1
     
     # ZEN_gluc_fut <-1
     # aZEL_gluc_fut <-1
@@ -761,7 +761,8 @@ R.PBK.model <- function(t, state, parms){
     ## IV Perf ----
     # if(t<=6){DoseOn=1} else{DoseOn=0}
     # 
-    # IV = IVDOSEumol*DoseOn         # ug, PFOA oral dose
+    # PerfRate = 1#/60
+    # IV = IVDOSEumol*DoseOn/PerfRate         # ug, PFOA oral dose
     
     ## Differential Equations ----
     
@@ -822,7 +823,7 @@ R.PBK.model <- function(t, state, parms){
     dAF_ZEN <- QF*(CB_ZEN-CVF_ZEN) 
     
     # Blood
-    dAB_ZEN <-  - (QSI + QL + QR + QS + QF)*CB_ZEN + #IV 
+    dAB_ZEN <-  - (QSI + QL + QR + QS + QF)*CB_ZEN + #IV + 
       + (QSI + QL)*CVL_ZEN + 
       + QF*CVF_ZEN + QR*CVR_ZEN + QS*CVS_ZEN + 
       - GFR*CB_ZEN*ZEN_fup +
@@ -1235,8 +1236,8 @@ MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone",
 
 ## Exposure ---- 
 
-Select_AdminType <- "PO" # IV # PO
-Select_Author <- "Videmann" # Shin # Q.Lu # Videmann 
+Select_AdminType <- "IV" # IV # PO
+Select_Author <- "Q.Lu" # Shin # Q.Lu # Videmann 
 
 BW <- if(Select_Author == "Shin"){0.26
 }else if(Select_Author == "Q.Lu"){0.2
@@ -1250,7 +1251,7 @@ ODOSEumol <- ((ODOSEmg*1000)/MW_ZEN)*BW                       # μmol
 
 # IV dose
 IVDOSEmg <- if(Select_AdminType != "IV"){0
-}else if(Select_Author == "Shin"){4 #2 # 4 #8#1.13#8
+}else if(Select_Author == "Shin"){1.13#4 #2 # 4 #8#1.13#8
 }else if(Select_Author == "Q.Lu"){6.65}
 
 IVDOSEumol <-((IVDOSEmg*1000)/MW_ZEN)*BW                      # μmol
@@ -1259,7 +1260,7 @@ names(ODOSEumol) <- "ODOSEumol"
 names(IVDOSEumol) <- "IVDOSEumol"
 parm.c <- c(Parameters, c(ODOSEumol, IVDOSEumol))
 
-timeSeq <- seq(0, 24, by=1/10)                                # per minute
+timeSeq <- seq(0, 24, by=1/100)                                # per minute
 
 
 ## Initials ----
