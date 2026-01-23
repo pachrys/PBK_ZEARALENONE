@@ -336,22 +336,21 @@ ka_Lymph <- 0.55                                               # /h
 
 #### Small intestine ----
 
-S9SI <- 1                                              # small intestinal S9 protein yield (mg S9 protein/gram intestine); Reference: Doerksen et al. (2020) doi: 10.1007/s13318-020-00666-w sum of microsomal 3.9 mg/g and cytosolic 18mg/g 
+S9SI <- 15.5                                              # small intestinal S9 protein yield (mg S9 protein/gram intestine); Reference: Doerksen et al. (2020) doi: 10.1007/s13318-020-00666-w sum of microsomal 3.9 mg/g and cytosolic 18mg/g 
 
 # Hydrolysis
 # Assuming the same as liver
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-Vmax_SI_aZEL.c <- 32*1e-6   *15.5 # umol/min/mg protein; from pmol-> umol
+Vmax_SI_aZEL.c <- 32*1e-6   # umol/min/mg protein; from pmol-> umol
 Km_SI_aZEL <- 592                                           # uM 
-Vmax_SI_bZEL.c <- 72*1e-6    *15.5            # umol/min/mg protein; from pmol-> umol
+Vmax_SI_bZEL.c <- 72*1e-6              # umol/min/mg protein; from pmol-> umol
 Km_SI_bZEL <- 21                                             # uM 
 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
-S9F <- 1                                                      # correcting for the alamethicin permeabilisation of the membrane which increases the glucuronidation; Reference: I. Kiiski et al. 2021 https://doi.org/10.1016/j.ejps.2020.105677
-Vmax_SI_ZEN_gluc.c <-  8.617*1e-3   *15.5           # umol/min/mg protein; from nmol-> umol 
+Vmax_SI_ZEN_gluc.c <-  8.617*1e-3              # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                       # uM 0.3
-Vmax_SI_aZEL_gluc.c <- 6.963*1e-3     *15.5     *1e6   # umol/min/mg protein; from nmol-> umol
+Vmax_SI_aZEL_gluc.c <- 6.963*1e-3 *1e6   # umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                      # uM
 
 # Glucuronide hydrolysis by gmGUS
@@ -365,20 +364,20 @@ Km_Hydro_aZEL_gluc <- 822/PhysChem$MolecularWeight[4] * 1e2#3 #ng->nmol ->umol/m
 
 #### Liver ----
 
-S9L <- 1                                                # liver S9 protein yield, (mg S9 protein/gram liver) reference: Moerenhout et al. (2024) DOI 10.1021/acs.est.4c06534 sum of microsomal 32mg/g liver and cytosolic 80.7mg/g liver content
+S9L <- 46                                               # liver S9 protein yield, (mg S9 protein/gram liver) reference: Moerenhout et al. (2024) DOI 10.1021/acs.est.4c06534 sum of microsomal 32mg/g liver and cytosolic 80.7mg/g liver content
 
 # Hydrolysis
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-Vmax_L_aZEL.c <- 32*1e-6  *46             # pmol->umol/min/mg protein
+Vmax_L_aZEL.c <- 32*1e-6               # pmol->umol/min/mg protein
 Km_L_aZEL <- 592                                         # uM
-Vmax_L_bZEL.c <- 72*1e-6   *46         # pmol->umol/min/mg protein   
+Vmax_L_bZEL.c <- 72*1e-6            # pmol->umol/min/mg protein   
 Km_L_bZEL <- 21                                               # uM
 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
-Vmax_L_ZEN_gluc.c <- 7.029*1e-3    *46              # nmol->umol/min/mg S9
+Vmax_L_ZEN_gluc.c <- 7.029*1e-3                  # nmol->umol/min/mg S9
 Km_L_ZEN_gluc <- 6.753                                        # uM
-Vmax_L_aZEL_gluc.c <- 6.963*1e-3    *46             # nmol->umol/min/mg S9
+Vmax_L_aZEL_gluc.c <- 6.963*1e-3              # nmol->umol/min/mg S9
 Km_L_aZEL_gluc <- 7.426                                       # uM 0.87
 
 
@@ -505,7 +504,6 @@ Other_params <- tibble(
   PappCaco2_ZEN = PappCaco2_ZEN,
   PappCaco2_aZEL = PappCaco2_aZEL,
   ka_Lymph = ka_Lymph,
-  S9F = S9F,
   S9SI =  S9SI,
   Vmax_SI_aZEL.c = Vmax_SI_aZEL.c,
   Km_SI_aZEL = Km_SI_aZEL,
@@ -637,17 +635,17 @@ R.PBK.model <- function(t, state, parms){
     Vmax_SI_aZEL <- Vmax_SI_aZEL.c * 60 * S9SI * VJej * 1e3            # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     Vmax_SI_bZEL <- Vmax_SI_bZEL.c * 60 * S9SI * VJej * 1e3            # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     Vmax_SI_ZEN_gluc <- Vmax_SI_ZEN_gluc.c * 60 * 
-      S9F * S9SI * VJej * 1e3                                          # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
+      S9SI * VJej * 1e3                                          # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     Vmax_SI_aZEL_gluc <- Vmax_SI_aZEL_gluc.c * 60 * 
-      S9F * S9SI * VJej  * 1e3                                         # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
+      S9SI * VJej  * 1e3                                         # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     
     ### Liver
     Vmax_L_aZEL <- Vmax_L_aZEL.c * 60 * S9L * VL * 1e3                 # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
     Vmax_L_bZEL <- Vmax_L_bZEL.c * 60 * S9L * VL * 1e3                 # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
     Vmax_L_ZEN_gluc <- Vmax_L_ZEN_gluc.c * 60 * 
-      S9F * S9L * VL * 1e3                                             # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
+      S9L * VL * 1e3                                             # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
     Vmax_L_aZEL_gluc <- Vmax_L_aZEL_gluc.c * 60 *
-      S9F * S9L * VL * 1e3                                             # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
+      S9L * VL * 1e3                                             # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
     
     
     ## Active transport

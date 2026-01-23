@@ -46,7 +46,7 @@
     
     
     A_init <- c(
-      AOD_ZEN = 0, 
+      AOD_ZEN = 0,
       
       ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, ACOL_ZEN = 0,
       ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
@@ -54,7 +54,7 @@
       AR_ZEN = 0,
       AS_ZEN = 0,
       AF_ZEN = 0, 
-      AB_ZEN = 0, 
+      AB_ZEN = 0,
       AUR_ZEN = 0, 
       AFE_ZEN = 0, 
       
@@ -68,6 +68,7 @@
       AS_ZEN_gluc = 0,
       AF_ZEN_gluc = 0, 
       AB_ZEN_gluc = 0, 
+      AK_ZEN_gluc = 0,
       AUR_ZEN_gluc = 0, 
       AFE_ZEN_gluc = 0,
       
@@ -89,14 +90,16 @@
       AS_aZEL_gluc = 0,
       AF_aZEL_gluc = 0,
       AB_aZEL_gluc = 0,
+      AK_aZEL_gluc = 0,
       AUR_aZEL_gluc = 0,
       AFE_aZEL_gluc = 0
+      
       
     )
     
     
     PBK.out <- lsoda(y = A_init,
-                     times = seq(0, 24,by=1/100),
+                     times = seq(0, 24,by=1/60),
                      func =  R.PBK.model,
                      parms = P)
     
