@@ -12,6 +12,7 @@ library(tidyverse)
 library(showtext)
 library(plotly)
 library(readxl)
+library(patchwork)
 font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
@@ -19,13 +20,13 @@ CP_theme <- theme_minimal() +
   theme(
     # plot.background = element_rect(fill = 'white', color = NA),
     # panel.background = element_rect(fill = 'white', color = NA),
-    axis.title = element_text(size = 44, face = "bold"),
-    axis.text = element_text(size = 40),
-    plot.title = element_text(hjust = 0, size = 48, face = "bold"),
+    axis.title = element_text(size = 24, face = "bold"),
+    axis.text = element_text(size = 20),
+    plot.title = element_text(hjust = 0, size = 28, face = "bold"),
     plot.margin = margin(0.3, 0.3, 0.3, 0.3, "cm"), 
-    axis.line = element_line(size = 0.1),
-    panel.grid = element_line(size = 0.3),
-    plot.caption = element_text(hjust = 0, size = 40, face= "italic"),
+    axis.line = element_line(linewidth = 0.1),
+    panel.grid = element_line(linewidth = 0.3),
+    plot.caption = element_text(hjust = 0, size = 20, face= "italic"),
     plot.title.position = "plot", 
     plot.caption.position = "plot",
     legend.position = "none"
@@ -40,7 +41,7 @@ dir.create(OUTPUT, recursive = TRUE)
 # Input ---- 
 load(here(OUTPUT, "Results.Rat.RData"))
 Select_AdminType <- Results.Rat$Metadata.Run.Rat$Select_AdminType
-# Select_AdminType <- "IV.PERF"
+Select_AdminType <- "IV.PERF"
 Select_Author <- Results.Rat$Metadata.Run.Rat$Select_Author
 
 ZEN_BPR = Results.Rat$Metadata.Run.Rat$ZEN_BPR[[1]]
@@ -78,10 +79,10 @@ Obs <- Observed.data %>%
   filter(AdminType == Select_AdminType,
          TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
          Author == Select_Author,
-         SampleCompound == "ZEN"#,
-         # IVPerfRate == IVDOSEmg
+         SampleCompound == "ZEN",
+         IVPerfRate == IVDOSEmg
          # IVBolusDose == IVDOSEmg
-         ) %>% 
+         ) %>%  
   select(c("Author", "Sex",
            "Tissue", "SamplingTime",
            "Concentration",
@@ -105,13 +106,13 @@ if(Select_Author == "Videmann"){
   Cobs <- Obs %>%
     filter(Tissue %in% c("Blood", "Intestine", "Liver"))
   Cpre <- Predicted.data %>% filter(Substance == "ZEN", 
-                                    Tissue %in% c("Blood", "Intestine", "Liver")) 
+                                    Tissue %in% c("Blood", "Intestine", "Liver")) %>% 
+    filter(Time == 6)
 }else{
   Cobs <- Obs %>% filter(Tissue == "Blood")
   Cpre <- Predicted.data %>% filter(Substance == "ZEN", 
                                     Tissue == "Blood")%>% 
-    select(Substance, Time, Concentration) #%>% 
-    # filter(Time <= 6) #rename("Blood" = "Concentratio")
+    select(Substance, Time, Concentration) 
 }
 
 
@@ -201,7 +202,85 @@ if(Select_Author == "Videmann"){
     units = "cm"
   )
 
-}else{print("only blood this time")}
+}else if(Select_Author == "Shin" && Select_AdminType == "IV.PERF"){
+  
+  Shin_obs <- Cobs %>% select(c(Tissue, Concentration, Cmin, Cmax)) %>% 
+    mutate(Datatype = "Observed")
+  Shin_pred <- Cpre %>% select(c(Tissue, Concentration)) %>% mutate(
+    Cmin = Concentration, 
+    Cmax = Concentration,
+    Datatype = "Predicted")
+  
+  Shin_data <- rbind(Shin_obs, Shin_pred) 
+  
+  PredvsObsAll_Shin_A <- Shin_data %>%
+    mutate(Tissue = reorder(Tissue, +Concentration)) %>% 
+    ggplot(aes(x=Tissue, y=log10(Concentration))) +
+    geom_segment(data = filter(Shin_data, Datatype == "Observed"), 
+                 aes(x=Tissue, xend=Tissue, y=log10(Cmin), yend=log10(Cmax)),
+                 color= "#F7D574",alpha = 0.5,  size=3 )+
+    geom_point(aes(x=Tissue, y=log10(Concentration), color = Datatype), size=3 ) +
+    scale_colour_manual(name = "Legend",
+                        values = c( Observed = "#F7D574",
+                                    Predicted = "#8631A7"),
+                        labels = c( Observed = "Observed",
+                                    Predicted = "Predicted"))  +
+    labs(
+      x = "",
+      y = expression(paste(("Concentration (log"[10] ~ "(ng/ml))")))) +
+    coord_cartesian(ylim = c(2, 4)) +
+    guides(color = guide_legend(label.position = "right"),
+           shape = guide_legend(label.position = "right"))+
+    ggtitle("A.")+
+    CP_theme +
+    theme(legend.position = "none")
+  PredvsObsAll_Shin_A
+  
+  PredvsObsAll_Shin_B <- Shin_data %>%
+    mutate(Tissue = reorder(Tissue, +Concentration)) %>% 
+    ggplot(aes(x=Tissue, y=log10(Concentration))) +
+    geom_segment(data = filter(Shin_data, Datatype == "Observed"), 
+                 aes(x=Tissue, xend=Tissue, y=log10(Cmin), yend=log10(Cmax)),
+                 color= "#F7D574",alpha = 0.5,  size=3 )+
+    geom_point(aes(x=Tissue, y=log10(Concentration), color = Datatype), size=3 ) +
+    scale_colour_manual(name = "Legend",
+                        values = c( Observed = "#F7D574",
+                                    Predicted = "#8631A7"),
+                        labels = c( Observed = "Observed",
+                                    Predicted = "Predicted"))  +
+    labs(
+      x = "",
+      y = "" )+ #expression(paste(("Concentration (log"[10] ~ "(ng/ml))")))) +
+    coord_cartesian(ylim = c(2, 4)) +
+    guides(color = guide_legend(label.position = "right"),
+           shape = guide_legend(label.position = "right"))+
+    ggtitle("B.")+
+    CP_theme +
+    theme(legend.position = "right",
+          legend.text = element_text(size = 40),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.5, "lines"),
+          legend.spacing.y = unit(0, "cm"),
+          legend.margin = margin(0, 0, 0, 0))  
+  PredvsObsAll_Shin_B
+  
+  PredvsObsAll_ZEN_Shin <- PredvsObsAll_Shin_A + PredvsObsAll_Shin_B +
+    plot_layout(widths = c(0.4, 0.4)) 
+  
+  ggsave(
+    filename = here(OUTPUT, "PredvsObsAll_ZEN_Shin.png"),
+    plot = PredvsObsAll_ZEN_Shin,
+    dpi = 600,  
+    width = 18,  
+    height = 9, 
+    units = "cm",
+    limitsize = TRUE
+  )
+  
+ 
+  
+}else{
+  print("only blood this time")}
 
 
 ### Urine ----

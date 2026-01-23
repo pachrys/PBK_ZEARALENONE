@@ -759,10 +759,10 @@ R.PBK.model <- function(t, state, parms){
    
     
     ## IV Perf ----
-    # if(t<=6){DoseOn=1} else{DoseOn=0}
-    # 
-    # PerfRate = 1#/60
-    # IV = IVDOSEumol*DoseOn/PerfRate         # ug, PFOA oral dose
+    if(t<=6){DoseOn=1} else{DoseOn=0}
+    
+    
+    IV = IVDOSEumol*DoseOn         # ug, PFOA oral dose
     
     ## Differential Equations ----
     
@@ -823,7 +823,7 @@ R.PBK.model <- function(t, state, parms){
     dAF_ZEN <- QF*(CB_ZEN-CVF_ZEN) 
     
     # Blood
-    dAB_ZEN <-  - (QSI + QL + QR + QS + QF)*CB_ZEN + #IV + 
+    dAB_ZEN <-  - (QSI + QL + QR + QS + QF)*CB_ZEN + IV + 
       + (QSI + QL)*CVL_ZEN + 
       + QF*CVF_ZEN + QR*CVR_ZEN + QS*CVS_ZEN + 
       - GFR*CB_ZEN*ZEN_fup +
@@ -1237,7 +1237,7 @@ MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone",
 ## Exposure ---- 
 
 Select_AdminType <- "IV" # IV # PO
-Select_Author <- "Q.Lu" # Shin # Q.Lu # Videmann 
+Select_Author <- "Shin" # Shin # Q.Lu # Videmann 
 
 BW <- if(Select_Author == "Shin"){0.26
 }else if(Select_Author == "Q.Lu"){0.2
@@ -1251,7 +1251,7 @@ ODOSEumol <- ((ODOSEmg*1000)/MW_ZEN)*BW                       # μmol
 
 # IV dose
 IVDOSEmg <- if(Select_AdminType != "IV"){0
-}else if(Select_Author == "Shin"){1.13#4 #2 # 4 #8#1.13#8
+}else if(Select_Author == "Shin"){2.25 #4 #2 # 4 #8#1.13#8
 }else if(Select_Author == "Q.Lu"){6.65}
 
 IVDOSEumol <-((IVDOSEmg*1000)/MW_ZEN)*BW                      # μmol
@@ -1274,7 +1274,7 @@ A_init <- c(
   AR_ZEN = 0,
   AS_ZEN = 0,
   AF_ZEN = 0, 
-  AB_ZEN = ifelse(Select_AdminType != "PO", IVDOSEumol, 0), 
+  AB_ZEN = 0,#ifelse(Select_AdminType != "PO", IVDOSEumol, 0), 
   AUR_ZEN = 0, 
   AFE_ZEN = 0, 
   
