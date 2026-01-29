@@ -23,28 +23,30 @@
   font_add(family = "Garamond", regular = "GARA.TTF")
   showtext_auto()
   
+  
+  
   CP_theme <- theme_minimal() +
-theme(
-  plot.background = element_rect(fill = 'white'), #element_blank(), #
-  plot.margin = margin(0.3, 0.3, 0.3, 0.3, "cm"), 
-  plot.title = element_text(hjust = 0, size = 48, face = "bold"),
-  plot.title.position = "plot", 
-  # plot.caption = element_text(hjust = 0, size = 40, face= "italic"),
-  # plot.caption.position = "plot",
-  panel.background = element_blank(), #rect(fill = 'white', color = NA),
-  panel.grid = element_blank(), #element_line(size = 0.3),  
-  axis.title = element_text(size = 44, face = "bold"),
-  axis.text = element_text(size = 44),
-  # axis.text.y = element_blank(),
-  # axis.text.x = element_text(size = 64, face = "bold"),
-  axis.line = element_line(size = 0.5),
-  legend.text = element_text(size = 44),
-  legend.title = element_text(size = 44), 
-  legend.key.size = unit(0.5, "lines"),
-  legend.spacing.y = unit(0.5, "cm"), 
-  legend.margin = margin(0,0,0,0),
-  legend.position = "right"
-)
+    theme(
+      plot.background = element_rect(fill = 'white'), #element_blank(), #
+      plot.margin = margin(0.3, 0.3, 0.3, 0.3, "cm"), 
+      plot.title = element_text(hjust = 0, size = 48, face = "bold"),
+      plot.title.position = "plot", 
+      # plot.caption = element_text(hjust = 0, size = 40, face= "italic"),
+      # plot.caption.position = "plot",
+      panel.background = element_blank(), #rect(fill = 'white', color = NA),
+      panel.grid = element_blank(), #element_line(size = 0.3),  
+      axis.title = element_text(size = 44, face = "bold"),
+      axis.text = element_text(size = 44),
+      # axis.text.y = element_blank(),
+      # axis.text.x = element_text(size = 64, face = "bold"),
+      axis.line = element_line(size = 0.5),
+      legend.text = element_text(size = 44),
+      legend.title = element_text(size = 44), 
+      legend.key.size = unit(0.5, "lines"),
+      legend.spacing.y = unit(0.5, "cm"), 
+      legend.margin = margin(0,0,0,0),
+      legend.position = "right"
+    )
   
   # Set output storage directory
   OUTPUT <- here("Output", format(Sys.Date(), "%Y-%m-%d"), format(Sys.time(), "%H-%M-%S"))
@@ -285,6 +287,7 @@ tell(Experience, sim.results.eFAST[i,])
   # plot(Experience)
   # 
   plot(Experience)
+print(Experience)
 
   plot(Experience)  
 
@@ -300,76 +303,475 @@ tell(Experience, sim.results.eFAST[i,])
   first_order <- Done / Variance  # D1 is the estimated Variance of the Conditional Expectation (VCE) with respect to each factor, normalized by total variance
   names(first_order) <- GSA.parms
   
-  total_order <- Dt / Experience$V  # Dt is the estimated VCE with respect to each factor complementary set of factors ("all but Xi"), normalized by total variance
+  total_order <- 1 - (Dt / Variance)  # Dt is the estimated VCE with respect to each factor complementary set of factors ("all but Xi"), normalized by total variance
   names(total_order) <- GSA.parms
   
   lowry_data <- data.frame(
-Parameter = GSA.parms,
-Main.Effect = first_order,
-Interaction = total_order) %>% 
-mutate(
-  Main.Effect = Main.Effect/sum(Main.Effect), # to normalise
-  Interaction = Interaction/sum(Interaction)  # to normalise
-) 
+    Parameter = GSA.parms,
+    Main.Effect = first_order,
+    Interaction = total_order)
   
+  
+  # %>%
+  #   mutate(
+  #     Main.Effect = Main.Effect/sum(Main.Effect), # to normalise
+  #     Interaction = Interaction/sum(Interaction)  # to normalise
+  #     ) 
+  # 
   write.csv(lowry_data, file = here("eFASTresults.csv"), row.names = FALSE)
   
   lowry_data <- read.csv(here("eFASTresults.csv"))
   
   ordered_data <- lowry_data %>%
-arrange(desc(Main.Effect)) %>%
-mutate(
-  Parameter = factor(Parameter, levels = Parameter), 
-  Total.effect = Main.Effect + Interaction,
-  Cumulative.main = cumsum(Main.Effect) 
-)
-  long_data <- ordered_data %>% pivot_longer(c(Main.Effect, Interaction))
+    arrange(desc(Main.Effect)) %>% 
+    mutate(
+      Parameter = factor(Parameter, levels = Parameter),
+      Total.effect = Main.Effect + Interaction,
+      Cumulative.main = cumsum(Main.Effect),
+      Cumulative.total = cumsum(Total.effect),
+      ymin = Cumulative.main, 
+      ymax = pmin(Cumulative.total, 1))
+  
+  long_data <- ordered_data %>% 
+    pivot_longer(c(Main.Effect, Interaction))
   long_data$name <- factor(long_data$name, levels = c("Main.Effect", "Interaction"))
   
-  
+
   lowry_plot <- 
-ggplot(long_data) +
-geom_col(aes(x = Parameter, y = value, fill = name),
- position = position_stack(reverse = FALSE),
- width = 0.8,
- alpha = 0.8) +
-geom_ribbon(
-  data = ordered_data,
-  aes(x = as.numeric(Parameter),
-  ymin = lag(Cumulative.main, default = 0),
-  ymax = Cumulative.main),
-  fill = "grey50", alpha = 0.3, color = "grey50", linewidth = 0.2
-) +
-scale_fill_manual(
-  values = c("Main.Effect" = "darkblue", "Interaction" = "blueviolet"),
-  labels = c("Main Effect", "Interaction")
-) +
-scale_y_continuous(
-  limits = c(0, 1),
-  expand = expansion(mult = c(0, 0.05)),
-  labels = percent_format(),
-  name = "Sensitivity Index"
-) +
-labs(
-  x = "Parameter",
-  title = "eFAST Sensitivity Analysis"
-) +
-CP_theme +
-theme(
-  legend.position = "top",
-  legend.title = element_blank(),
-  legend.text = element_text(size = 42),
-  legend.key.size = unit(0.5, "lines"),
-  legend.spacing.y = unit(0, "cm"),
-  legend.margin = margin(0, 0, 0, 0),
-  axis.text.x = element_text(angle = 45, hjust = 1,),
-  plot.margin = margin(0, 0, 0, 0.15, "cm")
-)
+    ggplot(long_data) +
+    geom_col(aes(x = Parameter, y = value, fill = name),
+             position = position_stack(reverse = TRUE),
+             width = 0.8,
+             alpha = 0.8) +
+    geom_ribbon(
+      data = ordered_dataT,
+      aes(x = as.numeric(Parameter),
+          ymin = ymin, 
+          ymax = ymax),
+      fill = "grey50", alpha = 0.3, color = "grey50", linewidth = 0.2) +
+    scale_fill_manual(
+      values = c("Main.Effect" = "grey5", "Interaction" = "grey50"),
+      labels = c("Main Effect", "Interaction")) +
+    scale_y_continuous(
+      limits = c(0, 1),
+      expand = expansion(mult = c(0, 0.05)),
+      labels = percent_format(),
+      name = "Sensitivity Index") +
+    labs(
+      x = "Parameter",
+      title = "eFAST Sensitivity Analysis") +
+    CP_theme +
+    theme(
+      legend.position = "top",
+      legend.title = element_blank(),
+      # legend.text = element_text(size = 42),
+      # legend.key.size = unit(0.5, "lines"),
+      legend.spacing.y = unit(0, "cm"),
+      legend.margin = margin(0, 0, 0, 0),
+      axis.text.x = element_text(size = 30, angle = 45, hjust = 1,),
+      axis.line = element_line(size = 0.1)
+      # plot.margin = margin(0, 0, 0, 0.15, "cm")
+      )
   
   lowry_plot
   ggsave(
-filename = here("lowry_plot.png"),
-plot = lowry_plot,
-dpi = 1000, 
-width = 12, height = 9, units = "cm"
-  )
+    filename = here("lowry_plot.png"),
+    plot = lowry_plot,
+    dpi = 600, 
+    width = 16, 
+    height = 9, 
+    units = "cm")
+  
+  
+  
+  CB_ZEN.sim.results.eFAST <- sim.results.eFAST[str_detect(rownames(sim.results.eFAST), "CB_ZEN") &
+                                                    !str_detect(rownames(sim.results.eFAST), "CB_ZEN_gluc"), ]
+  
+  
+  
+  
+  for (i in (1:length(CB_ZEN.sim.results.eFAST[,1])))
+  {
+    tell(Experience, CB_ZEN.sim.results.eFAST[i,])
+  }
+
+  plot(Experience)
+  print(Experience)
+
+  Variance <- Experience$V # Total variance
+  names(Variance) <- GSA.parms
+  
+  Done <- Experience$D1
+  names(Done) <- GSA.parms
+  
+  Dt <- Experience$Dt
+  names(Dt) <- GSA.parms
+  
+  first_order <- Done / Variance  # D1 is the estimated Variance of the Conditional Expectation (VCE) with respect to each factor, normalized by total variance
+  names(first_order) <- GSA.parms
+  
+  total_order <- 1 - (Dt / Variance)  # Dt is the estimated VCE with respect to each factor complementary set of factors ("all but Xi"), normalized by total variance
+  names(total_order) <- GSA.parms
+  
+  CB_ZEN.lowry_data <- data.frame(
+    Parameter = GSA.parms,
+    Main.Effect = first_order,
+    Interaction = total_order)
+  
+  write.csv(CB_ZEN.lowry_data, file = here("CB_ZEN.eFASTresults.csv"), row.names = FALSE)
+  
+  CB_ZEN.lowry_data <- read.csv(here("CB_ZEN.eFASTresults.csv"))
+  
+  CB_ZEN.ordered_data <- CB_ZEN.lowry_data %>%
+    arrange(desc(Main.Effect)) %>% 
+    mutate(
+      Parameter = factor(Parameter, levels = Parameter),
+      Total.effect = Main.Effect + Interaction,
+      Cumulative.main = cumsum(Main.Effect),
+      Cumulative.total = cumsum(Total.effect),
+      ymin = Cumulative.main, 
+      ymax = pmin(Cumulative.total, 1))
+  
+  CB_ZEN.long_data <- ordered_dataT %>% 
+    pivot_longer(c(Main.Effect, Interaction))
+  CB_ZEN.long_data$name <- factor(CB_ZEN.long_data$name, levels = c("Main.Effect", "Interaction"))
+  
+  
+  CB_ZEN.lowry_plot <- 
+    ggplot(CB_ZEN.long_data) +
+    geom_col(aes(x = Parameter, y = value, fill = name),
+             position = position_stack(reverse = TRUE),
+             width = 0.8,
+             alpha = 0.8) +
+    geom_ribbon(
+      data = CB_ZEN.ordered_data,
+      aes(x = as.numeric(Parameter),
+          ymin = ymin, 
+          ymax = ymax),
+      fill = "grey50", alpha = 0.3, color = "grey50", linewidth = 0.2) +
+    scale_fill_manual(
+      values = c("Main.Effect" = "grey5", "Interaction" = "grey50"),
+      labels = c("Main Effect", "Interaction")) +
+    scale_y_continuous(
+      limits = c(0, 1),
+      expand = expansion(mult = c(0, 0.05)),
+      labels = percent_format(),
+      name = "Sensitivity Index") +
+    labs(
+      x = "Parameter",
+      title = "eFAST Sensitivity Analysis") +
+    CP_theme +
+    theme(
+      legend.position = "top",
+      legend.title = element_blank(),
+      legend.spacing.y = unit(0, "cm"),
+      legend.margin = margin(0, 0, 0, 0),
+      axis.text.x = element_text(size = 30, angle = 45, hjust = 1,),
+      axis.line = element_line(size = 0.1)
+    )
+  
+  CB_ZEN.lowry_plot
+  ggsave(
+    filename = here("CB_ZEN.lowry_plot.png"),
+    plot = CB_ZEN.lowry_plot,
+    dpi = 600, 
+    width = 16, 
+    height = 9, 
+    units = "cm")
+  
+  
+  
+  
+  
+  CB_aZEL.sim.results.eFAST <- sim.results.eFAST[str_detect(rownames(sim.results.eFAST), "CB_aZEL") &
+                                                     str_detect(rownames(sim.results.eFAST), "CB_aZEL_gluc"), ]
+  
+  
+  
+  
+  for (i in (1:length(CB_aZEL.sim.results.eFAST[,1])))
+  {
+    tell(Experience, CB_aZEL.sim.results.eFAST[i,])
+  }
+  
+  plot(Experience)
+  print(Experience)
+  
+  Variance <- Experience$V # Total variance
+  names(Variance) <- GSA.parms
+  
+  Done <- Experience$D1
+  names(Done) <- GSA.parms
+  
+  Dt <- Experience$Dt
+  names(Dt) <- GSA.parms
+  
+  first_order <- Done / Variance  # D1 is the estimated Variance of the Conditional Expectation (VCE) with respect to each factor, normalized by total variance
+  names(first_order) <- GSA.parms
+  
+  total_order <- 1 - (Dt / Variance)  # Dt is the estimated VCE with respect to each factor complementary set of factors ("all but Xi"), normalized by total variance
+  names(total_order) <- GSA.parms
+  
+  CB_aZEL.lowry_data <- data.frame(
+    Parameter = GSA.parms,
+    Main.Effect = first_order,
+    Interaction = total_order)
+  
+  write.csv(CB_aZEL.lowry_data, file = here("CB_aZEL.eFASTresults.csv"), row.names = FALSE)
+  
+  CB_aZEL.lowry_data <- read.csv(here("CB_aZEL.eFASTresults.csv"))
+  
+  CB_aZEL.ordered_data <- CB_aZEL.lowry_data %>%
+    arrange(desc(Main.Effect)) %>% 
+    mutate(
+      Parameter = factor(Parameter, levels = Parameter),
+      Total.effect = Main.Effect + Interaction,
+      Cumulative.main = cumsum(Main.Effect),
+      Cumulative.total = cumsum(Total.effect),
+      ymin = Cumulative.main, 
+      ymax = pmin(Cumulative.total, 1))
+  
+  CB_aZEL.long_data <- ordered_dataT %>% 
+    pivot_longer(c(Main.Effect, Interaction))
+  CB_aZEL.long_data$name <- factor(CB_aZEL.long_data$name, levels = c("Main.Effect", "Interaction"))
+  
+  
+  CB_aZEL.lowry_plot <- 
+    ggplot(CB_aZEL.long_data) +
+    geom_col(aes(x = Parameter, y = value, fill = name),
+             position = position_stack(reverse = TRUE),
+             width = 0.8,
+             alpha = 0.8) +
+    geom_ribbon(
+      data = CB_aZEL.ordered_data,
+      aes(x = as.numeric(Parameter),
+          ymin = ymin, 
+          ymax = ymax),
+      fill = "grey50", alpha = 0.3, color = "grey50", linewidth = 0.2) +
+    scale_fill_manual(
+      values = c("Main.Effect" = "grey5", "Interaction" = "grey50"),
+      labels = c("Main Effect", "Interaction")) +
+    scale_y_continuous(
+      limits = c(0, 1),
+      expand = expansion(mult = c(0, 0.05)),
+      labels = percent_format(),
+      name = "Sensitivity Index") +
+    labs(
+      x = "Parameter",
+      title = "eFAST Sensitivity Analysis") +
+    CP_theme +
+    theme(
+      legend.position = "top",
+      legend.title = element_blank(),
+      legend.spacing.y = unit(0, "cm"),
+      legend.margin = margin(0, 0, 0, 0),
+      axis.text.x = element_text(size = 30, angle = 45, hjust = 1,),
+      axis.line = element_line(size = 0.1)
+    )
+  
+  CB_aZEL.lowry_plot
+  ggsave(
+    filename = here("CB_aZEL.lowry_plot.png"),
+    plot = CB_aZEL.lowry_plot,
+    dpi = 600, 
+    width = 16, 
+    height = 9, 
+    units = "cm")
+  
+  
+  
+  
+  
+
+  CB_ZEN_gluc.sim.results.eFAST  <- sim.results.eFAST [str_detect(rownames(sim.results.eFAST), "CB_ZEN_gluc"), ]
+  
+  
+  
+  for (i in (1:length(CB_ZEN_gluc.sim.results.eFAST[,1])))
+  {
+    tell(Experience, CB_ZEN_gluc.sim.results.eFAST[i,])
+  }
+  
+  plot(Experience)
+  print(Experience)
+  
+  Variance <- Experience$V # Total variance
+  names(Variance) <- GSA.parms
+  
+  Done <- Experience$D1
+  names(Done) <- GSA.parms
+  
+  Dt <- Experience$Dt
+  names(Dt) <- GSA.parms
+  
+  first_order <- Done / Variance  # D1 is the estimated Variance of the Conditional Expectation (VCE) with respect to each factor, normalized by total variance
+  names(first_order) <- GSA.parms
+  
+  total_order <- 1 - (Dt / Variance)  # Dt is the estimated VCE with respect to each factor complementary set of factors ("all but Xi"), normalized by total variance
+  names(total_order) <- GSA.parms
+  
+  CB_ZEN_gluc.lowry_data <- data.frame(
+    Parameter = GSA.parms,
+    Main.Effect = first_order,
+    Interaction = total_order)
+  
+  write.csv(CB_ZEN_gluc.lowry_data, file = here("CB_ZEN_gluc.eFASTresults.csv"), row.names = FALSE)
+  
+  CB_ZEN_gluc.lowry_data <- read.csv(here("CB_ZEN_gluc.eFASTresults.csv"))
+  
+  CB_ZEN_gluc.ordered_data <- CB_ZEN_gluc.lowry_data %>%
+    arrange(desc(Main.Effect)) %>% 
+    mutate(
+      Parameter = factor(Parameter, levels = Parameter),
+      Total.effect = Main.Effect + Interaction,
+      Cumulative.main = cumsum(Main.Effect),
+      Cumulative.total = cumsum(Total.effect),
+      ymin = Cumulative.main, 
+      ymax = pmin(Cumulative.total, 1))
+  
+  CB_ZEN_gluc.long_data <- ordered_dataT %>% 
+    pivot_longer(c(Main.Effect, Interaction))
+  CB_ZEN_gluc.long_data$name <- factor(CB_ZEN_gluc.long_data$name, levels = c("Main.Effect", "Interaction"))
+  
+  
+  CB_ZEN_gluc.lowry_plot <- 
+    ggplot(CB_ZEN_gluc.long_data) +
+    geom_col(aes(x = Parameter, y = value, fill = name),
+             position = position_stack(reverse = TRUE),
+             width = 0.8,
+             alpha = 0.8) +
+    geom_ribbon(
+      data = CB_ZEN_gluc.ordered_data,
+      aes(x = as.numeric(Parameter),
+          ymin = ymin, 
+          ymax = ymax),
+      fill = "grey50", alpha = 0.3, color = "grey50", linewidth = 0.2) +
+    scale_fill_manual(
+      values = c("Main.Effect" = "grey5", "Interaction" = "grey50"),
+      labels = c("Main Effect", "Interaction")) +
+    scale_y_continuous(
+      limits = c(0, 1),
+      expand = expansion(mult = c(0, 0.05)),
+      labels = percent_format(),
+      name = "Sensitivity Index") +
+    labs(
+      x = "Parameter",
+      title = "eFAST Sensitivity Analysis") +
+    CP_theme +
+    theme(
+      legend.position = "top",
+      legend.title = element_blank(),
+      legend.spacing.y = unit(0, "cm"),
+      legend.margin = margin(0, 0, 0, 0),
+      axis.text.x = element_text(size = 30, angle = 45, hjust = 1,),
+      axis.line = element_line(size = 0.1)
+    )
+  
+  CB_ZEN_gluc.lowry_plot
+  ggsave(
+    filename = here("CB_ZEN_gluc.lowry_plot.png"),
+    plot = CB_ZEN_gluc.lowry_plot,
+    dpi = 600, 
+    width = 16, 
+    height = 9, 
+    units = "cm")
+  
+  
+  
+  
+  
+  CB_aZEL_gluc.sim.results.eFAST  <- sim.results.eFAST [str_detect(rownames(sim.results.eFAST), "CB_aZEL_gluc."), ]
+
+  
+  
+  
+  for (i in (1:length(CB_aZEL_gluc.sim.results.eFAST[,1])))
+  {
+    tell(Experience, CB_aZEL_gluc.sim.results.eFAST[i,])
+  }
+  
+  plot(Experience)
+  print(Experience)
+  
+  Variance <- Experience$V # Total variance
+  names(Variance) <- GSA.parms
+  
+  Done <- Experience$D1
+  names(Done) <- GSA.parms
+  
+  Dt <- Experience$Dt
+  names(Dt) <- GSA.parms
+  
+  first_order <- Done / Variance  # D1 is the estimated Variance of the Conditional Expectation (VCE) with respect to each factor, normalized by total variance
+  names(first_order) <- GSA.parms
+  
+  total_order <- 1 - (Dt / Variance)  # Dt is the estimated VCE with respect to each factor complementary set of factors ("all but Xi"), normalized by total variance
+  names(total_order) <- GSA.parms
+  
+  CB_aZEL_gluc.lowry_data <- data.frame(
+    Parameter = GSA.parms,
+    Main.Effect = first_order,
+    Interaction = total_order)
+  
+  write.csv(CB_aZEL_gluc.lowry_data, file = here("CB_aZEL_gluc.eFASTresults.csv"), row.names = FALSE)
+  
+  CB_aZEL_gluc.lowry_data <- read.csv(here("CB_aZEL_gluc.eFASTresults.csv"))
+  
+  CB_aZEL_gluc.ordered_data <- CB_aZEL_gluc.lowry_data %>%
+    arrange(desc(Main.Effect)) %>% 
+    mutate(
+      Parameter = factor(Parameter, levels = Parameter),
+      Total.effect = Main.Effect + Interaction,
+      Cumulative.main = cumsum(Main.Effect),
+      Cumulative.total = cumsum(Total.effect),
+      ymin = Cumulative.main, 
+      ymax = pmin(Cumulative.total, 1))
+  
+  CB_aZEL_gluc.long_data <- ordered_dataT %>% 
+    pivot_longer(c(Main.Effect, Interaction))
+  CB_aZEL_gluc.long_data$name <- factor(CB_aZEL_gluc.long_data$name, levels = c("Main.Effect", "Interaction"))
+  
+  
+  CB_aZEL_gluc.lowry_plot <- 
+    ggplot(CB_aZEL_gluc.long_data) +
+    geom_col(aes(x = Parameter, y = value, fill = name),
+             position = position_stack(reverse = TRUE),
+             width = 0.8,
+             alpha = 0.8) +
+    geom_ribbon(
+      data = CB_aZEL_gluc.ordered_data,
+      aes(x = as.numeric(Parameter),
+          ymin = ymin, 
+          ymax = ymax),
+      fill = "grey50", alpha = 0.3, color = "grey50", linewidth = 0.2) +
+    scale_fill_manual(
+      values = c("Main.Effect" = "grey5", "Interaction" = "grey50"),
+      labels = c("Main Effect", "Interaction")) +
+    scale_y_continuous(
+      limits = c(0, 1),
+      expand = expansion(mult = c(0, 0.05)),
+      labels = percent_format(),
+      name = "Sensitivity Index") +
+    labs(
+      x = "Parameter",
+      title = "eFAST Sensitivity Analysis") +
+    CP_theme +
+    theme(
+      legend.position = "top",
+      legend.title = element_blank(),
+      legend.spacing.y = unit(0, "cm"),
+      legend.margin = margin(0, 0, 0, 0),
+      axis.text.x = element_text(size = 30, angle = 45, hjust = 1,),
+      axis.line = element_line(size = 0.1)
+    )
+  
+  CB_aZEL_gluc.lowry_plot
+  ggsave(
+    filename = here("CB_aZEL_gluc.lowry_plot.png"),
+    plot = CB_aZEL_gluc.lowry_plot,
+    dpi = 600, 
+    width = 16, 
+    height = 9, 
+    units = "cm")
+  
+  
