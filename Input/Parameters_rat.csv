@@ -95,10 +95,9 @@
 "Km_SI_ZEN_gluc",6.198
 "Vmax_SI_aZEL_gluc.c",6963
 "Km_SI_aZEL_gluc",7.426
-"k_Hydro",10
-"Vmax_Hydro_ZEN_gluc",1.58646646970739
+"Vmax_Hydro_ZEN_gluc",0
 "Km_Hydro_ZEN_gluc",166.336152818811
-"Vmax_Hydro_aZEL_gluc",0.22571953139013
+"Vmax_Hydro_aZEL_gluc",0
 "Km_Hydro_aZEL_gluc",165.662013216685
 "S9L",46
 "Vmax_L_aZEL.c",3.2e-05
@@ -117,9 +116,6 @@
 "Km_MRP3",5.7
 "Vmax_BCRP.c",0.00247
 "Km_BCRP",676.4
-"f_in_out_MRP2",0.42
-"f_in_out_MRP3",0.58
-"f_in_out_BCRP",0.326
 "SF_IN_MRP2",5.92481951705253e-05
 "SF_LI_MRP2",0.0776699029126214
 "SF_LI_MRP3",4.83968542044767e-05

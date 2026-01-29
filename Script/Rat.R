@@ -17,21 +17,33 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # For plotting
+
 CP_theme <- theme_minimal() +
   theme(
-    # plot.background = element_rect(fill = 'white', color = NA),
-    # panel.background = element_rect(fill = 'white', color = NA),
-    axis.title = element_text(size = 44, face = "bold"),
-    axis.text = element_text(size = 40),
-    plot.title = element_text(hjust = 0, size = 48, face = "bold"),
+    plot.background = element_rect(fill = 'white'), #element_blank(), #
     plot.margin = margin(0.3, 0.3, 0.3, 0.3, "cm"), 
-    axis.line = element_line(size = 0.1),
-    panel.grid = element_line(size = 0.3),
-    plot.caption = element_text(hjust = 0, size = 40, face= "italic"),
+    plot.title = element_text(hjust = 0, size = 48, face = "bold"),
     plot.title.position = "plot", 
-    plot.caption.position = "plot",
-    legend.position = "none"
-  ) 
+    # plot.caption = element_text(hjust = 0, size = 40, face= "italic"),
+    # plot.caption.position = "plot",
+    panel.background = element_blank(), #rect(fill = 'white', color = NA),
+    panel.grid = element_line(size = 0.1),  
+    axis.title = element_text(size = 44, face = "bold"),
+    axis.text = element_text(size = 44),
+    # axis.text.y = element_blank(),
+    # axis.text.x = element_text(size = 64, face = "bold"),
+    axis.line = element_line(size = 0.5),
+    legend.text = element_text(size = 44),
+    legend.title = element_text(size = 44), 
+    legend.key.spacing = unit(0.1, "cm"),
+    legend.key.size = unit(0.5, "lines"),
+    legend.spacing.y = unit(0.2, "cm"), 
+    legend.spacing.x = unit(0.2, "cm"),
+    legend.margin = margin(0,0,0,0),
+    legend.position = "right"
+  )
+
+
 
 # Set output storage directory
 
@@ -299,8 +311,7 @@ for (i in 1:nrow(PhysChem)) {
   pKa1 <- PhysChem$pKa.1[i]
   pKa2 <- PhysChem$pKa.2[i] 
   BPR  <- PhysChem$BPR[i] 
-  # fup <- PhysChem$fup[i]
-  
+
   Kp_fus_BPR <- calc_Kp_fus(logP = logP, 
                             pKa1 = pKa1, 
                             pka2 = pKa2, 
@@ -326,10 +337,10 @@ rm(Kp_fus_BPR)
 # Apparent permebility accross the intestinal membrane
 # Reference: Pfeiffer et al. (2011) DOI 10.1002/mnfr.201000381
 PappCaco2_ZEN <- 10.4 * 1e-6                                  # cm/s 
-PappCaco2_aZEL <- 5.4 * 1e-6                                # cm/s
+PappCaco2_aZEL <- 5.4 * 1e-6                                  # cm/s
 
 # Absorption to (& release from) the lymph
-ka_Lymph <- 0.55                                               # /h
+ka_Lymph <- 0.55                                           # /h
 
 
 ### Metabolism ----
@@ -354,10 +365,9 @@ Vmax_SI_aZEL_gluc.c <- 6.963*1e-3 *1e6   # umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                      # uM
 
 # Glucuronide hydrolysis by gmGUS
-k_Hydro <- 10
-Vmax_Hydro_ZEN_gluc <-1.12e8/PhysChem$MolecularWeight[3] *0.7e-5#ng->nmol -> umol/h
+Vmax_Hydro_ZEN_gluc <- 0 # 1.12e8/PhysChem$MolecularWeight[3] *0.7e-5#ng->nmol -> umol/h
 Km_Hydro_ZEN_gluc <- 822/PhysChem$MolecularWeight[3] * 1e2#3 #ng->nmol ->umol/ml->L
-Vmax_Hydro_aZEL_gluc <-1.12e8/PhysChem$MolecularWeight[4] *1e-6 #ng->nmol ->umol/h
+Vmax_Hydro_aZEL_gluc <- 0 #1.12e8/PhysChem$MolecularWeight[4] *1e-6 #ng->nmol ->umol/h
 Km_Hydro_aZEL_gluc <- 822/PhysChem$MolecularWeight[4] * 1e2#3 #ng->nmol ->umol/ml->L
 
 
@@ -513,7 +523,6 @@ Other_params <- tibble(
   Km_SI_ZEN_gluc = Km_SI_ZEN_gluc,
   Vmax_SI_aZEL_gluc.c = Vmax_SI_aZEL_gluc.c,
   Km_SI_aZEL_gluc = Km_SI_aZEL_gluc,
-  k_Hydro = k_Hydro,
   Vmax_Hydro_ZEN_gluc = Vmax_Hydro_ZEN_gluc,
   Km_Hydro_ZEN_gluc = Km_Hydro_ZEN_gluc,
   Vmax_Hydro_aZEL_gluc = Vmax_Hydro_aZEL_gluc,
@@ -535,9 +544,6 @@ Other_params <- tibble(
   Km_MRP3 = Km_MRP3,
   Vmax_BCRP.c = Vmax_BCRP.c,
   Km_BCRP = Km_BCRP,
-  f_in_out_MRP2 = f_in_out_MRP2,
-  f_in_out_MRP3 = f_in_out_MRP3,
-  f_in_out_BCRP = f_in_out_BCRP,
   SF_IN_MRP2 = SF_IN_MRP2,
   SF_LI_MRP2 = SF_LI_MRP2,
   SF_LI_MRP3 = SF_LI_MRP3,
@@ -756,12 +762,12 @@ R.PBK.model <- function(t, state, parms){
     CVS_aZEL_gluc <- CS_aZEL_gluc/aZEL_gluc_PS * aZEL_gluc_BPR
    
     
-    ## IV Perf ----
-    if(t<=6){DoseOn=1} else{DoseOn=0}
-    
-    
-    IV = IVDOSEumol*DoseOn         # ug, PFOA oral dose
-    
+    # ## IV Perf ----
+    # if(t<=6){DoseOn=1} else{DoseOn=0}
+    # 
+    # 
+    # IV = IVDOSEumol*DoseOn         # ug, PFOA oral dose
+    # 
     ## Differential Equations ----
     
     dAOD_ZEN <- - k_GER*AOD_ZEN                                        
@@ -821,7 +827,7 @@ R.PBK.model <- function(t, state, parms){
     dAF_ZEN <- QF*(CB_ZEN-CVF_ZEN) 
     
     # Blood
-    dAB_ZEN <-  - (QSI + QL + QR + QS + QF)*CB_ZEN + IV + 
+    dAB_ZEN <-  - (QSI + QL + QR + QS + QF)*CB_ZEN + #IV + 
       + (QSI + QL)*CVL_ZEN + 
       + QF*CVF_ZEN + QR*CVR_ZEN + QS*CVS_ZEN + 
       - GFR*CB_ZEN*ZEN_fup +
@@ -1234,7 +1240,7 @@ MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone",
 
 ## Exposure ---- 
 
-Select_AdminType <- "IV" # IV # PO
+Select_AdminType <- "PO" # IV # PO
 Select_Author <- "Shin" # Shin # Q.Lu # Videmann 
 
 BW <- if(Select_Author == "Shin"){0.26
@@ -1249,7 +1255,7 @@ ODOSEumol <- ((ODOSEmg*1000)/MW_ZEN)*BW                       # μmol
 
 # IV dose
 IVDOSEmg <- if(Select_AdminType != "IV"){0
-}else if(Select_Author == "Shin"){2.25 #4 #2 # 4 #8#1.13#8
+}else if(Select_Author == "Shin"){4 #2 # 4 #8#1.13#8
 }else if(Select_Author == "Q.Lu"){6.65}
 
 IVDOSEumol <-((IVDOSEmg*1000)/MW_ZEN)*BW                      # μmol
@@ -1272,7 +1278,7 @@ A_init <- c(
   AR_ZEN = 0,
   AS_ZEN = 0,
   AF_ZEN = 0, 
-  AB_ZEN = 0,#ifelse(Select_AdminType != "PO", IVDOSEumol, 0), 
+  AB_ZEN = ifelse(Select_AdminType != "PO", IVDOSEumol, 0), 
   AUR_ZEN = 0, 
   AFE_ZEN = 0, 
   

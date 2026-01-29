@@ -79,8 +79,8 @@ Obs <- Observed.data %>%
   filter(AdminType == Select_AdminType,
          TestCompound == "ZEN", #other options are ZEN_glu and a_ZEL
          Author == Select_Author,
-         SampleCompound == "ZEN",
-         IVPerfRate == IVDOSEmg
+         SampleCompound == "ZEN"#,
+         # IVPerfRate == IVDOSEmg
          # IVBolusDose == IVDOSEmg
          ) %>%  
   select(c("Author", "Sex",
@@ -106,8 +106,8 @@ if(Select_Author == "Videmann"){
   Cobs <- Obs %>%
     filter(Tissue %in% c("Blood", "Intestine", "Liver"))
   Cpre <- Predicted.data %>% filter(Substance == "ZEN", 
-                                    Tissue %in% c("Blood", "Intestine", "Liver")) %>% 
-    filter(Time == 6)
+                                    Tissue %in% c("Blood", "Intestine", "Liver"))# %>% 
+    # filter(Time == 6)
 }else{
   Cobs <- Obs %>% filter(Tissue == "Blood")
   Cpre <- Predicted.data %>% filter(Substance == "ZEN", 
