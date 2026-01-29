@@ -31,8 +31,8 @@ R.PBK.model <- function(t, state, parms){
     VR_gluc <- FV_R_gluc*BW
     VF <- FV_F*BW  
     VB <- FV_B*BW   
-    VS <- (0.96*BW) - (VSI + VL + VR + VF + VB)                        # fraction of slowly perfused tissue (Bone/Skin/Adipose/Muscle/(brain and testes) (slowly equilibrating tissues with large time constants))
-    VS_gluc <- (0.96*BW) - (VSI + VL + VR_gluc + VF + VB)                        # fraction of slowly perfused tissue (Bone/Skin/Adipose/Muscle/(brain and testes) (slowly equilibrating tissues with large time constants))
+    VS <- (0.96*BW) - (VSI + VL + VR + VF + VB)                                 # fraction of slowly perfused tissue (Bone/Skin/Adipose/Muscle/(brain and testes) (slowly equilibrating tissues with large time constants))
+    VS_gluc <- (0.96*BW) - (VSI + VL + VR_gluc + VF + VB)                       # fraction of slowly perfused tissue (Bone/Skin/Adipose/Muscle/(brain and testes) (slowly equilibrating tissues with large time constants))
     
     
     # For MRP3 kidney excretion use only
@@ -64,11 +64,11 @@ R.PBK.model <- function(t, state, parms){
     ## Intestinal absorption 
     
     ### Passive permeability
-    CLduo_ZEN <- PappCaco2_ZEN * SAduo * 3600 * 1e-3                     # L/h; from cm/s to cm3/h to 
-    CLjej_ZEN <- PappCaco2_ZEN * SAjej * 3600 * 1e-3                     # L/h; from cm/s to cm3/h to 
-    CLile_ZEN <- PappCaco2_ZEN * SAile * 3600 * 1e-3                     # L/h; from cm/s to cm3/h to 
+    CLduo_ZEN <- PappCaco2_ZEN * SAduo * 3600 * 1e-3                            # L/h; from cm/s to cm3/h to 
+    CLjej_ZEN <- PappCaco2_ZEN * SAjej * 3600 * 1e-3                            # L/h; from cm/s to cm3/h to 
+    CLile_ZEN <- PappCaco2_ZEN * SAile * 3600 * 1e-3                            # L/h; from cm/s to cm3/h to 
     
-    CLile_aZEL <- PappCaco2_aZEL * SAile * 3600 * 1e-3                   # L/h; from cm/min to cm3/h to 
+    CLile_aZEL <- PappCaco2_aZEL * SAile * 3600 * 1e-3                          # L/h; from cm/min to cm3/h to 
     
     
     ### Lymphatic absorption
@@ -78,40 +78,37 @@ R.PBK.model <- function(t, state, parms){
     ## Metabolism
     
     ### Small intestinal tissue
-    Vmax_SI_aZEL <- Vmax_SI_aZEL.c * 60 * S9SI * VJej * 1e3            # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
-    Vmax_SI_bZEL <- Vmax_SI_bZEL.c * 60 * S9SI * VJej * 1e3            # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
+    Vmax_SI_aZEL <- Vmax_SI_aZEL.c * 60 * S9SI * VJej * 1e3                     # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
+    Vmax_SI_bZEL <- Vmax_SI_bZEL.c * 60 * S9SI * VJej * 1e3                     # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     Vmax_SI_ZEN_gluc <- Vmax_SI_ZEN_gluc.c * 60 * 
-      S9SI * VJej * 1e3                                          # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
+      S9SI * VJej * 1e3                                                         # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     Vmax_SI_aZEL_gluc <- Vmax_SI_aZEL_gluc.c * 60 * 
-      S9SI * VJej  * 1e3                                         # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
+      S9SI * VJej  * 1e3                                                        # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     
     ### Liver
-    Vmax_L_aZEL <- Vmax_L_aZEL.c * 60 * S9L * VL * 1e3                 # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
-    Vmax_L_bZEL <- Vmax_L_bZEL.c * 60 * S9L * VL * 1e3                 # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
+    Vmax_L_aZEL <- Vmax_L_aZEL.c * 60 * S9L * VL * 1e3                          # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
+    Vmax_L_bZEL <- Vmax_L_bZEL.c * 60 * S9L * VL * 1e3                          # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
     Vmax_L_ZEN_gluc <- Vmax_L_ZEN_gluc.c * 60 * 
-      S9L * VL * 1e3                                             # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
+      S9L * VL * 1e3                                                            # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
     Vmax_L_aZEL_gluc <- Vmax_L_aZEL_gluc.c * 60 *
-      S9L * VL * 1e3                                             # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
+      S9L * VL * 1e3                                                            # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
     
     
     ## Active transport
     
-    Vmax_MRP2_LI <- Vmax_MRP2.c * 60 * SF_LI_MRP2 * VL * 1e6      # umol/min/mg liver; scaling: umol/min->h/mg MRP2 * mg MRP2 / mg liver -> whole liver (kg) 
-    Vmax_MRP2_IN <- Vmax_MRP2.c * 60 * SF_IN_MRP2 * VSI * 1e6    # umol/min/mg intestine; scaling: umol/min->h/mg MRP2 * mg MRP2 / mg liver -> whole intestine (kg)  
+    Vmax_MRP2_LI <- Vmax_MRP2.c * 60 * SF_LI_MRP2 * VL * 1e6                    # umol/min/mg liver; scaling: umol/min->h/mg MRP2 * mg MRP2 / mg liver -> whole liver (kg) 
+    Vmax_MRP2_IN <- Vmax_MRP2.c * 60 * SF_IN_MRP2 * VSI * 1e6                   # umol/min/mg intestine; scaling: umol/min->h/mg MRP2 * mg MRP2 / mg liver -> whole intestine (kg)  
     
-    Vmax_MRP3_LI <- Vmax_MRP3.c * 60 * SF_LI_MRP3 * VL * 1e6      # umol/min/mg liver; scaling: umol/min->h/mg MRP3 * mg MRP3 / mg liver -> whole liver (kg)
-    Vmax_MRP2_KI <- Vmax_MRP2.c * 60 * SF_KI_MRP2 * VK * 1e6      # umol/min/mg kidney; scaling: umol/min->h/mg MRP3 * mg MRP3 / mg liver -> whole VK_IC (kg)
+    Vmax_MRP3_LI <- Vmax_MRP3.c * 60 * SF_LI_MRP3 * VL * 1e6                    # umol/min/mg liver; scaling: umol/min->h/mg MRP3 * mg MRP3 / mg liver -> whole liver (kg)
+    Vmax_MRP2_KI <- Vmax_MRP2.c * 60 * SF_KI_MRP2 * VK * 1e6                    # umol/min/mg kidney; scaling: umol/min->h/mg MRP3 * mg MRP3 / mg liver -> whole VK_IC (kg)
     
-    Vmax_BCRP_IN <- Vmax_BCRP.c * 60 * SF_LI_BCRP * VSI * 1e6      # umol/min/mg liver; scaling: umol/min->h/mg BCRP * mg BCRP / mg liver -> whole liver (kg)
-    Vmax_BCRP_LI <- Vmax_BCRP.c * 60 * SF_LI_BCRP * VL * 1e6      # umol/min/mg liver; scaling: umol/min->h/mg BCRP * mg BCRP / mg liver -> whole liver (kg)
+    Vmax_BCRP_IN <- Vmax_BCRP.c * 60 * SF_LI_BCRP * VSI * 1e6                   # umol/min/mg liver; scaling: umol/min->h/mg BCRP * mg BCRP / mg liver -> whole liver (kg)
+    Vmax_BCRP_LI <- Vmax_BCRP.c * 60 * SF_LI_BCRP * VL * 1e6                    # umol/min/mg liver; scaling: umol/min->h/mg BCRP * mg BCRP / mg liver -> whole liver (kg)
     
     ## Biliary clearance
     
-    CL_Bile <- ifelse(t > 3, 1, Bile.fasted) # ifelse(t > 3 && t < 19, Bile.fed, Bile.fasted) 1
+    CL_Bile <- ifelse(t > 3, 1, Bile.fasted) 
     
-    # ZEN_gluc_fut <-1
-    # aZEL_gluc_fut <-1
-    # 
     ## Tissue Concentrations ----
     
     ### Zearalenone ----
@@ -228,12 +225,10 @@ R.PBK.model <- function(t, state, parms){
       - CLile_ZEN*CIleL_ZEN - ka_Lymph*AIleL_ZEN +  
       + ((Vmax_Hydro_ZEN_gluc*CIleL_ZEN_gluc) / 
            (Km_Hydro_ZEN_gluc + (CIleL_ZEN_gluc)))
-    # + k_Hydro*AIleL_ZEN_gluc 
     
     dACOL_ZEN <- + k_ile*AIleL_ZEN - k_CO*ACOL_ZEN +
       + ((Vmax_Hydro_ZEN_gluc*CCOL_ZEN_gluc) / 
            (Km_Hydro_ZEN_gluc + (CCOL_ZEN_gluc)))
-    # + k_Hydro*ACOL_ZEN_gluc 
     
     # Small intestinal tissue 
     dADuo_ZEN <- CLduo_ZEN*CDuoL_ZEN + QDuo*(CB_ZEN-CVDuo_ZEN) 
@@ -300,12 +295,10 @@ R.PBK.model <- function(t, state, parms){
     dAIleL_ZEN_gluc <- k_jej*AJejL_ZEN_gluc - k_ile*AIleL_ZEN_gluc +
       - ((Vmax_Hydro_ZEN_gluc*CIleL_ZEN_gluc) / 
            (Km_Hydro_ZEN_gluc + (CIleL_ZEN_gluc)))
-    # - k_Hydro*AIleL_ZEN_gluc
     
     dACOL_ZEN_gluc <- k_ile*AIleL_ZEN_gluc - k_CO*ACOL_ZEN_gluc +
       - ((Vmax_Hydro_ZEN_gluc*CCOL_ZEN_gluc) / 
            (Km_Hydro_ZEN_gluc + (CCOL_ZEN_gluc)))
-    # - k_Hydro*ACOL_ZEN_gluc  
     
     # Small Intestinal tissue
     dAJej_IC_ZEN_gluc <- ((Vmax_SI_ZEN_gluc*CJej_ZEN*ZEN_fut) / 
@@ -352,9 +345,7 @@ R.PBK.model <- function(t, state, parms){
     dAB_ZEN_gluc <- - (QSI + QL + QK + QR_gluc + QS_gluc + QF)*CB_ZEN_gluc +   
       + (QSI + QL)*CVL_EC_ZEN_gluc + 
       + QF*CVF_ZEN_gluc + QK*CVK_ZEN_gluc + QR_gluc*CVR_ZEN_gluc + QS_gluc*CVS_ZEN_gluc +
-      - GFR*CB_ZEN_gluc*ZEN_gluc_fup #+
-    # - ((Vmax_MRP2_KI*CB_ZEN_gluc*ZEN_gluc_fut) / 
-    #      (Km_MRP2 + (CB_ZEN_gluc*ZEN_gluc_fut)))
+      - GFR*CB_ZEN_gluc*ZEN_gluc_fup 
     
     dAK_ZEN_gluc <- QK*(CB_ZEN_gluc-CVK_ZEN_gluc) +
       + GFR*CB_ZEN_gluc*ZEN_gluc_fup +
@@ -364,9 +355,6 @@ R.PBK.model <- function(t, state, parms){
     # Urine
     dAUR_ZEN_gluc <- ((Vmax_MRP2_KI*CK_ZEN_gluc*ZEN_gluc_fut) / 
                         (Km_MRP2 + (CK_ZEN_gluc*ZEN_gluc_fut)))
-    # dAUR_ZEN_gluc <- GFR*CB_ZEN_gluc*ZEN_gluc_fup + 
-    #   ((Vmax_MRP2_KI*CB_ZEN_gluc*ZEN_gluc_fut) / 
-    #      (Km_MRP2 + (CB_ZEN_gluc*ZEN_gluc_fut)))
     # 
     # Feces
     dAFE_ZEN_gluc <- k_CO*ACOL_ZEN_gluc 
@@ -378,12 +366,10 @@ R.PBK.model <- function(t, state, parms){
       - CLile_aZEL*CIleL_aZEL - ka_Lymph*AIleL_aZEL +  
       + ((Vmax_Hydro_aZEL_gluc*CIleL_ZEN_gluc) / 
            (Km_Hydro_aZEL_gluc + (CIleL_ZEN_gluc)))
-    # + k_Hydro*AIleL_aZEL_gluc 
     
     dACOL_aZEL <- + k_ile*AIleL_aZEL - k_CO*ACOL_aZEL +
       + ((Vmax_Hydro_aZEL_gluc*CCOL_ZEN_gluc) / 
            (Km_Hydro_aZEL_gluc + (CCOL_ZEN_gluc)))
-    # + k_Hydro*ACOL_aZEL_gluc  
     
     # Small intestinal tissue 
     dAJej_aZEL <- ((Vmax_SI_aZEL*CJej_ZEN*ZEN_fut) / 
@@ -441,13 +427,11 @@ R.PBK.model <- function(t, state, parms){
     dAIleL_aZEL_gluc <- k_jej*AJejL_aZEL_gluc - k_ile*AIleL_aZEL_gluc +
       - ((Vmax_Hydro_aZEL_gluc*CIleL_ZEN_gluc) / 
            (Km_Hydro_aZEL_gluc + (CIleL_ZEN_gluc)))
-    # - k_Hydro*AIleL_aZEL_gluc
     
     dACOL_aZEL_gluc <- k_ile*AIleL_aZEL_gluc +
       - k_CO*ACOL_aZEL_gluc +
       - ((Vmax_Hydro_aZEL_gluc*CCOL_ZEN_gluc) / 
            (Km_Hydro_aZEL_gluc + (CCOL_ZEN_gluc)))
-    # - k_Hydro*ACOL_aZEL_gluc  
     
     # Small Intestinal tissue
     dAJej_IC_aZEL_gluc <- ((Vmax_SI_aZEL_gluc*CJej_aZEL*aZEL_fut) / 
@@ -494,9 +478,7 @@ R.PBK.model <- function(t, state, parms){
     dAB_aZEL_gluc <- - (QSI + QL + QK + QR_gluc + QS_gluc + QF)*CB_aZEL_gluc +   
       + (QSI + QL)*CVL_EC_aZEL_gluc + 
       + QF*CVF_aZEL_gluc + QK*CVK_aZEL_gluc + QR_gluc*CVR_aZEL_gluc + QS_gluc*CVS_aZEL_gluc +
-      - GFR*CB_aZEL_gluc*aZEL_gluc_fup #+
-    # - ((Vmax_MRP2_KI*CB_aZEL_gluc*aZEL_gluc_fut) / 
-    #      (Km_MRP2 + (CB_aZEL_gluc*aZEL_gluc_fut)))
+      - GFR*CB_aZEL_gluc*aZEL_gluc_fup 
     
     dAK_aZEL_gluc <- QK*(CB_aZEL_gluc-CVK_aZEL_gluc) + 
       + GFR*CB_aZEL_gluc*aZEL_gluc_fup +
@@ -506,9 +488,6 @@ R.PBK.model <- function(t, state, parms){
     # Urine
     dAUR_aZEL_gluc <- ((Vmax_MRP2_KI*CK_aZEL_gluc*aZEL_gluc_fut) / 
                          (Km_MRP2 + (CK_aZEL_gluc*aZEL_gluc_fut)))
-    # dAUR_aZEL_gluc <- GFR*CB_aZEL_gluc*aZEL_gluc_fup + 
-    #   ((Vmax_MRP2_KI*CB_aZEL_gluc*aZEL_gluc_fut) / 
-    #      (Km_MRP2 + (CB_aZEL_gluc*aZEL_gluc_fut)))
     
     # Feces
     dAFE_aZEL_gluc <- k_CO*ACOL_aZEL_gluc 

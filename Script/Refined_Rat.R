@@ -546,11 +546,11 @@ Parameters_df <- rbind(Kp_fus_BPR_df, Other_params) %>%
   mutate(Value = as.numeric(Value))
 
 Parameters_df <- Parameters_df %>% filter(!grepl("ZEN_PK", Parameter),
-                              !grepl("ZEN_PR_gluc", Parameter),
-                              !grepl("aZEL_PK", Parameter),
-                              !grepl("aZEL_PR_gluc", Parameter),
-                              !grepl("ZEN_gluc_PR", Parameter),
-                              !grepl("aZEL_gluc_PR", Parameter))
+                                          !grepl("ZEN_PR_gluc", Parameter),
+                                          !grepl("aZEL_PK", Parameter),
+                                          !grepl("aZEL_PR_gluc", Parameter),
+                                          !grepl("\\bZEN_gluc_PR\\b", Parameter),
+                                          !grepl("\\baZEL_gluc_PR\\b", Parameter))
 
 write.csv(Parameters_df, here("Input", "Parameters_rat.csv"), row.names = FALSE)
 
