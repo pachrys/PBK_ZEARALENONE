@@ -333,9 +333,6 @@ rm(Kp_fus_BPR)
 PappCaco2_ZEN <- 10.4 * 1e-6                                                    # cm/s 
 PappCaco2_aZEL <- 5.4 * 1e-6                                                    # cm/s
 
-# Absorption to (& release from) the lymph
-ka_Lymph <- 0.55                                                                # /h
-
 
 ### Metabolism ----
 
@@ -503,7 +500,6 @@ Other_params <- tibble(
   GFR = GFR,
   PappCaco2_ZEN = PappCaco2_ZEN,
   PappCaco2_aZEL = PappCaco2_aZEL,
-  ka_Lymph = ka_Lymph,
   S9SI =  S9SI,
   Vmax_SI_aZEL.c = Vmax_SI_aZEL.c,
   Km_SI_aZEL = Km_SI_aZEL,
@@ -549,8 +545,8 @@ Parameters_df <- Parameters_df %>% filter(!grepl("ZEN_PK", Parameter),
                               !grepl("ZEN_PR_gluc", Parameter),
                               !grepl("aZEL_PK", Parameter),
                               !grepl("aZEL_PR_gluc", Parameter),
-                              !grepl("ZEN_gluc_PR", Parameter),
-                              !grepl("aZEL_gluc_PR", Parameter))
+                              !grepl("\\bZEN_gluc_PR\\b", Parameter),
+                              !grepl("\\baZEL_gluc_PR\\b", Parameter))
 
 write.csv(Parameters_df, here("Input", "Parameters_rat.csv"), row.names = FALSE)
 
@@ -625,10 +621,6 @@ R.PBK.model <- function(t, state, parms){
     CLile_ZEN <- PappCaco2_ZEN * SAile * 3600 * 1e-3                            # L/h; from cm/s to cm3/h to 
     
     CLile_aZEL <- PappCaco2_aZEL * SAile * 3600 * 1e-3                          # L/h; from cm/min to cm3/h to 
-    
-    
-    ### Lymphatic absorption
-    ka_Lymph <- ifelse(t > 3 && t < 3.5, ka_Lymph, 0) 
     
     
     ## Metabolism
@@ -771,13 +763,13 @@ R.PBK.model <- function(t, state, parms){
     
     # Intestinal lumen 
     dADuoL_ZEN <- + k_GER*AOD_ZEN - k_duo*ADuoL_ZEN + 
-      - CLduo_ZEN*CDuoL_ZEN - ka_Lymph*ADuoL_ZEN
+      - CLduo_ZEN*CDuoL_ZEN 
     
     dAJejL_ZEN <- + k_duo*ADuoL_ZEN - k_jej*AJejL_ZEN + 
-      - CLjej_ZEN*CJejL_ZEN - ka_Lymph*AJejL_ZEN
+      - CLjej_ZEN*CJejL_ZEN 
     
     dAIleL_ZEN <- + k_jej*AJejL_ZEN - k_ile*AIleL_ZEN +  
-      - CLile_ZEN*CIleL_ZEN - ka_Lymph*AIleL_ZEN +  
+      - CLile_ZEN*CIleL_ZEN  +
       + ((Vmax_Hydro_ZEN_gluc*CIleL_ZEN_gluc) / 
            (Km_Hydro_ZEN_gluc + (CIleL_ZEN_gluc)))
     
@@ -821,8 +813,7 @@ R.PBK.model <- function(t, state, parms){
     dAB_ZEN <-  - (QSI + QL + QR + QS + QF)*CB_ZEN + #IV + 
       + (QSI + QL)*CVL_ZEN + 
       + QF*CVF_ZEN + QR*CVR_ZEN + QS*CVS_ZEN + 
-      - GFR*CB_ZEN*ZEN_fup +
-      + ka_Lymph*(ADuoL_ZEN + AJejL_ZEN + AIleL_ZEN)
+      - GFR*CB_ZEN*ZEN_fup 
     
     # Urine
     dAUR_ZEN <- GFR*CB_ZEN*ZEN_fup 
@@ -919,7 +910,7 @@ R.PBK.model <- function(t, state, parms){
     
     # Intestinal lumen
     dAIleL_aZEL <- - k_ile*AIleL_aZEL +  
-      - CLile_aZEL*CIleL_aZEL - ka_Lymph*AIleL_aZEL +  
+      - CLile_aZEL*CIleL_aZEL +  
       + ((Vmax_Hydro_aZEL_gluc*CIleL_ZEN_gluc) / 
            (Km_Hydro_aZEL_gluc + (CIleL_ZEN_gluc)))
     
@@ -958,8 +949,7 @@ R.PBK.model <- function(t, state, parms){
     dAB_aZEL <- - (QSI + QL + QR + QS + QF)*CB_aZEL +  
       + (QSI + QL)*CVL_aZEL + 
       + QF*CVF_aZEL + QR*CVR_aZEL + QS*CVS_aZEL +
-      - GFR*CB_aZEL*aZEL_fup +
-      + ka_Lymph*AIleL_aZEL
+      - GFR*CB_aZEL*aZEL_fup 
     
     # Urine
     dAUR_aZEL <- GFR*CB_aZEL*aZEL_fup
