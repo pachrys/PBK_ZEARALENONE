@@ -73,7 +73,7 @@ F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo)) %>%
 # Reference (if not stated otherwise): Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307
 
 # Body weight 
-BW <- 0.250                            # Kg
+BW <- 0.250                                                                     # Kg
 
 ### Fractional volumes ----           
 
@@ -85,19 +85,15 @@ FV_Ile <- 0.171                                                                 
 FV_SI_IC <- pull(Rat.input[Rat.input$tissue == "Gut", "f_iw"])                  # fraction of small intestine that is intracellular water
 FV_SI_EC <- pull(Rat.input[Rat.input$tissue == "Gut", "f_ew"])                  # fraction of small intestine that is extracellular water
 
-FV_CO <- 0.002                                                                  # colon tissue; calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 (total volume was 0.238ml)
-
 FV_SIL <- 0.014                                                                 # small intestine lumen 
 FV_duol <- 0.183                                                                # duodenum lumen; calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
 FV_jejl <- 0.334                                                                # jejunum lumen; calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
 FV_ilel <- 0.483                                                                # ileum lumen; calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
 
-FV_COL <- 0.012                                                                 # colon lumen; 
-
-
 FV_L <- pull(Rat.input[Rat.input$tissue == "Liver", "F_Vo"])                    # liver tissue
 FV_L_IC <- pull(Rat.input[Rat.input$tissue == "Liver", "f_iw"])                 # fraction of liver that is intracellular water
 FV_L_EC <- pull(Rat.input[Rat.input$tissue == "Liver", "f_ew"])                 # fraction of liver that is extracellular water
+FV_F <- pull(Rat.input[Rat.input$tissue == "Adipose", "F_Vo"])                  # fat tissue
 FV_R <- pull(Rat.input[Rat.input$tissue == "Heart", "F_Vo"]) +
   pull(Rat.input[Rat.input$tissue == "Kidney", "F_Vo"]) +
   pull(Rat.input[Rat.input$tissue == "Spleen", "F_Vo"]) +
@@ -105,13 +101,10 @@ FV_R <- pull(Rat.input[Rat.input$tissue == "Heart", "F_Vo"]) +
 FV_R_gluc <- pull(Rat.input[Rat.input$tissue == "Heart", "F_Vo"]) +
   pull(Rat.input[Rat.input$tissue == "Spleen", "F_Vo"]) +
   pull(Rat.input[Rat.input$tissue == "Lung", "F_Vo"])                           # rapidly perfused tissues
-FV_F <- pull(Rat.input[Rat.input$tissue == "Adipose", "F_Vo"])                  # fat tissue
 FV_B <- pull(Rat.input[Rat.input$tissue == "RBCs", "F_Vo"]) + 
   pull(Rat.input[Rat.input$tissue == "Plasma", "F_Vo"])                         # blood
 
 FV_K <- pull(Rat.input[Rat.input$tissue == "Kidney", "F_Vo"])                   # kidney tissue
-FV_K_IC <- pull(Rat.input[Rat.input$tissue == "Kidney", "f_iw"])
-FV_K_EC <- pull(Rat.input[Rat.input$tissue == "Kidney", "f_ew"])
 
 VBile <- 16e-3                                                                  # L from ml; Reference: Vonk, Doorn, and Strubbe 1978
 VUrine.c <- 10.9e-3/235.2e-3                                                    # L/BW from ml/235.2g; Reference: de Castro et al. 2013 DOI: 10.5935/0101-2800.20140023
@@ -176,14 +169,12 @@ t_SI <- 1.63                                                                    
 t_si_duo <- 0.06*t_SI                                                           # h; duodenum transit/residence time
 t_si_jej <- 0.769*t_SI                                                          # h; jejunum transit/residence time 
 t_si_ile <- 0.171*t_SI                                                          # h; ileum transit/residence time 
-t_CO <- 19.7                                                                    # h; colon transit/residence time
 
 # Emptying/transit/residence rates
 k_GER = 1/t_GER                                                                 # /h; stomach 
 k_duo <- 1/t_si_duo                                                             # /h; duodenum 
 k_jej <- 1/t_si_jej                                                             # /h; jejunum
 k_ile <- 1/t_si_ile                                                             # /h; ileum
-k_CO <- 1/t_CO                                                                  # /h; colon
 
 # Glomerular filtration rate
 GFR <- 0.0786                                                                   # L/h; Reference: Grandoni et al. (2019) DOI:  10.5599/admet.638 
@@ -343,19 +334,20 @@ S9SI <- 15.5                                                                    
 # Hydrolysis
 # Assuming the same as liver
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-Vmax_SI_aZEL.c <- 0 #32*1e-6                                                       # umol/min/mg protein; from pmol-> umol
+Vmax_SI_aZEL.c <- 0 #32*1e-6                                                    # umol/min/mg protein; from pmol-> umol
 Km_SI_aZEL <- 592                                                               # uM 
-Vmax_SI_bZEL.c <- 0 #72*1e-6                                                       # umol/min/mg protein; from pmol-> umol
+Vmax_SI_bZEL.c <- 0 #72*1e-6                                                    # umol/min/mg protein; from pmol-> umol
 Km_SI_bZEL <- 21                                                                # uM 
 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 Vmax_SI_ZEN_gluc.c <-  8.617*1e-3                                               # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                                         # uM 
-Vmax_SI_aZEL_gluc.c <- 0 #6.963*1e-3 *1e6                                          # umol/min/mg protein; from nmol-> umol
+Vmax_SI_aZEL_gluc.c <- 0 #6.963*1e-3 *1e6                                       # umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                                        # uM
 
 # Glucuronide hydrolysis by gmGUS
+# Reference: Ramisetty et al. (2025), table S3 DOI 10.3390/pharmaceutics17070814
 Vmax_Hydro_ZEN_gluc <- 1.12e8/PhysChem$MolecularWeight[3] *0.7e-5               #ng->nmol -> umol/h
 Km_Hydro_ZEN_gluc <- 822/PhysChem$MolecularWeight[3] * 1e2                      #ng->nmol ->umol/ml->L
 Vmax_Hydro_aZEL_gluc <- 1.12e8/PhysChem$MolecularWeight[4] *1e-6                #ng->nmol ->umol/h
@@ -386,7 +378,6 @@ Km_L_aZEL_gluc <- 7.426                                                         
 
 #### Biliary excretion ----
 
-Bile.fed <- 12.7e-6 * 60                                                        # L/h
 Bile.fasted <- 6.35e-6 * 60                                                     # L/h 
 
 
@@ -413,6 +404,9 @@ pmol_mg_MRP3 <- 239.4                                                           
 pmol_mg_BCRP <- 11.4                                                            # pmol transporter/mg total protein
 
 # Protein abundance in vivo (tissues)
+# Reference: Couto et al. (2020) DOI https://doi.org/10.1124/dmd.119.089656
+#            Fallon et al. (2016) DOI 10.1007/s11095-016-1966-5
+
 MW_MRP2 <- 190e3                                                                # kDa -> g/mol; Reference: https://www.sciencedirect.com/science/article/abs/pii/S0308814619305898
 pmolMP_mgP_IN_MRP2 <- 4.76e3/MW_MRP2                                            # pmol MRP2/mg protein in intestine; ng->pg, pg -> pmol; Reference: Gavins et al. 2023 https://doi.org/10.1016/j.biopha.2023.114329 
 pmolMP_mgP_LI_MRP2 <- 2.08                                                      # pmol MRP2/mg protein in liver; Reference: Fallon 2016 DOI 10.1007/s11095-016-1966-5
@@ -424,7 +418,6 @@ pmolMP_mgP_LI_MRP3 <- 0.32                                                      
 MW_BCRP <- 75e3                                                                 # kDa -> g/mol; Reference: Rosenberg et al. 2010 doi: 10.1016/j.str.2010.01.017
 pmolMP_mgP_IN_BCRP <- 12.51e3/MW_BCRP                                           # pmol BCRP/mg protein in intestine; ng->pg, pg -> pmol; Reference: Gavins et al. 2023 https://doi.org/10.1016/j.biopha.2023.114329 
 pmolMP_mgP_LI_BCRP <- 0.17                                                      # pmol BCRP/mg protein in liver; Reference: Fallon 2016 DOI 10.1007/s11095-016-1966-5
-
 
 # Total protein in tissues
 mgP_mgIN <- 0.133                                                               # mg protein/mg intestine
