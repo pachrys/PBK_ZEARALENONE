@@ -4,7 +4,7 @@
 # Date: 30-07-20266
 # --------------------------------------------------------------------------- #
 
-PBK_RUN <- function(y, parms, times){ 
+PBK_RUN <- function(y, parms, times, events){ 
   
   PBK.model <- function(t, state, parms){
     with(as.list(c(state, parms)), {
@@ -20,7 +20,7 @@ PBK_RUN <- function(y, parms, times){
       VDuoL <- VSIL*FV_duol 
       VJejL <- VSIL*FV_jejl 
       VIleL <- VSIL*FV_ilel 
-
+      
       VSI <- FV_SI*BW 
       VDuo <- VSI*FV_Duo
       VJej <- VSI*FV_Jej
@@ -36,16 +36,12 @@ PBK_RUN <- function(y, parms, times){
       VR_gluc <- FV_R_gluc*BW
       VF <- FV_F*BW  
       VB <- FV_B*BW   
-      VS <- (0.96*BW) - (VSI + VL + VR + VF + VB)                                 # fraction of slowly perfused tissue (Bone/Skin/Adipose/Muscle/(brain and testes) (slowly equilibrating tissues with large time constants))
-      VS_gluc <- (0.96*BW) - (VSI + VL + VR_gluc + VF + VB)                       # fraction of slowly perfused tissue (Bone/Skin/Adipose/Muscle/(brain and testes) (slowly equilibrating tissues with large time constants))
+      VS <- (0.96*BW) - (VSI + VL + VR + VF + VB)                               # fraction of slowly perfused tissue (Bone/Skin/Adipose/Muscle/(brain and testes) (slowly equilibrating tissues with large time constants))
+      VS_gluc <- (0.96*BW) - (VSI + VL + VR_gluc + VF + VB)                     # fraction of slowly perfused tissue (Bone/Skin/Adipose/Muscle/(brain and testes) (slowly equilibrating tissues with large time constants))
       
       
       # For MRP3 kidney excretion use only
       VK <- FV_K*BW
-      VK_IC <- VK*FV_K_IC
-      
-      # Urine
-      VUrine <- VUrine.c*BW
       
       ## Blood flow rates 
       QC <- QC  
@@ -69,42 +65,43 @@ PBK_RUN <- function(y, parms, times){
       ## Intestinal absorption 
       
       ### Passive permeability
-      CLduo_ZEN <- PappCaco2_ZEN * SAduo * 3600 * 1e-3                            # L/h; from cm/s to cm3/h to 
-      CLjej_ZEN <- PappCaco2_ZEN * SAjej * 3600 * 1e-3                            # L/h; from cm/s to cm3/h to 
-      CLile_ZEN <- PappCaco2_ZEN * SAile * 3600 * 1e-3                            # L/h; from cm/s to cm3/h to 
+      CLduo_ZEN <- PappCaco2_ZEN * SAduo * 3600 * 1e-3    * 24                  # L/day; from cm/s to cm3/h to 
+      CLjej_ZEN <- PappCaco2_ZEN * SAjej * 3600 * 1e-3    * 24                  # L/day; from cm/s to cm3/h to 
+      CLile_ZEN <- PappCaco2_ZEN * SAile * 3600 * 1e-3    * 24                  # L/day; from cm/s to cm3/h to 
       
-      CLile_aZEL <- PappCaco2_aZEL * SAile * 3600 * 1e-3                          # L/h; from cm/min to cm3/h to 
+      CLile_aZEL <- PappCaco2_aZEL * SAile * 3600 * 1e-3  * 24                  # L/day; from cm/min to cm3/h to 
       
       
       ## Metabolism
       
       ### Small intestinal tissue
-      # Vmax_SI_aZEL <- Vmax_SI_aZEL.c * 60 * S9SI * VJej * 1e3                     # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
-      # Vmax_SI_bZEL <- Vmax_SI_bZEL.c * 60 * S9SI * VJej * 1e3                     # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
-      Vmax_SI_ZEN_gluc <- Vmax_SI_ZEN_gluc.c * 60 * 
-        S9SI * VJej * 1e3                                                         # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
-      # Vmax_SI_aZEL_gluc <- Vmax_SI_aZEL_gluc.c * 60 * 
-      #   S9SI * VJej  * 1e3                                                        # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
+      Vmax_SI_aZEL <- Vmax_SI_aZEL.c * 60 * S9SI * VJej * 1e3   * 24          # umol/day; from umol/ min->day /mg protein -> whole intestine (kg)
+      Vmax_SI_bZEL <- Vmax_SI_bZEL.c * 60 * S9SI * VJej * 1e3   * 24          # umol/day; from umol/ min->day /mg protein -> whole intestine (kg)
+      Vmax_SI_ZEN_gluc <- Vmax_SI_ZEN_gluc.c * 60 * 24 *
+        S9SI * VJej * 1e3                                                       # umol/day; from umol/ min->day /mg protein -> whole intestine (kg)
+      Vmax_SI_aZEL_gluc <- Vmax_SI_aZEL_gluc.c * 60 * 24 *
+        S9SI * VJej  * 1e3                                                    # umol/day; from umol/ min->day /mg protein -> whole intestine (kg)
       
       ### Liver
-      Vmax_L_aZEL <- Vmax_L_aZEL.c * 60 * S9L * VL * 1e3                          # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
-      Vmax_L_bZEL <- Vmax_L_bZEL.c * 60 * S9L * VL * 1e3                          # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
-      Vmax_L_ZEN_gluc <- Vmax_L_ZEN_gluc.c * 60 * 
-        S9L * VL * 1e3                                                            # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
-      Vmax_L_aZEL_gluc <- Vmax_L_aZEL_gluc.c * 60 *
-        S9L * VL * 1e3                                                            # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
+      Vmax_L_aZEL <- Vmax_L_aZEL.c * 60 * S9L * VL * 1e3 * 24                   # umol/day; from umol/ min->day /mg protein -> whole liver (kg)
+      Vmax_L_bZEL <- Vmax_L_bZEL.c * 60 * S9L * VL * 1e3  * 24                  # umol/day; from umol/ min->day /mg protein -> whole liver (kg)
+      Vmax_L_ZEN_gluc <- Vmax_L_ZEN_gluc.c * 60 * 24 *
+        S9L * VL * 1e3                                                          # umol/day; from umol/ min->day /mg protein -> whole liver (kg)
+      Vmax_L_aZEL_gluc <- Vmax_L_aZEL_gluc.c * 60 * 24 *
+        S9L * VL * 1e3                                                          # umol/day; from umol/ min->day /mg protein -> whole liver (kg)
       
+      urine_excretion <- 2.42                                                   # L/day
       
       ## Active transport
       
-      Vmax_MRP2_LI <- Vmax_MRP2.c * 60 * SF_LI_MRP2 * VL * 1e6                    # umol/min/mg liver; scaling: umol/min->h/mg MRP2 * mg MRP2 / mg liver -> whole liver (kg) 
-      Vmax_MRP2_IN <- Vmax_MRP2.c * 60 * SF_IN_MRP2 * VSI * 1e6                   # umol/min/mg intestine; scaling: umol/min->h/mg MRP2 * mg MRP2 / mg liver -> whole intestine (kg)  
+      Vmax_MRP2_LI <- Vmax_MRP2.c * 60 * SF_LI_MRP2 * VL * 1e6 * 24             # umol/min/mg liver; scaling: umol/min->day/mg MRP2 * mg MRP2 / mg liver ->  liver (kg) 
+      Vmax_MRP2_IN <- Vmax_MRP2.c * 60 * SF_IN_MRP2 * VSI * 1e6 * 24            # umol/min/mg intestine; scaling: umol/min->day/mg MRP2 * mg MRP2 / mg liver ->  intestine (kg)  
       
-      Vmax_MRP3_LI <- Vmax_MRP3.c * 60 * SF_LI_MRP3 * VL * 1e6                    # umol/min/mg liver; scaling: umol/min->h/mg MRP3 * mg MRP3 / mg liver -> whole liver (kg)
-      Vmax_MRP2_KI <- Vmax_MRP2.c * 60 * SF_KI_MRP2 * VK * 1e6                    # umol/min/mg kidney; scaling: umol/min->h/mg MRP3 * mg MRP3 / mg liver -> whole VK_IC (kg)
+      Vmax_MRP3_LI <- Vmax_MRP3.c * 60 * SF_LI_MRP3 * VL * 1e6 * 24             # umol/min/mg liver; scaling: umol/min->day/mg MRP3 * mg MRP3 / mg liver ->  liver (kg)
+      Vmax_MRP2_KI <- Vmax_MRP2.c * 60 * SF_KI_MRP2 * VK * 1e6 * 24             # umol/min/mg kidney; scaling: umol/min->day/mg MRP3 * mg MRP3 / mg liver ->  kidney (kg)
       
-      Vmax_BCRP_LI <- Vmax_BCRP.c * 60 * SF_LI_BCRP * VL * 1e6                    # umol/min/mg liver; scaling: umol/min->h/mg BCRP * mg BCRP / mg liver -> whole liver (kg)
-      Vmax_BCRP_IN <- Vmax_BCRP.c * 60 * SF_IN_BCRP * VSI * 1e6                   # umol/min/mg liver; scaling: umol/min->h/mg BCRP * mg BCRP / mg liver -> whole liver (kg)
+      Vmax_BCRP_LI <- Vmax_BCRP.c * 60 * SF_LI_BCRP * VL * 1e6 * 24             # umol/min/mg liver; scaling: umol/min->day/mg BCRP * mg BCRP / mg liver ->  liver (kg)
+      Vmax_BCRP_IN <- Vmax_BCRP.c * 60 * SF_IN_BCRP * VSI * 1e6 * 24            # umol/min/mg liver; scaling: umol/min->day/mg BCRP * mg BCRP / mg liver ->  liver (kg)
       
       ## Biliary clearance
       
@@ -159,15 +156,17 @@ PBK_RUN <- function(y, parms, times){
       CVS_ZEN_gluc <- CS_ZEN_gluc/ZEN_gluc_PS * ZEN_gluc_BPR
       
       ### α-Zearalenol ----
-      CIleL_aZEL = AIleL_aZEL/VIleL
-      CIle_aZEL = AIle_aZEL/VIle
-      CL_aZEL = AL_aZEL/VL  
-      CR_aZEL = AR_aZEL/VR   
-      CS_aZEL = AS_aZEL/VS
-      CF_aZEL = AF_aZEL/VF
-      CB_aZEL = AB_aZEL/VB
+      CIleL_aZEL <- AIleL_aZEL/VIleL
+      CJej_aZEL = AJej_aZEL/VJej
+      CIle_aZEL <- AIle_aZEL/VIle
+      CL_aZEL <- AL_aZEL/VL  
+      CR_aZEL <- AR_aZEL/VR   
+      CS_aZEL <- AS_aZEL/VS
+      CF_aZEL <- AF_aZEL/VF
+      CB_aZEL <- AB_aZEL/VB
       
       CVIle_aZEL <- CIle_aZEL/aZEL_PSI * aZEL_BPR
+      CVJej_aZEL <- CJej_aZEL/aZEL_PSI * aZEL_BPR
       CVL_aZEL <- CL_aZEL/aZEL_PL * aZEL_BPR
       CVF_aZEL <- CF_aZEL/aZEL_PF * aZEL_BPR
       CVR_aZEL <- CR_aZEL/aZEL_PR * aZEL_BPR
@@ -175,8 +174,11 @@ PBK_RUN <- function(y, parms, times){
       
       ### a-Zearalenol-glucuronide ----
       
-      CDuoL_aZEL_gluc = ADuoL_aZEL_gluc/VDuoL
+      CDuoL_aZEL_gluc <- ADuoL_aZEL_gluc/VDuoL
+      CJejL_aZEL_gluc <- AJejL_aZEL_gluc/VJejL
       CIleL_aZEL_gluc <- AIleL_aZEL_gluc/VIleL 
+      CJej_IC_aZEL_gluc <- AJej_IC_aZEL_gluc/VJej_IC
+      CJej_EC_aZEL_gluc <- AJej_EC_aZEL_gluc/VJej_EC
       CL_IC_aZEL_gluc <- AL_IC_aZEL_gluc/VL_IC
       CL_EC_aZEL_gluc <- AL_EC_aZEL_gluc/VL_EC
       CK_aZEL_gluc <- AK_aZEL_gluc/VK
@@ -186,6 +188,7 @@ PBK_RUN <- function(y, parms, times){
       CF_aZEL_gluc <- AF_aZEL_gluc/VF
       CB_aZEL_gluc <- AB_aZEL_gluc/VB
       
+      CVJej_EC_aZEL_gluc <- CJej_EC_aZEL_gluc/aZEL_gluc_PSI * aZEL_gluc_BPR
       CVL_EC_aZEL_gluc <- CL_EC_aZEL_gluc/aZEL_gluc_PL * aZEL_gluc_BPR
       CVF_aZEL_gluc <- CF_aZEL_gluc/aZEL_gluc_PF * aZEL_gluc_BPR
       CVK_aZEL_gluc <- CK_aZEL_gluc/aZEL_gluc_PK * aZEL_gluc_BPR
@@ -194,15 +197,15 @@ PBK_RUN <- function(y, parms, times){
       
       
       ## Oral exposure ----
-      if(t<expSTOP){DoseOn=1} else{DoseOn=0}
-            Oral = expOral*BW*DoseOn         
-      OralD = Oral/Tinput*(t %% tinterval<Tinput)
-      
+      # if(t<expSTOP){DoseOn=1} else{DoseOn=0}
+      #       Oral = exp*BW*DoseOn         
+      # OralD = Oral/Tinput*(t %% tinterval<Tinput)
+      # 
       
       
       ## Differential Equations ----
       
-      dAOD_ZEN <- + OralD - k_GER*AOD_ZEN                                        
+      dAOD_ZEN <- - k_GER*AOD_ZEN      #+ OralD                                  
       
       
       ### Zearalenone ----
@@ -225,7 +228,11 @@ PBK_RUN <- function(y, parms, times){
       
       dAJej_ZEN <- CLjej_ZEN*CJejL_ZEN + QJej*(CB_ZEN-CVJej_ZEN) + 
         - ((Vmax_SI_ZEN_gluc*CJej_ZEN*ZEN_fut) / 
-             (Km_SI_ZEN_gluc + (CJej_ZEN*ZEN_fut))) 
+             (Km_SI_ZEN_gluc + (CJej_ZEN*ZEN_fut))) +
+        - ((Vmax_SI_aZEL*CJej_ZEN*ZEN_fut) / 
+             (Km_SI_aZEL + (CJej_ZEN*ZEN_fut))) +
+        - ((Vmax_SI_bZEL*CJej_ZEN*ZEN_fut) / 
+             (Km_SI_bZEL + (CJej_ZEN*ZEN_fut)))
       
       dAIle_ZEN <- CLile_ZEN*CIleL_ZEN + QIle*(CB_ZEN-CVIle_ZEN) 
       
@@ -262,7 +269,9 @@ PBK_RUN <- function(y, parms, times){
       
       # β-Zearalenol
       dA_bZEL <- ((Vmax_L_bZEL*CL_ZEN*ZEN_fut) / 
-                    (Km_L_bZEL + (CL_ZEN*ZEN_fut))) 
+                    (Km_L_bZEL + (CL_ZEN*ZEN_fut)))  +
+        ((Vmax_SI_bZEL*CJej_ZEN*ZEN_fut) / 
+           (Km_SI_bZEL + (CJej_ZEN*ZEN_fut)))
       
       
       ### Zearalenone glucuronide ----
@@ -347,12 +356,19 @@ PBK_RUN <- function(y, parms, times){
         + ((Vmax_Hydro_aZEL_gluc*CIleL_ZEN_gluc) / 
              (Km_Hydro_aZEL_gluc + (CIleL_ZEN_gluc)))
       
+      
+      dAJej_aZEL <- ((Vmax_SI_aZEL*CJej_ZEN*ZEN_fut) / 
+                       (Km_SI_aZEL + (CJej_ZEN*ZEN_fut))) +
+        + QJej*(CB_aZEL-CVJej_aZEL) +
+        - ((Vmax_SI_aZEL_gluc*CJej_aZEL*aZEL_fut) / 
+             (Km_SI_aZEL_gluc + (CJej_aZEL*aZEL_fut)))
+      
       dAIle_aZEL <- CLile_aZEL*CIleL_aZEL + 
         QIle*(CB_aZEL-CVIle_aZEL) 
       
       # Liver
-      dAL_aZEL <- + QIle*CVIle_aZEL + 
-        (QL+QDuo+QJej)*CB_aZEL - (QSI+QL)*CVL_aZEL + 
+      dAL_aZEL <- + QJej*CVJej_aZEL + QIle*CVIle_aZEL + 
+        (QL+QDuo)*CB_aZEL - (QSI+QL)*CVL_aZEL + 
         + ((Vmax_L_aZEL*CL_ZEN*ZEN_fut) / 
              (Km_L_aZEL + (CL_ZEN*ZEN_fut))) +
         - ((Vmax_L_aZEL_gluc*CL_aZEL*aZEL_fut) / 
@@ -379,15 +395,34 @@ PBK_RUN <- function(y, parms, times){
       # Feces
       dAFE_aZEL <- k_ile*AIleL_aZEL
       
+      
+      
+      
       ### α-Zearalenol glucuronide ----
       
       
       # Intestinal lumen 
-      dADuoL_aZEL_gluc <- CL_Bile*CBile_aZEL_gluc - k_jej*ADuoL_aZEL_gluc 
+      dADuoL_aZEL_gluc <- CL_Bile*CBile_aZEL_gluc - k_duo*ADuoL_aZEL_gluc 
       
-      dAIleL_aZEL_gluc <- k_jej*ADuoL_aZEL_gluc - k_ile*AIleL_aZEL_gluc + 
+      dAJejL_aZEL_gluc <- + k_duo*ADuoL_aZEL_gluc - k_jej*AJejL_aZEL_gluc +
+        + ((Vmax_MRP2_IN*CJej_IC_aZEL_gluc*aZEL_gluc_fut)/
+             (Km_MRP2 + (CJej_IC_aZEL_gluc*aZEL_gluc_fut))) +
+        + ((Vmax_BCRP_IN*CJej_IC_aZEL_gluc*aZEL_gluc_fut)/
+             (Km_BCRP + (CJej_IC_aZEL_gluc*aZEL_gluc_fut)))
+      
+      dAIleL_aZEL_gluc <- k_jej*AJejL_aZEL_gluc - k_ile*AIleL_aZEL_gluc + 
         - ((Vmax_Hydro_aZEL_gluc*CIleL_ZEN_gluc) / 
-             (Km_Hydro_aZEL_gluc + (CIleL_ZEN_gluc)))
+             (Km_Hydro_aZEL_gluc + (CIleL_ZEN_gluc))) 
+      
+      # Small Intestinal tissue
+      dAJej_IC_aZEL_gluc <- ((Vmax_SI_aZEL_gluc*CJej_aZEL*aZEL_fut) / 
+                               (Km_SI_aZEL_gluc + (CJej_aZEL*aZEL_fut))) +
+        - ((Vmax_MRP2_IN*CJej_IC_aZEL_gluc*aZEL_gluc_fut) / 
+             (Km_MRP2 + (CJej_IC_aZEL_gluc*aZEL_gluc_fut))) +
+        - ((Vmax_BCRP_IN*CJej_IC_aZEL_gluc*aZEL_gluc_fut)/
+             (Km_BCRP + (CJej_IC_aZEL_gluc*aZEL_gluc_fut))) 
+      
+      dAJej_EC_aZEL_gluc <- QJej*(CB_aZEL_gluc-CVJej_EC_aZEL_gluc) 
       
       # Liver
       dAL_IC_aZEL_gluc <- ((Vmax_L_aZEL_gluc*CL_aZEL*aZEL_fut) / 
@@ -399,7 +434,8 @@ PBK_RUN <- function(y, parms, times){
         - ((Vmax_BCRP_LI*CL_IC_aZEL_gluc*aZEL_gluc_fut) / 
              (Km_BCRP + (CL_IC_aZEL_gluc*aZEL_gluc_fut))) 
       
-      dAL_EC_aZEL_gluc <- + (QL+QSI)*CB_aZEL_gluc - (QSI + QL)*CVL_EC_aZEL_gluc + #+ QJej*CVJej_EC_aZEL_gluc +
+      dAL_EC_aZEL_gluc <- + QJej*CVJej_EC_aZEL_gluc +
+        + (QL+QDuo+QIle)*CB_aZEL_gluc - (QSI + QL)*CVL_EC_aZEL_gluc +
         + ((Vmax_MRP3_LI*CL_IC_aZEL_gluc*aZEL_gluc_fut) / 
              (Km_MRP3 + (CL_IC_aZEL_gluc*aZEL_gluc_fut)))
       
@@ -438,7 +474,8 @@ PBK_RUN <- function(y, parms, times){
       dAFE_aZEL_gluc <- k_ile*AIleL_aZEL_gluc
       
       ## Mass balance ----
-      ATotal <- ODOSEumol + IVDOSEumol
+      # dATotal <- OralD
+      # ATotal <- 1 #ODOSEumol
       ACalculated <- AOD_ZEN + 
         
         ADuoL_ZEN + AJejL_ZEN + AIleL_ZEN + 
@@ -466,7 +503,7 @@ PBK_RUN <- function(y, parms, times){
         AFE_ZEN_gluc +
         
         AIleL_aZEL + 
-        AIle_aZEL + 
+        AJej_aZEL + AIle_aZEL +
         AL_aZEL + 
         AR_aZEL +
         AS_aZEL +
@@ -475,7 +512,8 @@ PBK_RUN <- function(y, parms, times){
         AUR_aZEL +
         AFE_aZEL +
         
-        ADuoL_aZEL_gluc + AIleL_aZEL_gluc + 
+        ADuoL_aZEL_gluc + AJejL_aZEL_gluc + AIleL_aZEL_gluc +
+        AJej_IC_aZEL_gluc + AJej_EC_aZEL_gluc +
         AL_IC_aZEL_gluc + AL_EC_aZEL_gluc +
         ABile_aZEL_gluc + 
         AR_aZEL_gluc + 
@@ -486,7 +524,7 @@ PBK_RUN <- function(y, parms, times){
         AUR_aZEL_gluc +
         AFE_aZEL_gluc 
       
-      MB <- ATotal - ACalculated + 1
+      # MB <- ATotal - ACalculated + 1
       
       
       
@@ -520,7 +558,7 @@ PBK_RUN <- function(y, parms, times){
         dAFE_ZEN_gluc ,
         
         dAIleL_aZEL, 
-        dAIle_aZEL, 
+        dAJej_aZEL, dAIle_aZEL,
         dAL_aZEL,
         dAR_aZEL,
         dAS_aZEL,
@@ -529,7 +567,8 @@ PBK_RUN <- function(y, parms, times){
         dAUR_aZEL,
         dAFE_aZEL,
         
-        dADuoL_aZEL_gluc, dAIleL_aZEL_gluc, 
+        dADuoL_aZEL_gluc, dAJejL_aZEL_gluc, dAIleL_aZEL_gluc,
+        dAJej_IC_aZEL_gluc, dAJej_EC_aZEL_gluc,
         dAL_IC_aZEL_gluc, dAL_EC_aZEL_gluc,
         dABile_aZEL_gluc,
         dAR_aZEL_gluc,
@@ -538,11 +577,13 @@ PBK_RUN <- function(y, parms, times){
         dAB_aZEL_gluc,
         dAK_aZEL_gluc,
         dAUR_aZEL_gluc,
-        dAFE_aZEL_gluc 
+        dAFE_aZEL_gluc #,
+        
+        # dATotal
       ),
-      c(ATotal = ATotal,
+      c(#ATotal = ATotal,
         ACalculated = ACalculated,
-        MB = MB,
+        #MB = MB,
         CDuoL_ZEN = CDuoL_ZEN, CJejL_ZEN = CJejL_ZEN, CIleL_ZEN = CIleL_ZEN, #CCOL_ZEN = CCOL_ZEN,
         CDuo_ZEN = CDuo_ZEN, CJej_ZEN = CJej_ZEN, CIle_ZEN = CIle_ZEN,
         CL_ZEN = CL_ZEN,
@@ -550,8 +591,7 @@ PBK_RUN <- function(y, parms, times){
         CS_ZEN = CS_ZEN,
         CF_ZEN = CF_ZEN,
         CB_ZEN = CB_ZEN,
-        CUrine_ZEN = AUR_ZEN/VUrine,
-        
+
         CDuoL_ZEN_gluc = CDuoL_ZEN_gluc, CJejL_ZEN_gluc = CJejL_ZEN_gluc, CIleL_ZEN_gluc = CIleL_ZEN_gluc, #CCOL_ZEN_gluc = CCOL_ZEN_gluc,
         CJej_ZEN_gluc = CJej_IC_ZEN_gluc, 
         CL_ZEN_gluc = CL_IC_ZEN_gluc, 
@@ -561,37 +601,37 @@ PBK_RUN <- function(y, parms, times){
         CF_ZEN_gluc = CF_ZEN_gluc,
         CB_ZEN_gluc = CB_ZEN_gluc,
         CK_ZEN_gluc = CK_ZEN_gluc,
-        CUrine_ZEN_gluc = AUR_ZEN_gluc/VUrine,
-        
+
         CIleL_aZEL = CIleL_aZEL, 
-        CIle_aZEL = CIle_aZEL, 
+        CJej_aZEL = CJej_aZEL, CIle_aZEL = CIle_aZEL,
         CL_aZEL = CL_aZEL,
         CR_aZEL = CR_aZEL,
         CS_aZEL = CS_aZEL,
         CF_aZEL = CF_aZEL,
         CB_aZEL = CB_aZEL,
-        CUrine_aZEL = AUR_aZEL/VUrine,
+
         
-        
-        CDuoL_aZEL_gluc = CDuoL_aZEL_gluc, CIleL_aZEL_gluc = CIleL_aZEL_gluc, #CCOL_aZEL_gluc = CCOL_aZEL_gluc, #CJejL_aZEL_gluc = CJejL_aZEL_gluc
+        CDuoL_aZEL_gluc = CDuoL_aZEL_gluc, CJejL_aZEL_gluc = CJejL_aZEL_gluc, CIleL_aZEL_gluc = CIleL_aZEL_gluc, #CCOL_aZEL_gluc = CCOL_aZEL_gluc, #CJejL_aZEL_gluc = CJejL_aZEL_gluc
+        CJej_aZEL_gluc = CJej_IC_aZEL_gluc, 
         CL_aZEL_gluc = CL_IC_aZEL_gluc, 
         CBile_aZEL_gluc = CBile_aZEL_gluc,
         CR_aZEL_gluc = CR_aZEL_gluc,
         CS_aZEL_gluc = CS_aZEL_gluc,
         CF_aZEL_gluc = CF_aZEL_gluc,
         CB_aZEL_gluc = CB_aZEL_gluc,
-        CK_aZEL_gluc = CK_aZEL_gluc,
-        CUrine_aZEL_gluc = AUR_aZEL_gluc/VUrine
-        
+        CK_aZEL_gluc = CK_aZEL_gluc
+
       ))
       
     })
   }
   
   output_PBK <-lsoda(y = y, 
-                      times = times, 
-                      func = PBK.model,
-                      parms = parms)
+                     times = times, 
+                     func = PBK.model,
+                     parms = parms ,
+                     events = list(data = Dosingevents)
+                     )
   
   return(as.data.frame(output_PBK))
 }

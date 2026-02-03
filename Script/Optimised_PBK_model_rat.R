@@ -14,7 +14,7 @@ R.PBK.model <- function(t, state, parms){
     VDuoL <- VSIL*FV_duol 
     VJejL <- VSIL*FV_jejl 
     VIleL <- VSIL*FV_ilel 
-    VCOL <- FV_COL*BW
+    # VCOL <- FV_COL*BW
     
     VSI <- FV_SI*BW 
     VDuo <- VSI*FV_Duo
@@ -37,10 +37,10 @@ R.PBK.model <- function(t, state, parms){
     
     # For MRP3 kidney excretion use only
     VK <- FV_K*BW
-    VK_IC <- VK*FV_K_IC
+    # VK_IC <- VK*FV_K_IC
     
     # Urine
-    VUrine <- VUrine.c*BW
+    # VUrine <- VUrine.c*BW
     
     ## Blood flow rates 
     QC <- QC  
@@ -152,13 +152,13 @@ R.PBK.model <- function(t, state, parms){
     CVS_ZEN_gluc <- CS_ZEN_gluc/ZEN_gluc_PS * ZEN_gluc_BPR
     
     ### α-Zearalenol ----
-    CIleL_aZEL = AIleL_aZEL/VIleL
-    CIle_aZEL = AIle_aZEL/VIle
-    CL_aZEL = AL_aZEL/VL  
-    CR_aZEL = AR_aZEL/VR   
-    CS_aZEL = AS_aZEL/VS
-    CF_aZEL = AF_aZEL/VF
-    CB_aZEL = AB_aZEL/VB
+    CIleL_aZEL <- AIleL_aZEL/VIleL
+    CIle_aZEL <- AIle_aZEL/VIle
+    CL_aZEL <- AL_aZEL/VL  
+    CR_aZEL <- AR_aZEL/VR   
+    CS_aZEL <- AS_aZEL/VS
+    CF_aZEL <- AF_aZEL/VF
+    CB_aZEL <- AB_aZEL/VB
     
     CVIle_aZEL <- CIle_aZEL/aZEL_PSI * aZEL_BPR
     CVL_aZEL <- CL_aZEL/aZEL_PL * aZEL_BPR
@@ -168,7 +168,7 @@ R.PBK.model <- function(t, state, parms){
     
     ### a-Zearalenol-glucuronide ----
     
-    CDuoL_aZEL_gluc = ADuoL_aZEL_gluc/VDuoL
+    CDuoL_aZEL_gluc <- ADuoL_aZEL_gluc/VDuoL
     CIleL_aZEL_gluc <- AIleL_aZEL_gluc/VIleL 
     CL_IC_aZEL_gluc <- AL_IC_aZEL_gluc/VL_IC
     CL_EC_aZEL_gluc <- AL_EC_aZEL_gluc/VL_EC

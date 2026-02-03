@@ -157,17 +157,17 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   # Intestinal segment transit time is calculated by the total transit time divided by the intestinal segment length as a proportion of total small intestinal length 
   
   # Times
-  t_GER <- 0.5                                                                  # h; stomach emptying time
-  t_SI <- 199.2/60                                                              # h; small intestine/residence transit time
-  t_si_duo <- 0.037*t_SI                                                        # h; duodenum transit/residence time
-  t_si_jej <- 0.382*t_SI                                                        # h; jejunum transit/residence time 
-  t_si_ile <- 0.581*t_SI                                                        # h; ileum transit/residence time 
+  t_GER <- 0.5 / 24                                                             # day; stomach emptying time
+  t_SI <- 199.2/60 / 24                                                         # day; small intestine/residence transit time
+  t_si_duo <- 0.037*t_SI / 24                                                   # day; duodenum transit/residence time
+  t_si_jej <- 0.382*t_SI / 24                                                   # day; jejunum transit/residence time 
+  t_si_ile <- 0.581*t_SI / 24                                                   # day; ileum transit/residence time 
   
   # Emptying/transit/residence rates
-  k_GER = 1/t_GER                                                               # /h; stomach 
-  k_duo <- 1/t_si_duo                                                           # /h; duodenum 
-  k_jej <- 1/t_si_jej                                                           # /h; jejunum
-  k_ile <- 1/t_si_ile                                                           # /h; ileum
+  k_GER = 1/t_GER                                                               # /day; stomach 
+  k_duo <- 1/t_si_duo                                                           # /day; duodenum 
+  k_jej <- 1/t_si_jej                                                           # /day; jejunum
+  k_ile <- 1/t_si_ile                                                           # /day; ileum
   
   # Glomerular filtration rate
   GFR <- Physio_params[[paste0("GFR", suffix)]]                                 # Age/creatinine dependent glomerular filtration rate (L/day)
@@ -193,37 +193,37 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
     dat_rbc <- Human.input %>% filter(tissue == "RBCs")                         # df for RBCs
     dat_plas <- Human.input %>% filter(tissue == "Plasma")                      # df for plasma
     
-    pH_IW <- 7                                                                    # pH of intracellular tissue water
-    pH_P <- 7.4                                                                   # pH of plasma
-    pH_RBC <- 7.22                                                                # pH of blood cells
+    pH_IW <- 7                                                                  # pH of intracellular tissue water
+    pH_P <- 7.4                                                                 # pH of plasma
+    pH_RBC <- 7.22                                                              # pH of blood cells
     
-    P <- 10^(logP)                                                                # octanol:water partition coeff
-    logP_OW <- 1.115*logP - 1.35                                                  # oil:water partition coeff
+    P <- 10^(logP)                                                              # octanol:water partition coeff
+    logP_OW <- 1.115*logP - 1.35                                                # oil:water partition coeff
     P_OW <- 10^(logP_OW) 
     
-    HCT <- 0.45                                                                   # hematocrit
+    HCT <- 0.45                                                                 # hematocrit
     
     # Calculate fraction unbound in plasma and tissues
     # Reference: Lobell and Sivarajah 2003
     # Equation slightly different depending on the ionisation status in plasma, therefore between glycuronides and aglycones
     
     if(pKa1 >= 7){
-      fup <- 1/(1 + 10^((0.4485*logP) - 0.4782))                                  # fraction unbound in plasma
+      fup <- 1/(1 + 10^((0.4485*logP) - 0.4782))                                # fraction unbound in plasma
     }else {
-      fup <- 1/(1 + 10^((0.3649*logP) + 0.41678))                                 # fraction unbound in plasma
+      fup <- 1/(1 + 10^((0.3649*logP) + 0.41678))                               # fraction unbound in plasma
     }
     
-    fut <- 1/(1 + ((1 - fup)/fup)*0.5)                                            # fraction unbound in tissues
+    fut <- 1/(1 + ((1 - fup)/fup)*0.5)                                          # fraction unbound in tissues
     
     
     # Calculate partitioning and ionisation status
-    Kpu_bc <- (HCT - 1 + BPR) / (HCT*fup)                                         # partitioning to blood cells                     
-    X <- 10^(pH_IW - pKa1) + 10^(2*pH_IW - pKa1 - pKa2)                           # ionisation status in cells    
-    Y <- 10^(pH_P - pKa1) + 10^(2*pH_P - pKa1 - pKa2)                             # ionisation status in plasma 
+    Kpu_bc <- (HCT - 1 + BPR) / (HCT*fup)                                       # partitioning to blood cells                     
+    X <- 10^(pH_IW - pKa1) + 10^(2*pH_IW - pKa1 - pKa2)                         # ionisation status in cells    
+    Y <- 10^(pH_P - pKa1) + 10^(2*pH_P - pKa1 - pKa2)                           # ionisation status in plasma 
     Z <- 1 
     Ka_PR <- (                                                
       1/fup - 1 - ((P*dat_plas$f_n_l + (0.3*P + 0.7)*dat_plas$f_n_pl) / (1+Y))
-    )                                                                             # albumin association constant
+    )                                                                           # albumin association constant
     
     # Calculate tissue:plasma partition coefficients for non-lipid tissues
     Kp_all <- (
@@ -245,28 +245,28 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
     Kp <- as.list(c(Kp_ad,Kp_all)) 
     names(Kp) <- nms  
     
-    PSI <- Kp$Kpgu                                                                # Intestine:Blood partition coefficient
-    PL <- Kp$Kpli                                                                 # Liver:Blood partition coefficient
-    PF <- Kp$Kpad                                                                 # Adipose:Blood partition coefficient
+    PSI <- Kp$Kpgu                                                              # Intestine:Blood partition coefficient
+    PL <- Kp$Kpli                                                               # Liver:Blood partition coefficient
+    PF <- Kp$Kpad                                                               # Adipose:Blood partition coefficient
     PK <- Kp$Kpki # only for glucuronides
     PS <- (
       F_Vo.dat$FVBo*Kp$Kpbo + F_Vo.dat$FVBr*Kp$Kpbr +
         F_Vo.dat$FVMu*Kp$Kpmu + F_Vo.dat$FVSk*Kp$Kpsk
     ) /
       (F_Vo.dat$FVBo + F_Vo.dat$FVBr + 
-         F_Vo.dat$FVMu + F_Vo.dat$FVSk)                                           # Slowly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
+         F_Vo.dat$FVMu + F_Vo.dat$FVSk)                                         # Slowly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
     PR <- (
       F_Vo.dat$FVHe*Kp$Kphe + F_Vo.dat$FVKi*Kp$Kpki + 
         F_Vo.dat$FVLu*Kp$Kplu + F_Vo.dat$FVSp*Kp$Kpsp
     ) /
       (F_Vo.dat$FVHe + F_Vo.dat$FVKi + 
-         F_Vo.dat$FVLu + F_Vo.dat$FVSp)                                           # Rapidly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
+         F_Vo.dat$FVLu + F_Vo.dat$FVSp)                                         # Rapidly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
     PR_gluc <- ( # only for glucuronides
       F_Vo.dat$FVHe*Kp$Kphe +  
         F_Vo.dat$FVLu*Kp$Kplu + F_Vo.dat$FVSp*Kp$Kpsp
     ) /
       (F_Vo.dat$FVHe + F_Vo.dat$FVKi + 
-         F_Vo.dat$FVLu + F_Vo.dat$FVSp)                                           # Rapidly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
+         F_Vo.dat$FVLu + F_Vo.dat$FVSp)                                         # Rapidly perfused = partition coefficient of each of these organs * fractional volume of the respective organ / sum of the fractional volume of all these organs
     
     Kp_fus_BPR <- as.list(c(PSI = PSI, 
                             PL = PL, 
@@ -345,10 +345,10 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
 
   # Glucuronide hydrolysis by gmGUS
   # Reference: Ramisetty et al. (2025), table S3 DOI 10.3390/pharmaceutics17070814
-  Vmax_Hydro_ZEN_gluc <- 1.12e8/PhysChem$MolecularWeight[3] *0.7e-5             #ng->nmol -> umol/h
-  Km_Hydro_ZEN_gluc <- 822/PhysChem$MolecularWeight[3] * 1e2                    #ng->nmol ->umol/ml->L
-  Vmax_Hydro_aZEL_gluc <- 1.12e8/PhysChem$MolecularWeight[4] *1e-6              #ng->nmol ->umol/h
-  Km_Hydro_aZEL_gluc <- 822/PhysChem$MolecularWeight[4] * 1e2                   #ng->nmol ->umol/ml->L
+  Vmax_Hydro_ZEN_gluc <- 1.12e8/PhysChem$MolecularWeight[3] *0.7e-5 * 24        # ng->nmol -> umol/day
+  Km_Hydro_ZEN_gluc <- 822/PhysChem$MolecularWeight[3] * 1e2                    # ng->nmol ->umol/ml->L
+  Vmax_Hydro_aZEL_gluc <- 1.12e8/PhysChem$MolecularWeight[4] *1e-6  * 24        # ng->nmol ->umol/day
+  Km_Hydro_aZEL_gluc <- 822/PhysChem$MolecularWeight[4] * 1e2                   # ng->nmol ->umol/ml->L
   
   
   #### Liver ----
@@ -375,9 +375,9 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   #### Biliary excretion ----
   # specifying the duration of gallbladder emptying (assuming 3 meals per day at 8, 14 and 20h)
   
-  Tgb <- 25/60                                                                  # h time for the bile to travel through he gallbladder
-  Bile.fasted <- 0                                                              # L/h
-  Bile.fed <- 1                                                                 # L/h
+  Tgb <- 25/60   / 24                                                           # day time for the bile to travel through he gallbladder
+  Bile.fasted <- 0                                                              # L/day
+  Bile.fed <- 1                                                                 # L/day
   
   
   #### Active transport ----
@@ -431,14 +431,14 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   REF_LI_BCRP <- pmolMP_mgP_LI_BCRP / pmol_mg_BCRP
   
   # Scaling factor
-  SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2                            # mg MRP2 / mg small intestine
-  SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *10                        # mg MRP2 / mg liver
-  SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2 *10                        # mg MRP2 / mg liver
+  SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2                          # mg MRP2 / mg small intestine
+  SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *10                      # mg MRP2 / mg liver
+  SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2 *10                      # mg MRP2 / mg liver
   
-  SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3 /10                        # mg MRP3 / mg liver 
+  SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3 /10                      # mg MRP3 / mg liver 
   
-  SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP                            # mg BCRP / mg liver 
-  SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *10                        # mg BCRP / mg liver 
+  SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP                          # mg BCRP / mg liver 
+  SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *10                      # mg BCRP / mg liver 
   
   
   
@@ -490,6 +490,12 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
     PappCaco2_ZEN = PappCaco2_ZEN,
     PappCaco2_aZEL = PappCaco2_aZEL,
     S9SI =  S9SI,
+    Vmax_SI_bZEL.c =  Vmax_SI_bZEL.c,
+    Km_SI_bZEL = Km_SI_bZEL,
+    Vmax_SI_aZEL.c =  Vmax_SI_aZEL.c,
+    Km_SI_aZEL = Km_SI_aZEL,
+    Vmax_SI_aZEL_gluc.c =  Vmax_SI_aZEL_gluc.c,
+    Km_SI_aZEL_gluc = Km_SI_aZEL_gluc,
     Vmax_SI_ZEN_gluc.c =  Vmax_SI_ZEN_gluc.c,
     Km_SI_ZEN_gluc = Km_SI_ZEN_gluc,
     Vmax_Hydro_ZEN_gluc = Vmax_Hydro_ZEN_gluc,
@@ -506,6 +512,7 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
     Vmax_L_aZEL_gluc.c = Vmax_L_aZEL_gluc.c,
     Km_L_aZEL_gluc = Km_L_aZEL_gluc,
     Bile.fasted = Bile.fasted,
+    Bile.fed = Bile.fed,
     Tgb = Tgb,
     Vmax_MRP2.c = Vmax_MRP2.c,
     Km_MRP2 = Km_MRP2,
@@ -534,7 +541,8 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   
   write.csv(Parameters_df, here("Input", "Parameters_rat.csv"), row.names = FALSE)
   
-  parm.c <- split(Parameters_df, seq(nrow(Parameters_df)))
-  return(parm.c)
+  
+  # parm.c <- split(Parameters_df, seq(nrow(Parameters_df)))
+  return(Parameters_df)
 }
 
