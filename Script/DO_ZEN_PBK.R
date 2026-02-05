@@ -59,29 +59,30 @@
                                "MolecularWeight"])
   
   # Oral dose
-  ODOSEmg.BW <- 100/70 #0.2/1000  #100/70                                                 # mg/kg bw 
+  ODOSEmg.BW <- 45e-3 #0.2/1000  #100/70                                      # mg/kg bw 
   ODOSEumol.BW <- ((ODOSEmg.BW*1000)/MW_ZEN)                                    # μmol/kg bw
  
   # Load input ----
 
- Tstart  <-  0                                                                  # days, start of the simulation
- Tstop  <- 1 #3*365                                                             # days, stop of the simulation
- Dt  <-  1/(24*60)                                                                  # days, iteration steps (decrease/increase depending on run time)
+  Tstart  <-  0                                                                 # days, start of the simulation
+  Tstop  <- 1                                                                   # days, stop of the simulation
+  Dt  <- 1/(24*60)# round(1/10,3) #(24*60)                                  # days, iteration steps (decrease/increase depending on run time)
   
   
- exp <- ODOSEumol.BW                                                            # umol/kg/day
- Tinput <- 1                                                                    # for repeated exposure with in a day (let's say at every meal or so), default = 1
- tinterval <- 1                                                                 # for repeated exposure or so default = 1
- expSTART <- 0                                                                  # time in days of the begining of exposure
- expSTOP <- Dt#13*Dt                                                                # time in days after which the exposure stopped
- # exp1STOP <- 1+(13*Dt) 
- # exp2STOP <- 2+(13*Dt) 
- # exp3STOP <- 3+(13*Dt) 
+  exp <- ODOSEumol.BW                                                           # umol/kg/day
+  Tinput <- 1                                                                   # for repeated exposure with in a day (let's say at every meal or so), default = 1
+  tinterval <- 1                                                                # for repeated exposure or so default = 1
+  expSTART <- 0                                                                 # time in days of the begining of exposure
+  expSTOP <- 1#13*Dt                                                          # time in days after which the exposure stopped
+  dosingT <-  c(0:Dt)#c(expSTOP,1+expSTOP, 2+expSTOP)
+  # exp1STOP <- 1+(13*Dt) 
+  # exp2STOP <- 2+(13*Dt) 
+  # exp3STOP <- 3+(13*Dt) 
  
- # Subject-relevant information
- expAGE <- 27#30                                                                   # years, old age at exposure if not provided then age argument is not used physiology is based on BW
- expBW <- 70    #60 #                                                                # kg, if not provided then the BW of the corresponding age and sex is taken; if both BW and Age are not given then a default BW = 70 is taken; if BW is higher than the BW from the lifestage equations then the actual BW overwrites the calculated one
- sex  <-  "M"                                                                   # sex either "F" or "M" if none then default is "M"
+  # Subject-relevant information
+  expAGE <- 30                                                                   # years, old age at exposure if not provided then age argument is not used physiology is based on BW
+  expBW <- NA    #60 #                                                                # kg, if not provided then the BW of the corresponding age and sex is taken; if both BW and Age are not given then a default BW = 70 is taken; if BW is higher than the BW from the lifestage equations then the actual BW overwrites the calculated one
+  sex  <-  "F"                                                                   # sex either "F" or "M" if none then default is "M"
 
 
   if(Lifestage == "Yes"){
@@ -100,9 +101,8 @@
         
         # Exposure-relevant information
         exp = exp, 
-        Tinput = Tinput, 
-        tinterval = tinterval, 
         expSTOP = expSTOP, 
+        dosingT = dosingT,
 
         # Subject-relevant information
         expAGE = expAGE, 
@@ -121,13 +121,9 @@
       RUNandOUT(
         
         # Exposure-relevant information
-        exp = exp, #*expBW, 
-        Tinput = Tinput, 
-        tinterval = tinterval, 
+        exp = exp, 
         expSTOP = expSTOP, 
-        # exp1STOP = exp1STOP, 
-        # exp2STOP = exp2STOP, 
-        # exp3STOP = exp3STOP,
+        dosingT = dosingT,
         
         # Subject-relevant information
         expAGE = expAGE, 
@@ -147,90 +143,11 @@
   # Save Results ----
 
   # RawData <- MODEL_OUTPUT
-  save(MODEL_OUTPUT, file = here(OUTPUT, "RawData_ZEN_PBK.RData"))
+  save(MODEL_OUTPUT, file = here(OUTPUT, "EC50.ZEN.0.06.RawData_ZEN_PBK.RData"))
   
+ print(MODEL_OUTPUT$Cmaxs)
   
-  # # Data analysis ----
-  # POST.RUN_RESULTS <- POST.Run(exp = exp,
-  #                              Tinput = Tinput, 
-  #                              tinterval = tinterval, 
-  #                              expSTOP = expSTOP, 
-  #                              
-  #                              # Subject-relevant information
-  #                              expAGE = expAGE, 
-  #                              expBW = expBW, 
-  #                              sex = sex, 
-  #                              
-  #                              # Simulation relevant information
-  #                              Tstart = Tstart, 
-  #                              Tstop = Tstop, 
-  #                              Dt = Dt, 
-  #                              RawData = RawData)
-  # 
-  # save(POST.RUN_RESULTS, file = here(OUTPUT, "POST.RUN_RESULTS.RData"))
-  # 
-  # 
-  # PBK_OUTPUT <- RawData$PBK_OUTPUT
-  # 
-  # 
-  # MWZEN <- 318.37
-  # MWZENGLUC <- 494.493
-  # MWaZEL <- 320.4
-  # BP <- 0.67 #assuming the same for all zearalenone, a-zearalenol and zearalenone glucuronide
-  # 
-  # BW <- RawData$CALC_Parameters[["BW"]]  ##{Kg} #  body weight rat
-  # VSIL <- RawData$CALC_Parameters[["FV_SIL"]]*BW # fractional volume of small intestinal lumen
-  # VSI <- RawData$CALC_Parameters[["FV_SI"]]*BW # fractional volume of small intestinal tissue
-  # VDuoL <- VSIL*RawData$CALC_Parameters[["FV_duol"]] 
-  # VJejL <- VSIL*RawData$CALC_Parameters[["FV_jejl"]] 
-  # VIleL <- VSIL*RawData$CALC_Parameters[["FV_ilel"]] 
-  # 
-  # VDuo <- VSI*RawData$CALC_Parameters[["FV_Duo"]]
-  # VJej <- VSI*RawData$CALC_Parameters[["FV_Jej"]]
-  # VJej_IC <- RawData$CALC_Parameters[["FV_SI_IC"]]*VJej
-  # VJej_EC <- RawData$CALC_Parameters[["FV_SI_EC"]]*VJej
-  # VIle <- VSI*RawData$CALC_Parameters[["FV_Ile"]]
-  # 
-  # # Create df with organ concentrations
-  # 
-  # C.Pre <- PBK_OUTPUT %>%
-  #   transmute(Time = time/365,
-  #             DuodenumT_ZEN = CDuo_ZEN, DuodenumL_ZEN = CDuoL_ZEN,
-  #             JejunumT_ZEN = CJej_ZEN, JejunumL_ZEN = CJejL_ZEN,
-  #             IleumT_ZEN = CIle_ZEN, IleumL_ZEN = CIleL_ZEN,
-  #             LIntestineL_ZEN = CCOL_ZEN,
-  #             Liver_ZEN = CL_ZEN, 
-  #             Fat_ZEN = CF_ZEN, Rapidly_ZEN = CR_ZEN, Slowly_ZEN = CS_ZEN,
-  #             Blood_ZEN = CB_ZEN, DuodenumT_aZEL = 0, DuodenumL_aZEL = 0,
-  #             JejunumT_aZEL = CJej_aZEL, JejunumL_aZEL = 0,
-  #             IleumT_aZEL = 0, IleumL_aZEL = 0,
-  #             LIntestineL_aZEL = 0, Liver_aZEL = CL_aZEL,
-  #             Fat_aZEL = CF_aZEL, Rapidly_aZEL = CR_aZEL, Slowly_aZEL = CS_aZEL,
-  #             Blood_aZEL = CB_aZEL,
-  #             DuodenumT_ZENGLU = 0, DuodenumL_ZENGLU = CDuoL_ZENGLU,
-  #             JejunumT_ZENGLU = CJej_ZENGLU, JejunumL_ZENGLU = CJejL_ZENGLU,
-  #             IleumT_ZENGLU = 0, IleumL_ZENGLU = CIleL_ZENGLU, LIntestineL_ZENGLU = CCOL_ZENGLU, JejunumT_ZENGLU = CJej_ZENGLU,
-  #             Liver_ZENGLU = CL_ZENGLU, 
-  #             Fat_ZENGLU = CF_ZENGLU, Rapidly_ZENGLU = CR_ZENGLU, Slowly_ZENGLU = CS_ZENGLU,
-  #             Blood_ZENGLU = CB_ZENGLU)
-  # 
-  # 
-  # C_ZEN <- last(C.Pre$Blood_ZEN)* 1000 #umol to nmol/L* MWZEN # * 1000 #* 1000
-  # print(C_ZEN)
-  # C_aZEL <- last(C.Pre$Blood_aZEL) * 1000 #umol to nmol/L* MWaZEL #* 1000 #* 1000
-  # print(C_aZEL)
-  # C_ZENGluc <- last(C.Pre$Blood_ZENGLU) * 1000 #umol to nmol/L* MWZENGLUC
-  # print(C_ZENGluc)
-  
-  # Cmax_ZEN <- max(C.Pre$Blood_ZEN) * 1000 #umol to nmol/L* MWZEN # * 1000 #* 1000
-  # print(Cmax_ZEN)
-  # Cmax_aZEL <- max(C.Pre$Blood_aZEL) * 1000 #umol to nmol/L* MWaZEL #* 1000 #* 1000
-  # print(Cmax_aZEL)
-  # Cmax_ZENGluc <- max(C.Pre$Blood_ZENGLU) * 1000 #umol to nmol/L* MWZENGLUC
-  # print(C_ZENGluc)
-  # 
- 
- Out <- MODEL_OUTPUT$PBK_OUTPUT
- Urine <- Out %>%  select(c(time, starts_with("AUR_")))
- write.csv(Urine, here(OUTPUT, "UrineMirocha.csv"), row.names = FALSE)
- Dosing <- MODEL_OUTPUT$Dosing
+  # Out <- MODEL_OUTPUT$PBK_OUTPUT
+ # Urine <- Out %>%  select(c(time, starts_with("AUR_")))
+ # write.csv(Urine, here(OUTPUT, "UrineMirocha.csv"), row.names = FALSE)
+ # Dosing <- MODEL_OUTPUT$Dosing
