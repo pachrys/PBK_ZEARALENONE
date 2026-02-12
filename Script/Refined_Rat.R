@@ -93,7 +93,8 @@ FV_jejl <- 0.334                                                   # jejunum lum
 FV_ilel <- 0.483                                                   # ileum lumen; calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
 
 FV_COL <- 0.012                                                    # colon lumen; 
-
+Vfe_IleL <- 4.1e-3 * 0.1                                           # volume of "feces" in the ileum, 4.1g is the total volume of feces excreted per day, 0.007 is to correct for the small fraction already formed in the ileum
+Vfe_COL <- 4.1e-3 * 0.9                                            # volume of feces in the colon
 
 FV_L <- pull(Rat.input[Rat.input$tissue == "Liver", "F_Vo"])       # liver tissue
 FV_L_IC <- pull(Rat.input[Rat.input$tissue == "Liver", "f_iw"])    # fraction of liver that is intracellular water
@@ -110,11 +111,8 @@ FV_B <- pull(Rat.input[Rat.input$tissue == "RBCs", "F_Vo"]) +
   pull(Rat.input[Rat.input$tissue == "Plasma", "F_Vo"])            # blood
 
 FV_K <- pull(Rat.input[Rat.input$tissue == "Kidney", "F_Vo"])      # kidney tissue
-FV_K_IC <- pull(Rat.input[Rat.input$tissue == "Kidney", "f_iw"])
-FV_K_EC <- pull(Rat.input[Rat.input$tissue == "Kidney", "f_ew"])
 
 VBile <- 16e-3                                                     # L from ml; Reference: Vonk, Doorn, and Strubbe 1978
-VUrine.c <- 10.9e-3/235.2e-3                                       # L/BW from ml/235.2g; Reference: de Castro et al. 2013 DOI: 10.5935/0101-2800.20140023
 
 ### To calculate the surface aeria of the intestine ----
 # Reference (if not stated otherwise): Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al
@@ -355,16 +353,13 @@ Km_SI_bZEL <- 21                                                                
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 Vmax_SI_ZEN_gluc.c <-  8.617*1e-3                                               # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                                         # uM 
-Vmax_SI_aZEL_gluc.c <- 6.963*1e-3 *1e6                                          # umol/min/mg protein; from nmol-> umol
+Vmax_SI_aZEL_gluc.c <- 6.963*1e-3 #*1e6                                          # umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                                        # uM
 
 # Glucuronide hydrolysis by gmGUS
-Vmax_Hydro_ZEN_gluc <- 1.12e8/PhysChem$MolecularWeight[3] *0.7e-5               #ng->nmol -> umol/h
-Km_Hydro_ZEN_gluc <- 822/PhysChem$MolecularWeight[3] * 1e2                      #ng->nmol ->umol/ml->L
-Vmax_Hydro_aZEL_gluc <- 1.12e8/PhysChem$MolecularWeight[4] *1e-6                #ng->nmol ->umol/h
-Km_Hydro_aZEL_gluc <- 822/PhysChem$MolecularWeight[4] * 1e2                     #ng->nmol ->umol/ml->L
-
-
+S9gmGUS <- 4                                                                    # mg protein/ml feces
+Vmax_Hydro <- 4.42                                                             # umol/h
+Km_Hydro <- 3.08*15                                                             # uM
 
 #### Liver ----
 
@@ -389,7 +384,6 @@ Km_L_aZEL_gluc <- 7.426                                                         
 
 #### Biliary excretion ----
 
-Bile.fed <- 12.7e-6 * 60                                                        # L/h
 Bile.fasted <- 6.35e-6 * 60                                                     # L/h 
 
 
@@ -473,6 +467,8 @@ Other_params <- tibble(
   FV_jejl = FV_jejl,
   FV_ilel = FV_ilel,
   FV_COL = FV_COL,
+  Vfe_IleL = Vfe_IleL,
+  Vfe_COL = Vfe_COL,
   FV_L = FV_L,
   FV_L_IC = FV_L_IC,
   FV_L_EC = FV_L_EC,
@@ -513,10 +509,9 @@ Other_params <- tibble(
   Km_SI_ZEN_gluc = Km_SI_ZEN_gluc,
   Vmax_SI_aZEL_gluc.c = Vmax_SI_aZEL_gluc.c,
   Km_SI_aZEL_gluc = Km_SI_aZEL_gluc,
-  Vmax_Hydro_ZEN_gluc = Vmax_Hydro_ZEN_gluc,
-  Km_Hydro_ZEN_gluc = Km_Hydro_ZEN_gluc,
-  Vmax_Hydro_aZEL_gluc = Vmax_Hydro_aZEL_gluc,
-  Km_Hydro_aZEL_gluc = Km_Hydro_aZEL_gluc,
+  S9gmGUS = S9gmGUS,
+  Vmax_Hydro = Vmax_Hydro,
+  Km_Hydro = Km_Hydro,
   S9L = S9L,
   Vmax_L_aZEL.c = Vmax_L_aZEL.c,
   Km_L_aZEL = Km_L_aZEL,
@@ -593,11 +588,7 @@ R.PBK.model <- function(t, state, parms){
     
     # For MRP3 kidney excretion use only
     VK <- FV_K*BW
-    VK_IC <- VK*FV_K_IC
-    
-    # Urine
-    VUrine <- VUrine.c*BW
-    
+
     ## Blood flow rates 
     QC <- QC  
     
@@ -640,6 +631,10 @@ R.PBK.model <- function(t, state, parms){
       S9SI * VJej * 1e3                                                         # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     Vmax_SI_aZEL_gluc <- Vmax_SI_aZEL_gluc.c * 60 * 
       S9SI * VJej  * 1e3                                                        # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
+    
+    Vmax_Hydro_IleL <- Vmax_Hydro * 60 * S9gmGUS * Vfe_IleL                     # umol/h; from umol/ min->h /mg protein -> whole intestinal micriobiome (kg)
+    Vmax_Hydro_COL <- Vmax_Hydro * 60 * S9gmGUS * Vfe_COL                     # umol/h; from umol/ min->h /mg protein -> whole intestinal micriobiome (kg)
+    
     
     ### Liver
     Vmax_L_aZEL <- Vmax_L_aZEL.c * 60 * S9L * VL * 1e3                          # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
@@ -778,12 +773,12 @@ R.PBK.model <- function(t, state, parms){
     
     dAIleL_ZEN <- + k_jej*AJejL_ZEN - k_ile*AIleL_ZEN +  
       - CLile_ZEN*CIleL_ZEN - ka_Lymph*AIleL_ZEN +  
-      + ((Vmax_Hydro_ZEN_gluc*CIleL_ZEN_gluc) / 
-           (Km_Hydro_ZEN_gluc + (CIleL_ZEN_gluc)))
+      + ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
+           (Km_Hydro + (CIleL_ZEN_gluc)))
     
     dACOL_ZEN <- + k_ile*AIleL_ZEN - k_CO*ACOL_ZEN +
-      + ((Vmax_Hydro_ZEN_gluc*CCOL_ZEN_gluc) / 
-           (Km_Hydro_ZEN_gluc + (CCOL_ZEN_gluc)))
+      + ((Vmax_Hydro_COL*CCOL_ZEN_gluc) / 
+           (Km_Hydro + (CCOL_ZEN_gluc)))
     
     # Small intestinal tissue 
     dADuo_ZEN <- CLduo_ZEN*CDuoL_ZEN + QDuo*(CB_ZEN-CVDuo_ZEN) 
@@ -849,12 +844,12 @@ R.PBK.model <- function(t, state, parms){
            (Km_BCRP + (CJej_IC_ZEN_gluc*ZEN_gluc_fut))) 
     
     dAIleL_ZEN_gluc <- k_jej*AJejL_ZEN_gluc - k_ile*AIleL_ZEN_gluc +
-      - ((Vmax_Hydro_ZEN_gluc*CIleL_ZEN_gluc) / 
-           (Km_Hydro_ZEN_gluc + (CIleL_ZEN_gluc)))
+      - ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
+           (Km_Hydro + (CIleL_ZEN_gluc)))
     
     dACOL_ZEN_gluc <- k_ile*AIleL_ZEN_gluc - k_CO*ACOL_ZEN_gluc +
-      - ((Vmax_Hydro_ZEN_gluc*CCOL_ZEN_gluc) / 
-           (Km_Hydro_ZEN_gluc + (CCOL_ZEN_gluc)))
+      - ((Vmax_Hydro_COL*CCOL_ZEN_gluc) / 
+           (Km_Hydro + (CCOL_ZEN_gluc)))
     
     # Small Intestinal tissue
     dAJej_IC_ZEN_gluc <- ((Vmax_SI_ZEN_gluc*CJej_ZEN*ZEN_fut) / 
@@ -920,12 +915,12 @@ R.PBK.model <- function(t, state, parms){
     # Intestinal lumen
     dAIleL_aZEL <- - k_ile*AIleL_aZEL +  
       - CLile_aZEL*CIleL_aZEL - ka_Lymph*AIleL_aZEL +  
-      + ((Vmax_Hydro_aZEL_gluc*CIleL_ZEN_gluc) / 
-           (Km_Hydro_aZEL_gluc + (CIleL_ZEN_gluc)))
+      + ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
+           (Km_Hydro + (CIleL_ZEN_gluc)))
     
     dACOL_aZEL <- + k_ile*AIleL_aZEL - k_CO*ACOL_aZEL +
-      + ((Vmax_Hydro_aZEL_gluc*CCOL_ZEN_gluc) / 
-           (Km_Hydro_aZEL_gluc + (CCOL_ZEN_gluc)))
+      + ((Vmax_Hydro_COL*CCOL_ZEN_gluc) / 
+           (Km_Hydro + (CCOL_ZEN_gluc)))
     
     # Small intestinal tissue 
     dAJej_aZEL <- ((Vmax_SI_aZEL*CJej_ZEN*ZEN_fut) / 
@@ -981,13 +976,13 @@ R.PBK.model <- function(t, state, parms){
            (Km_BCRP + (CJej_IC_aZEL_gluc*aZEL_gluc_fut))) 
     
     dAIleL_aZEL_gluc <- k_jej*AJejL_aZEL_gluc - k_ile*AIleL_aZEL_gluc +
-      - ((Vmax_Hydro_aZEL_gluc*CIleL_ZEN_gluc) / 
-           (Km_Hydro_aZEL_gluc + (CIleL_ZEN_gluc)))
+      - ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
+           (Km_Hydro + (CIleL_ZEN_gluc)))
     
     dACOL_aZEL_gluc <- k_ile*AIleL_aZEL_gluc +
       - k_CO*ACOL_aZEL_gluc +
-      - ((Vmax_Hydro_aZEL_gluc*CCOL_ZEN_gluc) / 
-           (Km_Hydro_aZEL_gluc + (CCOL_ZEN_gluc)))
+      - ((Vmax_Hydro_COL*CCOL_ZEN_gluc) / 
+           (Km_Hydro + (CCOL_ZEN_gluc)))
     
     # Small Intestinal tissue
     dAJej_IC_aZEL_gluc <- ((Vmax_SI_aZEL_gluc*CJej_aZEL*aZEL_fut) / 
@@ -1164,7 +1159,6 @@ R.PBK.model <- function(t, state, parms){
       CS_ZEN = CS_ZEN,
       CF_ZEN = CF_ZEN,
       CB_ZEN = CB_ZEN,
-      CUrine_ZEN = AUR_ZEN/VUrine,
       
       CDuoL_ZEN_gluc = CDuoL_ZEN_gluc, CJejL_ZEN_gluc = CJejL_ZEN_gluc, CIleL_ZEN_gluc = CIleL_ZEN_gluc, CCOL_ZEN_gluc = CCOL_ZEN_gluc,
       CJej_ZEN_gluc = CJej_IC_ZEN_gluc, 
@@ -1175,7 +1169,6 @@ R.PBK.model <- function(t, state, parms){
       CF_ZEN_gluc = CF_ZEN_gluc,
       CB_ZEN_gluc = CB_ZEN_gluc,
       CK_ZEN_gluc = CK_ZEN_gluc,
-      CUrine_ZEN_gluc = AUR_ZEN_gluc/VUrine,
       
       CIleL_aZEL = CIleL_aZEL, CCOL_aZEL = CCOL_aZEL,
       CJej_aZEL = CJej_aZEL, CIle_aZEL = CIle_aZEL,
@@ -1184,8 +1177,6 @@ R.PBK.model <- function(t, state, parms){
       CS_aZEL = CS_aZEL,
       CF_aZEL = CF_aZEL,
       CB_aZEL = CB_aZEL,
-      CUrine_aZEL = AUR_aZEL/VUrine,
-      
       
       CDuoL_aZEL_gluc = CDuoL_aZEL_gluc, CJejL_aZEL_gluc = CJejL_aZEL_gluc, CIleL_aZEL_gluc = CIleL_aZEL_gluc, CCOL_aZEL_gluc = CCOL_aZEL_gluc,
       CJej_aZEL_gluc = CJej_IC_aZEL_gluc, 
@@ -1195,9 +1186,7 @@ R.PBK.model <- function(t, state, parms){
       CS_aZEL_gluc = CS_aZEL_gluc,
       CF_aZEL_gluc = CF_aZEL_gluc,
       CB_aZEL_gluc = CB_aZEL_gluc,
-      CK_aZEL_gluc = CK_aZEL_gluc,
-      CUrine_aZEL_gluc = AUR_aZEL_gluc/VUrine
-      
+      CK_aZEL_gluc = CK_aZEL_gluc
       ))
     
   })
@@ -1217,7 +1206,7 @@ MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone",
 ## Exposure ---- 
 
 Select_AdminType <- "PO" # IV # PO
-Select_Author <- "Shin" # Shin # Q.Lu # Videmann 
+Select_Author <- "Videmann" # Shin # Q.Lu # Videmann 
 
 BW <- if(Select_Author == "Shin"){0.26
 }else if(Select_Author == "Q.Lu"){0.2
@@ -1231,7 +1220,7 @@ ODOSEumol <- ((ODOSEmg*1000)/MW_ZEN)*BW                                         
 
 # IV dose
 IVDOSEmg <- if(Select_AdminType != "IV"){0
-}else if(Select_Author == "Shin"){4 #2 # 4 #8#1.13#8
+}else if(Select_Author == "Shin"){1 #4 #2 # 4 #8#1.13#8
 }else if(Select_Author == "Q.Lu"){6.65}
 
 IVDOSEumol <-((IVDOSEmg*1000)/MW_ZEN)*BW                                        # μmol
@@ -1401,7 +1390,6 @@ Clean.replacements <- c(
   "CBile" = "Bile",
   "CB" = "Blood", 
   "CK" = "Kidney",
-  "CUrine" = "Urine",
   "_gluc" = "-gluc",
   "time" = "Time"
 )
@@ -1522,4 +1510,4 @@ Results.Rat <- list(
   Plots = list(MB.plot, CBlood.plot, CTissues.plot)
 )
 
-save(Results.Rat, file = here(OUTPUT, "Results.Rat.RData"))
+save(Results.Rat, file = here(OUTPUT, "Results.RData"))
