@@ -332,7 +332,7 @@ PappCaco2_ZEN <- 10.4 * 1e-6                                                    
 PappCaco2_aZEL <- 5.4 * 1e-6                                                    # cm/s
 
 # Absorption to (& release from) the lymph
-ka_Lymph <- 0.55                                                                # /h
+ka_Lymph <- 0 #0.55                                                                # /h
 
 
 ### Metabolism ----
@@ -658,7 +658,7 @@ R.PBK.model <- function(t, state, parms){
     
     ## Biliary clearance
     
-    CL_Bile <- ifelse(t > 2.5, 1, Bile.fasted) 
+    CL_Bile <- ifelse(t > 2.5, 1, (10*Bile.fasted)) 
     
     
     ## Tissue Concentrations ----
@@ -1510,4 +1510,4 @@ Results.Rat <- list(
   Plots = list(MB.plot, CBlood.plot, CTissues.plot)
 )
 
-save(Results.Rat, file = here(OUTPUT, "Results.RData"))
+save(Results.Rat, file = here(OUTPUT, "highBile.RData"))
