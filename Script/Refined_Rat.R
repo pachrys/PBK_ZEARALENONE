@@ -332,7 +332,7 @@ PappCaco2_ZEN <- 10.4 * 1e-6                                                    
 PappCaco2_aZEL <- 5.4 * 1e-6                                                    # cm/s
 
 # Absorption to (& release from) the lymph
-ka_Lymph <- 0 #0.55                                                                # /h
+ka_Lymph <- 0.55                                                                # /h
 
 
 ### Metabolism ----
@@ -353,13 +353,13 @@ Km_SI_bZEL <- 21                                                                
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 Vmax_SI_ZEN_gluc.c <-  8.617*1e-3                                               # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                                         # uM 
-Vmax_SI_aZEL_gluc.c <- 6.963*1e-3 #*1e6                                          # umol/min/mg protein; from nmol-> umol
+Vmax_SI_aZEL_gluc.c <- 6.963*1e-3                                          # umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                                        # uM
 
 # Glucuronide hydrolysis by gmGUS
 S9gmGUS <- 4                                                                    # mg protein/ml feces
-Vmax_Hydro <- 4.42                                                             # umol/h
-Km_Hydro <- 3.08*15                                                             # uM
+Vmax_Hydro <- 4.42                                                              # umol/h
+Km_Hydro <- 3.08                                                             # uM
 
 #### Liver ----
 
@@ -439,13 +439,13 @@ REF_IN_BCRP <- pmolMP_mgP_IN_BCRP / pmol_mg_BCRP
 REF_LI_BCRP <- pmolMP_mgP_LI_BCRP / pmol_mg_BCRP
 
 # Scaling factor
-SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2                            # mg MRP2 / mg small intestine
+SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2 *10                           # mg MRP2 / mg small intestine
 SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *10                        # mg MRP2 / mg liver
 SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2 *10                        # mg MRP2 / mg liver
 
 SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3 /10                        # mg MRP3 / mg liver 
 
-SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP                            # mg BCRP / mg liver 
+SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP *10                          # mg BCRP / mg liver 
 SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *10                        # mg BCRP / mg liver 
 
 ## Collect all parameters ----
@@ -1510,4 +1510,4 @@ Results.Rat <- list(
   Plots = list(MB.plot, CBlood.plot, CTissues.plot)
 )
 
-save(Results.Rat, file = here(OUTPUT, "highBile.RData"))
+save(Results.Rat, file = here(OUTPUT, "Results.Rat.RData"))

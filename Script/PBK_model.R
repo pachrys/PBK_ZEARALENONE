@@ -82,6 +82,8 @@ PBK_RUN <- function(y, parms, times, events){
       Vmax_SI_aZEL_gluc <- Vmax_SI_aZEL_gluc.c * 60 * 24 *
         S9SI * VJej  * 1e3                                                    # umol/day; from umol/ min->day /mg protein -> whole intestine (kg)
       
+      Vmax_Hydro_IleL <- Vmax_Hydro * 60 * S9gmGUS * Vfe_IleL                     # umol/h; from umol/ min->h /mg protein -> whole intestinal micriobiome (kg)
+      
       ### Liver
       Vmax_L_aZEL <- Vmax_L_aZEL.c * 60 * S9L * VL * 1e3 * 24                   # umol/day; from umol/ min->day /mg protein -> whole liver (kg)
       Vmax_L_bZEL <- Vmax_L_bZEL.c * 60 * S9L * VL * 1e3  * 24                  # umol/day; from umol/ min->day /mg protein -> whole liver (kg)
@@ -90,7 +92,6 @@ PBK_RUN <- function(y, parms, times, events){
       Vmax_L_aZEL_gluc <- Vmax_L_aZEL_gluc.c * 60 * 24 *
         S9L * VL * 1e3                                                          # umol/day; from umol/ min->day /mg protein -> whole liver (kg)
       
-      urine_excretion <- 2.42                                                   # L/day
       
       ## Active transport
       
@@ -220,8 +221,8 @@ PBK_RUN <- function(y, parms, times, events){
       
       dAIleL_ZEN <- + k_jej*AJejL_ZEN - k_ile*AIleL_ZEN +  
         - CLile_ZEN*CIleL_ZEN  +
-        + ((Vmax_Hydro_ZEN_gluc*CIleL_ZEN_gluc) / 
-             (Km_Hydro_ZEN_gluc + (CIleL_ZEN_gluc)))
+        + ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
+             (Km_Hydro + (CIleL_ZEN_gluc)))
       
       # Small intestinal tissue 
       dADuo_ZEN <- CLduo_ZEN*CDuoL_ZEN + QDuo*(CB_ZEN-CVDuo_ZEN) 
@@ -286,8 +287,8 @@ PBK_RUN <- function(y, parms, times, events){
              (Km_BCRP + (CJej_IC_ZEN_gluc*ZEN_gluc_fut))) 
       
       dAIleL_ZEN_gluc <- k_jej*AJejL_ZEN_gluc - k_ile*AIleL_ZEN_gluc +
-        - ((Vmax_Hydro_ZEN_gluc*CIleL_ZEN_gluc) / 
-             (Km_Hydro_ZEN_gluc + (CIleL_ZEN_gluc)))
+        - ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
+             (Km_Hydro + (CIleL_ZEN_gluc)))
       
       # Small Intestinal tissue
       dAJej_IC_ZEN_gluc <- ((Vmax_SI_ZEN_gluc*CJej_ZEN*ZEN_fut) / 
@@ -353,8 +354,8 @@ PBK_RUN <- function(y, parms, times, events){
       # Intestinal lumen
       dAIleL_aZEL <- - k_ile*AIleL_aZEL +  
         - CLile_aZEL*CIleL_aZEL +  
-        + ((Vmax_Hydro_aZEL_gluc*CIleL_ZEN_gluc) / 
-             (Km_Hydro_aZEL_gluc + (CIleL_ZEN_gluc)))
+        + ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
+             (Km_Hydro + (CIleL_ZEN_gluc)))
       
       
       dAJej_aZEL <- ((Vmax_SI_aZEL*CJej_ZEN*ZEN_fut) / 
@@ -411,8 +412,8 @@ PBK_RUN <- function(y, parms, times, events){
              (Km_BCRP + (CJej_IC_aZEL_gluc*aZEL_gluc_fut)))
       
       dAIleL_aZEL_gluc <- k_jej*AJejL_aZEL_gluc - k_ile*AIleL_aZEL_gluc + 
-        - ((Vmax_Hydro_aZEL_gluc*CIleL_ZEN_gluc) / 
-             (Km_Hydro_aZEL_gluc + (CIleL_ZEN_gluc))) 
+        - ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
+             (Km_Hydro + (CIleL_ZEN_gluc))) 
       
       # Small Intestinal tissue
       dAJej_IC_aZEL_gluc <- ((Vmax_SI_aZEL_gluc*CJej_aZEL*aZEL_fut) / 
