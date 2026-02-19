@@ -85,6 +85,8 @@ PBK_RUN <- function(y, parms, times, events){
       Vmax_Hydro_IleL <- Vmax_Hydro * 60 * S9gmGUS * Vfe_IleL                   # umol/h; from umol/ min->h /mg protein -> whole intestinal micriobiome (kg)
       
       
+      Vmax_Hydro_IleL <- Vmax_Hydro * 60 * S9gmGUS * Vfe_IleL                     # umol/h; from umol/ min->h /mg protein -> whole intestinal micriobiome (kg)
+      
       ### Liver
       Vmax_L_aZEL <- Vmax_L_aZEL.c * 60 * S9L * VL * 1e3 * 24                   # umol/day; from umol/ min->day /mg protein -> whole liver (kg)
       Vmax_L_bZEL <- Vmax_L_bZEL.c * 60 * S9L * VL * 1e3  * 24                  # umol/day; from umol/ min->day /mg protein -> whole liver (kg)
@@ -93,6 +95,10 @@ PBK_RUN <- function(y, parms, times, events){
       Vmax_L_aZEL_gluc <- Vmax_L_aZEL_gluc.c * 60 * 24 *
         S9L * VL * 1e3                                                          # umol/day; from umol/ min->day /mg protein -> whole liver (kg)
       
+<<<<<<< HEAD
+=======
+      
+>>>>>>> 3121499f20b39ffe684b0f7d92dc61ba6f4f0fdc
       ## Active transport
       
       Vmax_MRP2_LI <- Vmax_MRP2.c * 60 * SF_LI_MRP2 * VL * 1e6 * 24             # umol/min/mg liver; scaling: umol/min->day/mg MRP2 * mg MRP2 / mg liver ->  liver (kg) 
