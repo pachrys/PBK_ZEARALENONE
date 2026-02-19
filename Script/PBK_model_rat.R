@@ -499,7 +499,7 @@ R.PBK.model <- function(t, state, parms){
     
     
     ## Mass balance ----
-    ATotal <- ODOSEumol + IVDOSEumol
+    ATotal <- ODOSEumol 
     ACalculated <- AOD_ZEN + 
       
       ADuoL_ZEN + AJejL_ZEN + AIleL_ZEN + ACOL_ZEN +
