@@ -45,7 +45,7 @@
   dir.create(OUTPUT, recursive = TRUE)
   
   # Model Code
-  source(here("Script", "GSA","PBK_model_rat.R"))
+  source(here("Script", "GSA","PBK_model.R")) "PBK_model_rat.R"
   
 
   # SENSITIVITY FUNCTION ####
@@ -111,7 +111,7 @@
     
     PBK.out <- lsoda(y = A_init,
                      times = seq(0, 24,by=1/60),
-                     func =  R.PBK.model,
+                     func =  PBK.model, #R.PBK.model
                      parms = P)
     
     CB_ZEN <- PBK.out[,"CB_ZEN"]
@@ -132,7 +132,7 @@
   # Parameter upper and lower bounds
   
   # Parameters
-  Parameters_df <- read.csv(here("Input", "Parameters_rat.csv"))
+  Parameters_df <- read.csv(here("Input", "Parameters_human.csv")) #Parameters_rat.csv
   # Parameters <- as.list(Parameters_df$Value)
   # names(Parameters) <- Parameters_df$Parameter
 

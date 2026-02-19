@@ -82,12 +82,8 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   FV_jejl <- 0.362                                                              # calculated (Vjej/TotalV)
   FV_ilel <- 0.543                                                              # calculated (Vile/TotalV)
   
-<<<<<<< HEAD
   Vfe_IleL <- 0.128 * 0.1                                                       # volume of "feces" in the ileum, 0.128kg is the total volume of feces excreted per day, 0.007 is to correct for the small fraction already formed in the ileum
-=======
-  Vfe_IleL <- 128e-3 * 0.1 # volume of "feces" in the ileum, 4.1g is the total volume of feces excreted per day, 0.007 is to correct for the small fraction already formed in the ileum
->>>>>>> 3121499f20b39ffe684b0f7d92dc61ba6f4f0fdc
-  
+
   FV_L <- Physio_params[[paste0("V_liverFraction", suffix)]]                          
   FV_L_IC = 0.573                                                               # fractional volume of intracellular space in the liver; Reference: Utsey et al. 2020 https://doi.org/10.1124/dmd.120.090498, https://github.com/metrumresearchgroup/PBPK_PC/blob/master/data/unified_tissue_comp.csv
   FV_L_EC = 0.161                                                               # Fractional volume of extracellular space in the liver; Reference: Utsey et al. 2020 https://doi.org/10.1124/dmd.120.090498, https://github.com/metrumresearchgroup/PBPK_PC/blob/master/data/unified_tissue_comp.csv
@@ -350,18 +346,11 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   Km_SI_aZEL_gluc <- 7.426                                                      # uM
 
   # Glucuronide hydrolysis by gmGUS
-<<<<<<< HEAD
   # Reference: Ebuzoeme et al. (2021) https://doi.org/  10.3390/pharmaceutics13071043 (wogonoside glucuronide)
   S9gmGUS <- 4                                                                  # mg protein/ml feces
   Vmax_Hydro <- 5.35                                                            # umol/h
   Km_Hydro <- 0.41*15                                                           # uM
-=======
-  S9gmGUS <- 4                                                                    # mg protein/ml feces
-  Vmax_Hydro <- 5.35         # umol/min/mg -> umol/day
-  Km_Hydro <- 0.41*15           # uM 
 
->>>>>>> 3121499f20b39ffe684b0f7d92dc61ba6f4f0fdc
-  
   #### Liver ----
   
   S9L <- 122                                                                    # liver S9 protein yield, (mg S9 protein/gram liver) reference: Moerenhout et al. (2024) DOI 10.1021/acs.est.4c06534 sum of microsomal 32mg/g liver and cytosolic 80.7mg/g liver content
@@ -472,10 +461,6 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
     FV_jejl = FV_jejl,
     FV_ilel = FV_ilel,
     Vfe_IleL = Vfe_IleL,
-<<<<<<< HEAD
-=======
-    Vfe_IleL = Vfe_IleL,
->>>>>>> 3121499f20b39ffe684b0f7d92dc61ba6f4f0fdc
     FV_L = FV_L,
     FV_L_IC = FV_L_IC,
     FV_L_EC = FV_L_EC,
@@ -515,11 +500,7 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
     Vmax_SI_ZEN_gluc.c =  Vmax_SI_ZEN_gluc.c,
     Km_SI_ZEN_gluc = Km_SI_ZEN_gluc,
     S9gmGUS = S9gmGUS,
-<<<<<<< HEAD
     Vmax_Hydro = Vmax_Hydro, 
-=======
-    Vmax_Hydro = Vmax_Hydro,
->>>>>>> 3121499f20b39ffe684b0f7d92dc61ba6f4f0fdc
     Km_Hydro = Km_Hydro,
     S9L = S9L,
     Vmax_L_aZEL.c = Vmax_L_aZEL.c,
