@@ -82,7 +82,11 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   FV_jejl <- 0.362                                                              # calculated (Vjej/TotalV)
   FV_ilel <- 0.543                                                              # calculated (Vile/TotalV)
   
+<<<<<<< HEAD
   Vfe_IleL <- 0.128 * 0.1                                                       # volume of "feces" in the ileum, 0.128kg is the total volume of feces excreted per day, 0.007 is to correct for the small fraction already formed in the ileum
+=======
+  Vfe_IleL <- 128e-3 * 0.1 # volume of "feces" in the ileum, 4.1g is the total volume of feces excreted per day, 0.007 is to correct for the small fraction already formed in the ileum
+>>>>>>> 3121499f20b39ffe684b0f7d92dc61ba6f4f0fdc
   
   FV_L <- Physio_params[[paste0("V_liverFraction", suffix)]]                          
   FV_L_IC = 0.573                                                               # fractional volume of intracellular space in the liver; Reference: Utsey et al. 2020 https://doi.org/10.1124/dmd.120.090498, https://github.com/metrumresearchgroup/PBPK_PC/blob/master/data/unified_tissue_comp.csv
@@ -346,10 +350,17 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   Km_SI_aZEL_gluc <- 7.426                                                      # uM
 
   # Glucuronide hydrolysis by gmGUS
+<<<<<<< HEAD
   # Reference: Ebuzoeme et al. (2021) https://doi.org/  10.3390/pharmaceutics13071043 (wogonoside glucuronide)
   S9gmGUS <- 4                                                                  # mg protein/ml feces
   Vmax_Hydro <- 5.35                                                            # umol/h
   Km_Hydro <- 0.41*15                                                           # uM
+=======
+  S9gmGUS <- 4                                                                    # mg protein/ml feces
+  Vmax_Hydro <- 5.35         # umol/min/mg -> umol/day
+  Km_Hydro <- 0.41*15           # uM 
+
+>>>>>>> 3121499f20b39ffe684b0f7d92dc61ba6f4f0fdc
   
   #### Liver ----
   
@@ -406,14 +417,14 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   # Reference: Couto et al. (2020) DOI https://doi.org/10.1124/dmd.119.089656
   #            Fallon et al. (2016) DOI 10.1007/s11095-016-1966-5
   
-  pmolMP_mgP_IN_MRP2 <- 3.3                                                     # pmol MRP2/mg protein in intestine; ng->pg, pg -> pmol; Reference: Gavins et al. 2023 https://doi.org/10.1016/j.biopha.2023.114329 
-  pmolMP_mgP_LI_MRP2 <- 0.38                                                    # pmol MRP2/mg protein in liver; Reference: Fallon 2016 DOI 10.1007/s11095-016-1966-5
-  pmolMP_mgP_KI_MRP2 <- 0.48                                                    # pmol MRP2/mg protein in kidney; Reference: Fallon 2016 DOI 10.1007/s11095-016-1966-5
+  pmolMP_mgP_IN_MRP2 <- 3.3                                                     # pmol MRP2/mg protein in intestine 
+  pmolMP_mgP_LI_MRP2 <- 0.38                                                    # pmol MRP2/mg protein in liver 
+  pmolMP_mgP_KI_MRP2 <- 0.48                                                    # pmol MRP2/mg protein in kidney
   
-  pmolMP_mgP_LI_MRP3 <- 0.69                                                    # pmol MRP3/mg protein in liver; Reference: Fallon 2016 DOI 10.1007/s11095-016-1966-5
+  pmolMP_mgP_LI_MRP3 <- 0.69                                                    # pmol MRP3/mg protein in liver
   
-  pmolMP_mgP_IN_BCRP <- 0.59                                                    # pmol BCRP/mg protein in intestine; ng->pg, pg -> pmol; Reference: Gavins et al. 2023 https://doi.org/10.1016/j.biopha.2023.114329 
-  pmolMP_mgP_LI_BCRP <- 0.13                                                    # pmol BCRP/mg protein in liver; Reference: Fallon 2016 DOI 10.1007/s11095-016-1966-5
+  pmolMP_mgP_IN_BCRP <- 0.59                                                    # pmol BCRP/mg protein in intestine
+  pmolMP_mgP_LI_BCRP <- 0.13                                                    # pmol BCRP/mg protein in liver
   
   # Total protein in tissues
   mgP_mgLI <- 0.18                                                              # mg protein per mg liver
@@ -461,6 +472,10 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
     FV_jejl = FV_jejl,
     FV_ilel = FV_ilel,
     Vfe_IleL = Vfe_IleL,
+<<<<<<< HEAD
+=======
+    Vfe_IleL = Vfe_IleL,
+>>>>>>> 3121499f20b39ffe684b0f7d92dc61ba6f4f0fdc
     FV_L = FV_L,
     FV_L_IC = FV_L_IC,
     FV_L_EC = FV_L_EC,
@@ -500,7 +515,11 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
     Vmax_SI_ZEN_gluc.c =  Vmax_SI_ZEN_gluc.c,
     Km_SI_ZEN_gluc = Km_SI_ZEN_gluc,
     S9gmGUS = S9gmGUS,
+<<<<<<< HEAD
     Vmax_Hydro = Vmax_Hydro, 
+=======
+    Vmax_Hydro = Vmax_Hydro,
+>>>>>>> 3121499f20b39ffe684b0f7d92dc61ba6f4f0fdc
     Km_Hydro = Km_Hydro,
     S9L = S9L,
     Vmax_L_aZEL.c = Vmax_L_aZEL.c,
@@ -539,7 +558,7 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
                                             !grepl("\\bZEN_gluc_PR\\b", Parameter),
                                             !grepl("\\baZEL_gluc_PR\\b", Parameter))
   
-  write.csv(Parameters_df, here("Input", "Parameters_rat.csv"), row.names = FALSE)
+  write.csv(Parameters_df, here("Input", "Parameters_human.csv"), row.names = FALSE)
   
   
   # parm.c <- split(Parameters_df, seq(nrow(Parameters_df)))
