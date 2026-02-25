@@ -95,7 +95,7 @@ Vmax_L_ZEN_gluc.c,0.00297
 Km_L_ZEN_gluc,2.043
 Vmax_L_aZEL_gluc.c,0.002983
 Km_L_aZEL_gluc,2.415
-Bile.fasted,0
+Bile.fasted,1E-13
 Bile.fed,1
 Tgb,0.017361111
 Vmax_MRP2.c,0.003366

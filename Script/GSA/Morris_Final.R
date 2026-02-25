@@ -449,7 +449,7 @@
   load(here(OUTPUT,"Morris_ZEN.indices.RData"))
   ZEN_morris_data <- Morris.indices$IGlobal
   ZEN <- ZEN_morris_data %>% arrange(desc(IGlobal_mu.star)) %>% 
-    mutate(n = seq(from=1, to=114, by=1)) %>% 
+    mutate(n = seq(from=1, to=112, by=1)) %>% 
     filter(IGlobal_sigma > 0)
   
   ZEN <- ZEN %>%  mutate(
@@ -515,7 +515,7 @@
   load(here(OUTPUT,"Morris_ZEN_gluc.indices.RData"))
   ZEN_glucmorris_data <- Morris.indices$IGlobal
   ZEN_gluc <- ZEN_glucmorris_data %>% arrange(desc(IGlobal_mu.star)) %>% 
-    mutate(n = seq(from=1, to=114, by=1)) %>% 
+    mutate(n = seq(from=1, to=112, by=1)) %>% 
     filter(IGlobal_sigma > 0)
   ZEN_gluc <- ZEN_gluc %>%  mutate(
     "ParameterType" = case_when(
@@ -565,7 +565,7 @@
   load(here(OUTPUT,"Morris_aZEL.indices.RData"))
   aZEL_morris_data <- Morris.indices$IGlobal
   aZEL <- aZEL_morris_data %>% arrange(desc(IGlobal_mu.star)) %>% 
-    mutate(n = seq(from=1, to=114, by=1)) %>% 
+    mutate(n = seq(from=1, to=112, by=1)) %>% 
     filter(IGlobal_sigma > 0)
   aZEL <- aZEL %>%  mutate(
     "ParameterType" = case_when(
@@ -618,7 +618,7 @@
   load(here(OUTPUT,"Morris_aZEL_gluc.indices.RData"))
   aZEL_gluc_morris_data <- Morris.indices$IGlobal
   aZEL_gluc <- aZEL_gluc_morris_data %>% arrange(desc(IGlobal_mu.star)) %>% 
-    mutate(n = seq(from=1, to=114, by=1)) %>% 
+    mutate(n = seq(from=1, to=112, by=1)) %>% 
     filter(IGlobal_sigma > 0)
   
   aZEL_gluc <- aZEL_gluc %>%  mutate(
@@ -695,7 +695,7 @@
     geom_jitter(width = .5, alpha = 0.7)  +
     geom_text(aes(label=ifelse(IGlobal_mu.star>0.02,as.character(parm_names),'')),hjust=0,vjust=0) 
 
-  Global_eFAST <- morris_data %>% filter(n<=40) %>% mutate(Mycotoxin = "Global")
+  # Global_eFAST <- morris_data %>% filter(n<=40) %>% mutate(Mycotoxin = "Global")
 
   Occurence <- rbind(ZEN_eFAST, aZEL_eFAST, ZEN_gluc_eFAST, aZEL_gluc_eFAST) %>% 
   group_by(parm_names)  %>% summarise(occurrences = n()) 
@@ -750,7 +750,7 @@
   
   morris_data <- Morris.indices$IGlobal
   morris_data <- morris_data %>% arrange(desc(IGlobal_mu.star)) %>% 
-    mutate(n = seq(from=1, to=114, by=1)) %>% 
+    mutate(n = seq(from=1, to=112, by=1)) %>% 
     filter(IGlobal_sigma > 0)
   morris_data <- morris_data %>%  mutate(
     "ParameterType" = case_when(
