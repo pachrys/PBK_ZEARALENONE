@@ -45,7 +45,7 @@
   dir.create(OUTPUT, recursive = TRUE)
   
   # Model Code
-  source(here("Script", "GSA","PBK_model.R")) "PBK_model_rat.R"
+  source(here("Script", "GSA","PBK_model_human.R")) #"PBK_model_rat.R"
   
 
   # SENSITIVITY FUNCTION ####
@@ -111,7 +111,7 @@
     
     PBK.out <- lsoda(y = A_init,
                      times = seq(0, 24,by=1/60),
-                     func =  PBK.model, #R.PBK.model
+                     func =  H.PBK.model, #R.PBK.model
                      parms = P)
     
     CB_ZEN <- PBK.out[,"CB_ZEN"]
