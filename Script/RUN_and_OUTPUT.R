@@ -15,7 +15,7 @@ RUNandOUT <- function(exp,
   
   # Load R files 
   source(here("Script", "CALC_Parameters.R"), local = TRUE)
-  source(here("Script", "PBK_model.R"), local = TRUE)  
+  source(here("Script", "Final_PBK_model_Human.R"), local = TRUE)  
   
   ## Add state ####
   A_init <- c(

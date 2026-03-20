@@ -352,7 +352,7 @@ Km_SI_bZEL <- 21                                                                
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 Vmax_SI_ZEN_gluc.c <-  8.617*1e-3                                               # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                                         # uM 
-Vmax_SI_aZEL_gluc.c <- 6.963*1e-3 #*1e6                                         # umol/min/mg protein; from nmol-> umol
+Vmax_SI_aZEL_gluc.c <- 6.963*1e-3                                               # umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                                        # uM
 
 # Glucuronide hydrolysis by gmGUS

@@ -333,20 +333,10 @@ PappCaco2_aZEL <- 5.4 * 1e-6                                                    
 
 S9SI <- 15.5                                                                    # small intestinal S9 protein yield (mg S9 protein/gram intestine); Reference: Doerksen et al. (2020) doi: 10.1007/s13318-020-00666-w sum of microsomal 3.9 mg/g and cytosolic 18mg/g 
 
-# Hydrolysis
-# Assuming the same as liver
-# Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-Vmax_SI_aZEL.c <- 0 #32*1e-6                                                    # umol/min/mg protein; from pmol-> umol
-Km_SI_aZEL <- 592                                                               # uM 
-Vmax_SI_bZEL.c <- 0 #72*1e-6                                                    # umol/min/mg protein; from pmol-> umol
-Km_SI_bZEL <- 21                                                                # uM 
-
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 Vmax_SI_ZEN_gluc.c <-  8.617*1e-3                                               # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                                         # uM 
-Vmax_SI_aZEL_gluc.c <- 0 #6.963*1e-3 *1e6                                       # umol/min/mg protein; from nmol-> umol
-Km_SI_aZEL_gluc <- 7.426                                                        # uM
 
 # Glucuronide hydrolysis by gmGUS
 # Reference: Ebuzoeme et al. (2021) https://doi.org/  10.3390/pharmaceutics13071043 (wogonoside glucuronide)
@@ -1067,7 +1057,7 @@ R.PBK.model <- function(t, state, parms){
     c(ATotal = ATotal,
       ACalculated = ACalculated,
       MB = MB,
-      CDuoL_ZEN = CDuoL_ZEN, CJejL_ZEN = CJejL_ZEN, CIleL_ZEN = CIleL_ZEN, #CCOL_ZEN = CCOL_ZEN,
+      CDuoL_ZEN = CDuoL_ZEN, CJejL_ZEN = CJejL_ZEN, CIleL_ZEN = CIleL_ZEN, 
       CDuo_ZEN = CDuo_ZEN, CJej_ZEN = CJej_ZEN, CIle_ZEN = CIle_ZEN,
       CL_ZEN = CL_ZEN,
       CR_ZEN = CR_ZEN ,
@@ -1076,7 +1066,7 @@ R.PBK.model <- function(t, state, parms){
       CB_ZEN = CB_ZEN,
       CUrine_ZEN = AUR_ZEN/VUrine,
       
-      CDuoL_ZEN_gluc = CDuoL_ZEN_gluc, CJejL_ZEN_gluc = CJejL_ZEN_gluc, CIleL_ZEN_gluc = CIleL_ZEN_gluc, #CCOL_ZEN_gluc = CCOL_ZEN_gluc,
+      CDuoL_ZEN_gluc = CDuoL_ZEN_gluc, CJejL_ZEN_gluc = CJejL_ZEN_gluc, CIleL_ZEN_gluc = CIleL_ZEN_gluc, 
       CJej_ZEN_gluc = CJej_IC_ZEN_gluc, 
       CL_ZEN_gluc = CL_IC_ZEN_gluc, 
       CBile_ZEN_gluc = CBile_ZEN_gluc,
@@ -1097,7 +1087,7 @@ R.PBK.model <- function(t, state, parms){
       CUrine_aZEL = AUR_aZEL/VUrine,
       
       
-      CDuoL_aZEL_gluc = CDuoL_aZEL_gluc, CIleL_aZEL_gluc = CIleL_aZEL_gluc, #CCOL_aZEL_gluc = CCOL_aZEL_gluc, #CJejL_aZEL_gluc = CJejL_aZEL_gluc
+      CDuoL_aZEL_gluc = CDuoL_aZEL_gluc, CIleL_aZEL_gluc = CIleL_aZEL_gluc, 
       CL_aZEL_gluc = CL_IC_aZEL_gluc, 
       CBile_aZEL_gluc = CBile_aZEL_gluc,
       CR_aZEL_gluc = CR_aZEL_gluc,
@@ -1325,7 +1315,7 @@ Clean.C <- PBK_OUTPUT %>%
       VDuo + VJej + VIle),
     "CInL_aZEL" = ((CIleL_aZEL*VIleL))/(
       VDuoL + VJejL + VIleL),
-    "CInL_aZEL_gluc" = ((CDuoL_aZEL_gluc*VDuoL) + (CIleL_aZEL_gluc*VIleL))/( #(CJejL_aZEL_gluc*VJejL)
+    "CInL_aZEL_gluc" = ((CDuoL_aZEL_gluc*VDuoL) + (CIleL_aZEL_gluc*VIleL))/( 
       VDuoL + VJejL + VIleL)
     ) %>% 
   mutate(
