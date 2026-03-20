@@ -1,0 +1,5 @@
+Substance;MolecularWeight;logP;pKa.1;pKa.2;pKa.3;pKa.4;pKa.5;pKa.6;fup;Solubility_6.5_mg/ml;Solubility_7.4_mg/ml;Solubility_8_mg/ml;BPR;Comment;SMILES
+Zearalenone;318.15;3.58;7.5;7.7;;;;;0.156;0.31;0.32;0.39;0.67;assumed diprotic acid;C[C@H]1CCCC(=O)CCC\C=C\C2=CC(O)=CC(O)=C2C(=O)O1
+a-Zearalenol;320.16;3.37;7.5;7.7;10.2;;;;0.156;0.26;0.28;0.33;0.67;assumed diprotic acid;C[C@H]1CCC[C@H](O)CCC\C=C\C2=CC(O)=CC(O)=C2C(=O)O1
+Zearalenone-14O-glucuronide;494.18;1.15;3;7.2;9.9;11.3;11.4;;0.258;494.49;494.49;494.49;0.55;assumed diprotic acid;C[C@H]1CCCC(=O)CCC\C=C\C2=C(C(O)=CC(O[C@@H]3O[C@@H]([C@@H](O)[C@H](O)[C@H]3O)C(O)=O)=C2)C(=O)O1
+a-Zearalenol-glucuronide;496.191;0.937;3;7.2;9.9;10.7;11.3;11.4;0.148;496.5;496.51;496.52;0.55;assumed diprotic acid;C[C@H]1CCC[C@H](O)CCC\C=C\C2=C(C(O)=CC(O[C@@H]3O[C@@H]([C@@H](O)[C@H](O)[C@H]3O)C(O)=O)=C2)C(=O)O1
