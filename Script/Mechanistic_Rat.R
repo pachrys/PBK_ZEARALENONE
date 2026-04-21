@@ -13,10 +13,13 @@ library(deSolve)
 library(showtext)
 library(plotly)
 library(readr)
+library(PKNCA)
+library(pracma)
 font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # For plotting
+test = "Q.Lu"
 
 CP_theme <- theme_minimal() +
   theme(
@@ -48,7 +51,7 @@ dir.create(OUTPUT, recursive = TRUE)
 # -------------------------------------------------------------------------#
 # -------------------------------------------------------------------------#
 
-
+timeSeq <- seq(0, 24, by=1/60)                                                 # per minute
 
 
 
@@ -66,7 +69,9 @@ names <- substr(Rat.dat$tissue, 1, 2)
 F_Vo.names <- paste0("FV", names)
 F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo)) %>%
   pivot_wider(names_from = F_Vo.names, values_from = F_Vo)
-
+Bile_Lymph.df <- read_delim(here("Input", "Bile_LymphN.csv"),
+                            delim = ",",
+                            escape_double = FALSE, trim_ws = TRUE)
 
 ## Physiological constants ----
 # Reference (if not stated otherwise): Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307
@@ -332,7 +337,10 @@ PappCaco2_aZEL <- 5.4 * 1e-6                                                    
 
 # Absorption to (& release from) the lymph
 ka_Lymph <- 0.55                                                                # /h
-
+LymphIPf <- approxfun(Bile_Lymph.df$Time, 
+                      Bile_Lymph.df$LymphR, 
+                      rule = 2)                                                 # /h
+plot(LymphIPf(timeSeq))
 
 ### Metabolism ----
 
@@ -358,7 +366,7 @@ Km_SI_aZEL_gluc <- 7.426                                                        
 # Glucuronide hydrolysis by gmGUS
 # Reference: Ebuzoeme et al. (2021) https://doi.org/  10.3390/pharmaceutics13071043 (wogonoside glucuronide)
 S9gmGUS <- 4                                                                    # mg protein/ml feces
-Vmax_Hydro <- 4.42                                                              # umol/h
+Vmax_Hydro <- 4.42                                                               # umol/h
 Km_Hydro <- 3.08*15                                                             # uM
 
 #### Liver ----
@@ -384,8 +392,11 @@ Km_L_aZEL_gluc <- 7.426                                                         
 
 #### Biliary excretion ----
 
-Bile.fasted <- 6.35e-6 * 60                                                     # L/h 
-
+Bile.fasted <- 6.35e-6 * 60                                                     # L/h
+BileIPf <- approxfun(Bile_Lymph.df$Time,                                        # L/h
+                     Bile_Lymph.df$BileContentsExcretionR*1e-6*60,
+                     rule = 2)
+plot(BileIPf(timeSeq))
 
 #### Active transport ----
 # Reference: Yanfei Li et al. 2019 doi:10.1016/j.jsbmb.2019.03.027.
@@ -619,7 +630,8 @@ R.PBK.model <- function(t, state, parms){
     
     
     ### Lymphatic absorption
-    ka_Lymph <- ifelse(t > 3 && t < 3.5, ka_Lymph, 0) 
+    # ka_Lymph <- ifelse(t > 3 && t < 3.5, ka_Lymph, 0)
+    ka_Lymph <- LymphIPf(t)
     
     
     ## Metabolism
@@ -658,8 +670,8 @@ R.PBK.model <- function(t, state, parms){
     
     ## Biliary clearance
     
-    CL_Bile <- ifelse(t > 2.5, 1, Bile.fasted) 
-    
+    # CL_Bile <- ifelse(t > 2.5, 1, Bile.fasted)
+    CL_Bile <- BileIPf(t)
     
     ## Tissue Concentrations ----
     
@@ -1206,14 +1218,14 @@ MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone",
 ## Exposure ---- 
 
 Select_AdminType <- "PO" # IV # PO
-Select_Author <- "Videmann" # Shin # Q.Lu # Videmann 
+Select_Author <- "Q.Lu" # Shin # Q.Lu # Videmann 
 
 BW <- if(Select_Author == "Shin"){0.26
 }else if(Select_Author == "Q.Lu"){0.2
 }else if(Select_Author == "Videmann"){0.26}
 
 # Oral dose
-ODOSEmg <- if(Select_Author == "Shin"){8
+ODOSEmg <- if(Select_Author == "Q.Lu"){8
 }else if(Select_Author == "Q.Lu"){6.65
 }else if(Select_Author == "Videmann"){1}                                        # mg/kg bw IV dose
 ODOSEumol <- ((ODOSEmg*1000)/MW_ZEN)*BW                                         # μmol
@@ -1229,7 +1241,7 @@ names(ODOSEumol) <- "ODOSEumol"
 names(IVDOSEumol) <- "IVDOSEumol"
 parm.c <- c(Parameters, c(ODOSEumol, IVDOSEumol))
 
-timeSeq <- seq(0, 24, by=1/100)                                                 # per minute
+timeSeq <- timeSeq                                                 # per minute
 
 
 ## Initials ----
@@ -1318,13 +1330,13 @@ MB.plot <- ggplot(data = MB.df)+
   )+
   ylab("MB / ERROR")
 MB.plot
-ggsave(
-  filename = here(OUTPUT,"MB.Rat.png"),
-  dpi = 600,
-  width = 11,
-  height = 7,
-  units = "cm"
-)
+# ggsave(
+#   filename = here(OUTPUT,"MB.Rat.png"),
+#   dpi = 600,
+#   width = 11,
+#   height = 7,
+#   units = "cm"
+# )
 
 MW_ZEN_gluc <- pull(PhysChem[PhysChem$Substance == "Zearalenone-14O-glucuronide", 
                         "MolecularWeight"])
@@ -1456,7 +1468,7 @@ CBlood.plot <- C.Pre_long %>% filter(Tissue == "Blood") %>%
         legend.margin = margin(0, 0, 0, 0))
 CBlood.plot
 ggsave(
-  filename = here(OUTPUT,"BloodC.Rat.png"),
+  filename = here(OUTPUT,paste0(test, "BloodC.Rat.png")),
   dpi = 600,
   width = 11,
   height = 7,
@@ -1482,15 +1494,98 @@ CTissues.plot <- Clean.C %>%
         legend.spacing.y = unit(0, "cm"),
         legend.margin = margin(0, 0, 0, 0))
 CTissues.plot
-ggsave(
-  filename = here(OUTPUT,"TissueC.Rat.png"),
-  dpi = 600,
-  width = 11,
-  height = 7,
-  units = "cm"
+# ggsave(
+#   filename = here(OUTPUT, paste0(test, "TissueC.Rat.png")),
+#   dpi = 600,
+#   width = 11,
+#   height = 7,
+#   units = "cm"
+# )
+
+# write_csv(Clean.C, here(OUTPUT, "C.Tissues.Rat.csv"))
+
+# ZEN
+AUC_ZEN <- trapz(PBK_OUTPUT[ , "time"], PBK_OUTPUT[ , "CB_ZEN"])  # umol*h/L
+print(AUC_ZEN)
+
+time <- PBK_OUTPUT[ , "time"] # h
+conc_ZEN <- PBK_OUTPUT[ , "CB_ZEN"] # uM 
+Cmax_ZEN <- max(conc_ZEN)
+Tmax_ZEN <- time[which.max(conc_ZEN)]
+tlast_ZEN <- max(time[conc_ZEN > 0])
+half_life_ZEN <- pk.calc.half.life(
+  conc_ZEN,
+  time,
+  Tmax_ZEN,
+  tlast_ZEN
+)
+HalfLife_ZEN <- half_life_ZEN$half.life  # half-life in h
+print(HalfLife_ZEN)
+
+# ZEN gluc
+AUC_ZEN_gluc <- trapz(PBK_OUTPUT[ , "time"], PBK_OUTPUT[ , "CB_ZEN_gluc"])  # umol*h/L
+print(AUC_ZEN_gluc)
+
+time <- PBK_OUTPUT[ , "time"] # h
+conc_ZEN_gluc <- PBK_OUTPUT[ , "CB_ZEN_gluc"] # uM 
+Cmax_ZEN_gluc <- max(conc_ZEN_gluc)
+Tmax_ZEN_gluc <- time[which.max(conc_ZEN_gluc)]
+tlast_ZEN_gluc <- max(time[conc_ZEN_gluc > 0])
+half_life_ZEN_gluc <- pk.calc.half.life(
+  conc_ZEN_gluc,
+  time,
+  Tmax_ZEN_gluc,
+  tlast_ZEN_gluc
+)
+HalfLife_ZEN_gluc <- half_life_ZEN_gluc$half.life  # half-life in h
+print(HalfLife_ZEN_gluc)
+
+# CB_aZEL
+AUC_aZEL <- trapz(PBK_OUTPUT[ , "time"], PBK_OUTPUT[ , "CB_aZEL"])  # umol*h/L
+print(AUC_aZEL)
+
+time <- PBK_OUTPUT[ , "time"] # h
+conc_aZEL <- PBK_OUTPUT[ , "CB_aZEL"] # uM 
+Cmax_aZEL <- max(conc_aZEL)
+Tmax_aZEL <- time[which.max(conc_aZEL)]
+tlast_aZEL <- max(time[conc_aZEL > 0])
+half_life_aZEL <- pk.calc.half.life(
+  conc_aZEL,
+  time,
+  Tmax_aZEL,
+  tlast_aZEL
+)
+HalfLife_aZEL <- half_life_aZEL$half.life  # half-life in h
+print(HalfLife_aZEL)
+
+# aZEL_gluc
+AUC_aZEL_gluc <- trapz(PBK_OUTPUT[ , "time"], PBK_OUTPUT[ , "CB_aZEL_gluc"])  # umol*h/L
+print(AUC_aZEL_gluc)
+
+time <- PBK_OUTPUT[ , "time"] # h
+conc_aZEL_gluc <- PBK_OUTPUT[ , "CB_aZEL_gluc"] # uM 
+Cmax_aZEL_gluc <- max(conc_aZEL_gluc)
+Tmax_aZEL_gluc <- time[which.max(conc_aZEL_gluc)]
+tlast_aZEL_gluc <- max(time[conc_aZEL_gluc > 0])
+half_life_aZEL_gluc <- pk.calc.half.life(
+  conc_aZEL_gluc,
+  time,
+  Tmax_aZEL_gluc,
+  tlast_aZEL_gluc
+)
+HalfLife_aZEL_gluc <- half_life_aZEL_gluc$half.life  # half-life in h
+print(HalfLife_aZEL_gluc)
+
+TK.data <- tibble(
+  Mycotoxin = c("ZEN", "ZEN_gluc", "aZEL", "aZEL_gluc"),
+  Cmax = c(Cmax_ZEN, Cmax_ZEN_gluc, Cmax_aZEL, Cmax_aZEL_gluc), 
+  Tmax = c(Tmax_ZEN, Tmax_ZEN_gluc, Tmax_aZEL, Tmax_aZEL_gluc),
+  AUC = c(AUC_ZEN, AUC_ZEN_gluc, AUC_aZEL, AUC_aZEL_gluc),
+  Half_life = c(HalfLife_ZEN, HalfLife_ZEN_gluc, HalfLife_aZEL, HalfLife_aZEL_gluc), 
+  Test = test
 )
 
-write_csv(Clean.C, here(OUTPUT, "C.Tissues.Rat.csv"))
+# Results
 
 Results.Rat <- list(
   Metadata.Run.Rat = list(Select_AdminType = Select_AdminType,
@@ -1507,7 +1602,8 @@ Results.Rat <- list(
   Raw.Data.Rat = PBK_OUTPUT,
   C.Tissues.Rat = Clean.C,
   C.All.Rat = C.Pre_long,
-  Plots = list(MB.plot, CBlood.plot, CTissues.plot)
+  Plots = list(CBlood.plot, CTissues.plot), #MB.plot, 
+  TK.data = TK.data
 )
 
-save(Results.Rat, file = here(OUTPUT, "Resuls.RData"))
+save(Results.Rat, file = here(OUTPUT, paste0(test, "Results.Rat.RData")))

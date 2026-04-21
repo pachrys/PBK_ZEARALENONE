@@ -39,7 +39,7 @@ OUTPUT <- here("Output", format(Sys.Date(), "%Y-%m-%d")) #,
 dir.create(OUTPUT, recursive = TRUE)
 
 # Input ---- 
-load(here(OUTPUT, "Results.Rat.RData"))
+load(here(OUTPUT, "Q.LuResults.Rat.RData"))
 Select_AdminType <- Results.Rat$Metadata.Run.Rat$Select_AdminType
 # Select_AdminType <- "IV.PERF"
 Select_Author <- Results.Rat$Metadata.Run.Rat$Select_Author
@@ -72,7 +72,6 @@ Predicted.urine <- Results.Rat$Raw.Data.Rat %>% filter(time >= 0.005) %>%
                 names_to = c("Tissue", "Substance"),
                 names_sep = c("_"),
                 values_to = "Amount")
-
 
 
 Obs <- Observed.data %>%
@@ -114,6 +113,31 @@ if(Select_Author == "Videmann"){
                                     Tissue == "Blood")%>% 
     select(Substance, Time, Concentration) 
 }
+
+# AUC-halflife ####
+Predicted <- Results.Rat$Raw.Data.Rat %>% select(time) %>% pull()
+B <- Cobs %>% filter(Tissue == "Blood") #%>% filter(Sex == "Male")
+b    <- approxfun(B$Time, B$Concentration, rule = 2)
+plot(b(Predicted))
+t <- b(Predicted)
+df <- tibble(Time = Predicted, Concentration = t)
+AUC_ZEN <- trapz(Predicted, t)  # umol*h/L
+print(AUC_ZEN)
+
+time <- Predicted # h
+conc_ZEN <- t # uM
+Cmax_ZEN <- max(t)
+Tmax_ZEN <- time[which.max(conc_ZEN)]
+tlast_ZEN <- max(time[conc_ZEN > 0])
+half_life_ZEN <- pk.calc.half.life(
+  conc_ZEN,
+  time,
+  Tmax_ZEN,
+  tlast_ZEN
+)
+HalfLife_ZEN <- half_life_ZEN$half.life  # half-life in h
+print(HalfLife_ZEN)
+
 
 
 # Plots ---- 
@@ -476,7 +500,7 @@ if(Select_Author == "Videmann"){
     mutate(Time = as.numeric(Time), 
            Concentration = as.numeric(Concentration),
            Concentration = ifelse(Tissue == "Plasma",
-                                  Concentration / aZEL_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
+                                  Concentration * aZEL_BPR, Concentration), # (ng/ml) blood concentration: changing from plasma concentrations to blood concentrations by multiplying with BP
            Tissue = ifelse(Tissue == "Plasma", "Blood", Tissue))
   
   Cobs.aZEL <- Obs.aZEL %>%
