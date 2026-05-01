@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------- #
 # Script for the Refined PBK Model 
 # By: Chrysanthi Pachoulide
-# Date: 23-06-2025
+# Date: 01-05-2025
 # --------------------------------------------------------------------------- #
 
 rm(list=ls()) 
@@ -51,7 +51,7 @@ dir.create(OUTPUT, recursive = TRUE)
 # -------------------------------------------------------------------------#
 # -------------------------------------------------------------------------#
 
-timeSeq <- seq(0, 24, by=1/60)                                                 # per minute
+timeSeq <- seq(0, 24, by=1/60)                                                  # per minute
 
 
 
@@ -62,22 +62,22 @@ timeSeq <- seq(0, 24, by=1/60)                                                 #
 Rat.input <- read_delim(here("Input", "TissueComposition.csv"),
                         delim = ";",
                         escape_double = FALSE, trim_ws = TRUE) %>%
-  filter(Species == "Rat") # tissue composition mainly as R&R composition, unified by Utsey and optimised as per Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
+  filter(Species == "Rat")                                                      # tissue composition mainly as R&R composition, unified by Utsey and optimised as per Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
 
-Rat.dat <- Rat.input %>% filter(!tissue %in% c("RBCs", "Plasma")) # df for all tissues except for adipose and RBCs
+Rat.dat <- Rat.input %>% filter(!tissue %in% c("RBCs", "Plasma"))          
 names <- substr(Rat.dat$tissue, 1, 2)
 F_Vo.names <- paste0("FV", names)
 F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo)) %>%
   pivot_wider(names_from = F_Vo.names, values_from = F_Vo)
-Bile_Lymph.df <- read_delim(here("Input", "Bile_LymphN.csv"),
-                            delim = ",",
-                            escape_double = FALSE, trim_ws = TRUE)
+# Bile_Lymph.df <- read_delim(here("Input", "Bile_LymphN.csv"),
+#                             delim = ",",
+#                             escape_double = FALSE, trim_ws = TRUE)
 
 ## Physiological constants ----
 # Reference (if not stated otherwise): Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307
 
 # Body weight 
-BW <- 0.250                            # Kg
+BW <- 0.250                                                                     # Kg
 
 ### Fractional volumes ----           
 
@@ -89,16 +89,12 @@ FV_Ile <- 0.171                                                                 
 FV_SI_IC <- pull(Rat.input[Rat.input$tissue == "Gut", "f_iw"])                  # fraction of small intestine that is intracellular water
 FV_SI_EC <- pull(Rat.input[Rat.input$tissue == "Gut", "f_ew"])                  # fraction of small intestine that is extracellular water
 
-FV_CO <- 0.002                                                                  # colon tissue; calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 (total volume was 0.238ml)
-
 FV_SIL <- 0.014                                                                 # small intestine lumen 
 FV_duol <- 0.183                                                                # duodenum lumen; calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
 FV_jejl <- 0.334                                                                # jejunum lumen; calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
 FV_ilel <- 0.483                                                                # ileum lumen; calculated from Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003
 
-FV_COL <- 0.012                                                                 # colon lumen; 
 Vfe_IleL <- 4.1e-3 * 0.1                                                        # volume of "feces" in the ileum, 4.1g is the total volume of feces excreted per day, 0.007 is to correct for the small fraction already formed in the ileum
-Vfe_COL <- 4.1e-3 * 0.9                                                         # volume of feces in the colon
 
 FV_L <- pull(Rat.input[Rat.input$tissue == "Liver", "F_Vo"])                    # liver tissue
 FV_L_IC <- pull(Rat.input[Rat.input$tissue == "Liver", "f_iw"])                 # fraction of liver that is intracellular water
@@ -132,13 +128,13 @@ Lduo <- 7                                                                       
 Ljej <- 90                                                                      # cm jejunum
 Lile <- 20                                                                      # cm ileum
 
-# Microvilli amplification factor
-# villi and microvilli together amplify the small intestinal surface area by 60–120 times https://doi.org/10.3109/00365521.2014.898326
+# TO REMOVE: Villi amplification factor
 # Reference: Desesso et al. (2001) https://doi.org/10.1016/S0278-6915(00)00136-8
+# Reference: Stenling and Helander 1981 10.1007/BF00233821, rat villi amplification factor at a non-fasted state
 
-Amp <- 120                                                                      # small intestine 
+Amp <- 10                                                                       # small intestine 
 Ampduo <- 1*Amp                                                                 # duodenum       
-Ampjej <- 0.7*Amp                                                               # jejunum
+Ampjej <- 0.8*Amp                                                               # jejunum
 Ampile <- 0.5*Amp                                                               # ileum
 
 # Surface aeria
@@ -178,14 +174,12 @@ t_SI <- 1.63                                                                    
 t_si_duo <- 0.06*t_SI                                                           # h; duodenum transit/residence time
 t_si_jej <- 0.769*t_SI                                                          # h; jejunum transit/residence time 
 t_si_ile <- 0.171*t_SI                                                          # h; ileum transit/residence time 
-t_CO <- 19.7                                                                    # h; colon transit/residence time
 
 # Emptying/transit/residence rates
 k_GER = 1/t_GER                                                                 # /h; stomach 
 k_duo <- 1/t_si_duo                                                             # /h; duodenum 
 k_jej <- 1/t_si_jej                                                             # /h; jejunum
 k_ile <- 1/t_si_ile                                                             # /h; ileum
-k_CO <- 1/t_CO                                                                  # /h; colon
 
 # Glomerular filtration rate
 GFR <- 0.0786                                                                   # L/h; Reference: Grandoni et al. (2019) DOI:  10.5599/admet.638 
@@ -337,16 +331,16 @@ PappCaco2_aZEL <- 5.4 * 1e-6                                                    
 
 # Absorption to (& release from) the lymph
 ka_Lymph <- 0.55                                                                # /h
-LymphIPf <- approxfun(Bile_Lymph.df$Time, 
-                      Bile_Lymph.df$LymphR, 
-                      rule = 2)                                                 # /h
-plot(LymphIPf(timeSeq))
+# LymphIPf <- approxfun(Bile_Lymph.df$Time,
+#                       Bile_Lymph.df$LymphR,
+#                       rule = 2)                                                 # /h
+# plot(LymphIPf(timeSeq))
 
 ### Metabolism ----
 
 #### Small intestine ----
 
-S9SI <- 15.5                                                                    # small intestinal S9 protein yield (mg S9 protein/gram intestine); Reference: Doerksen et al. (2020) doi: 10.1007/s13318-020-00666-w sum of microsomal 3.9 mg/g and cytosolic 18mg/g 
+S9SI <- 3.9 #15.5                                                                    # small intestinal S9 protein yield (mg S9 protein/gram intestine); Reference: Doerksen et al. (2020) doi: 10.1007/s13318-020-00666-w sum of microsomal 3.9 mg/g and cytosolic 18mg/g 
 
 # Hydrolysis
 # Assuming the same as liver
@@ -366,12 +360,12 @@ Km_SI_aZEL_gluc <- 7.426                                                        
 # Glucuronide hydrolysis by gmGUS
 # Reference: Ebuzoeme et al. (2021) https://doi.org/  10.3390/pharmaceutics13071043 (wogonoside glucuronide)
 S9gmGUS <- 4                                                                    # mg protein/ml feces
-Vmax_Hydro <- 4.42                                                               # umol/h
-Km_Hydro <- 3.08*15                                                             # uM
+Vmax_Hydro <- 4.42                                                              # umol/h
+Km_Hydro <- 3.08                                                                # uM
 
 #### Liver ----
 
-S9L <- 46                                                                       # liver S9 protein yield, (mg S9 protein/gram liver) reference: Moerenhout et al. (2024) DOI 10.1021/acs.est.4c06534 sum of microsomal 32mg/g liver and cytosolic 80.7mg/g liver content
+S9L <- 32 #                                                                     # liver S9 protein yield, (mg S9 protein/gram liver) reference: microsomal 32mg/g liver 
 
 # Hydrolysis
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
@@ -393,10 +387,10 @@ Km_L_aZEL_gluc <- 7.426                                                         
 #### Biliary excretion ----
 
 Bile.fasted <- 6.35e-6 * 60                                                     # L/h
-BileIPf <- approxfun(Bile_Lymph.df$Time,                                        # L/h
-                     Bile_Lymph.df$BileContentsExcretionR*1e-6*60,
-                     rule = 2)
-plot(BileIPf(timeSeq))
+# BileIPf <- approxfun(Bile_Lymph.df$Time,                                        # L/h
+#                      Bile_Lymph.df$BileContentsExcretionR*1e-6*60,
+#                      rule = 2)
+# plot(BileIPf(timeSeq))
 
 #### Active transport ----
 # Reference: Yanfei Li et al. 2019 doi:10.1016/j.jsbmb.2019.03.027.
@@ -450,13 +444,13 @@ REF_IN_BCRP <- pmolMP_mgP_IN_BCRP / pmol_mg_BCRP
 REF_LI_BCRP <- pmolMP_mgP_LI_BCRP / pmol_mg_BCRP
 
 # Scaling factor
-SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2                            # mg MRP2 / mg small intestine
+SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2  #*0                          # mg MRP2 / mg small intestine
 SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *10                        # mg MRP2 / mg liver
 SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2 *10                        # mg MRP2 / mg liver
 
 SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3 /10                        # mg MRP3 / mg liver 
 
-SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP                            # mg BCRP / mg liver 
+SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP   #*0                         # mg BCRP / mg liver 
 SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *10                        # mg BCRP / mg liver 
 
 ## Collect all parameters ----
@@ -477,9 +471,7 @@ Other_params <- tibble(
   FV_duol = FV_duol,
   FV_jejl = FV_jejl,
   FV_ilel = FV_ilel,
-  FV_COL = FV_COL,
   Vfe_IleL = Vfe_IleL,
-  Vfe_COL = Vfe_COL,
   FV_L = FV_L,
   FV_L_IC = FV_L_IC,
   FV_L_EC = FV_L_EC,
@@ -506,7 +498,6 @@ Other_params <- tibble(
   k_duo = k_duo,
   k_jej = k_jej,
   k_ile = k_ile,
-  k_CO = k_CO,
   GFR = GFR,
   PappCaco2_ZEN = PappCaco2_ZEN,
   PappCaco2_aZEL = PappCaco2_aZEL,
@@ -576,8 +567,7 @@ R.PBK.model <- function(t, state, parms){
     VDuoL <- VSIL*FV_duol 
     VJejL <- VSIL*FV_jejl 
     VIleL <- VSIL*FV_ilel 
-    VCOL <- FV_COL*BW 
-    
+
     VSI <- FV_SI*BW 
     VDuo <- VSI*FV_Duo
     VJej <- VSI*FV_Jej
@@ -630,9 +620,29 @@ R.PBK.model <- function(t, state, parms){
     
     
     ### Lymphatic absorption
-    # ka_Lymph <- ifelse(t > 3 && t < 3.5, ka_Lymph, 0)
+    LymphIPf    <- splinefun(c(0,
+                               1.5,
+                               2.4,
+                               3.5,
+                               4.5,
+                               5.5,
+                               7.5,
+                               9.5,
+                               15,
+                               20,
+                               24), ka_Lymph*c(0.0084,
+                                               0.0503,
+                                               0.3659,
+                                               1,
+                                               0.5810,
+                                               0.3715,
+                                               0.1704,
+                                               0.1369,
+                                               0.0100,
+                                               0.0090,
+                                               0.0084),
+                             method = "natural")
     ka_Lymph <- LymphIPf(t)
-    
     
     ## Metabolism
     
@@ -645,8 +655,7 @@ R.PBK.model <- function(t, state, parms){
       S9SI * VJej  * 1e3                                                        # umol/h; from umol/ min->h /mg protein -> whole intestine (kg)
     
     Vmax_Hydro_IleL <- Vmax_Hydro * 60 * S9gmGUS * Vfe_IleL                     # umol/h; from umol/ min->h /mg protein -> whole intestinal micriobiome (kg)
-    Vmax_Hydro_COL <- Vmax_Hydro * 60 * S9gmGUS * Vfe_COL                       # umol/h; from umol/ min->h /mg protein -> whole intestinal micriobiome (kg)
-    
+
     
     ### Liver
     Vmax_L_aZEL <- Vmax_L_aZEL.c * 60 * S9L * VL * 1e3                          # umol/h; from umol/ min->h /mg protein -> whole liver (kg)
@@ -670,7 +679,27 @@ R.PBK.model <- function(t, state, parms){
     
     ## Biliary clearance
     
-    # CL_Bile <- ifelse(t > 2.5, 1, Bile.fasted)
+    # CL_Bile <- ifelse(t > 3 && t < 6, Bile.fasted, 1) #
+    BileIPf    <- splinefun(c(0,
+                              2,
+                              4,
+                              5,
+                              7,
+                              10,
+                              13,
+                              16,
+                              20,
+                              24), Bile.fasted*c(1.2368,
+                                                 1.0394,
+                                                 0.8743,
+                                                 0.8793,
+                                                 0.9297,
+                                                 1.2685,
+                                                 1.7844,
+                                                 2.0877,
+                                                 1.7761,
+                                                 1.5435),
+                            method = "natural")
     CL_Bile <- BileIPf(t)
     
     ## Tissue Concentrations ----
@@ -679,7 +708,6 @@ R.PBK.model <- function(t, state, parms){
     CDuoL_ZEN = ADuoL_ZEN/VDuoL
     CJejL_ZEN = AJejL_ZEN/VJejL
     CIleL_ZEN = AIleL_ZEN/VIleL
-    CCOL_ZEN = ACOL_ZEN/VCOL
     CDuo_ZEN = ADuo_ZEN/VDuo
     CJej_ZEN = AJej_ZEN/VJej
     CIle_ZEN = AIle_ZEN/VIle
@@ -701,7 +729,6 @@ R.PBK.model <- function(t, state, parms){
     CDuoL_ZEN_gluc = ADuoL_ZEN_gluc/VDuoL
     CJejL_ZEN_gluc <- AJejL_ZEN_gluc/VJejL
     CIleL_ZEN_gluc <- AIleL_ZEN_gluc/VIleL 
-    CCOL_ZEN_gluc <- ACOL_ZEN_gluc/VCOL 
     CJej_IC_ZEN_gluc <- AJej_IC_ZEN_gluc/VJej_IC
     CJej_EC_ZEN_gluc <- AJej_EC_ZEN_gluc/VJej_EC
     CL_IC_ZEN_gluc <- AL_IC_ZEN_gluc/VL_IC
@@ -722,7 +749,6 @@ R.PBK.model <- function(t, state, parms){
     
     ### α-Zearalenol ----
     CIleL_aZEL = AIleL_aZEL/VIleL
-    CCOL_aZEL = ACOL_aZEL/VCOL
     CJej_aZEL = AJej_aZEL/VJej
     CIle_aZEL = AIle_aZEL/VIle
     CL_aZEL = AL_aZEL/VL  
@@ -743,7 +769,6 @@ R.PBK.model <- function(t, state, parms){
     CDuoL_aZEL_gluc = ADuoL_aZEL_gluc/VDuoL
     CJejL_aZEL_gluc <- AJejL_aZEL_gluc/VJejL
     CIleL_aZEL_gluc <- AIleL_aZEL_gluc/VIleL 
-    CCOL_aZEL_gluc <- ACOL_aZEL_gluc/VCOL
     CJej_IC_aZEL_gluc <- AJej_IC_aZEL_gluc/VJej_IC
     CJej_EC_aZEL_gluc <- AJej_EC_aZEL_gluc/VJej_EC
     CL_IC_aZEL_gluc <- AL_IC_aZEL_gluc/VL_IC
@@ -787,11 +812,7 @@ R.PBK.model <- function(t, state, parms){
       - CLile_ZEN*CIleL_ZEN - ka_Lymph*AIleL_ZEN +  
       + ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
            (Km_Hydro + (CIleL_ZEN_gluc)))
-    
-    dACOL_ZEN <- + k_ile*AIleL_ZEN - k_CO*ACOL_ZEN +
-      + ((Vmax_Hydro_COL*CCOL_ZEN_gluc) / 
-           (Km_Hydro + (CCOL_ZEN_gluc)))
-    
+
     # Small intestinal tissue 
     dADuo_ZEN <- CLduo_ZEN*CDuoL_ZEN + QDuo*(CB_ZEN-CVDuo_ZEN) 
     
@@ -835,7 +856,7 @@ R.PBK.model <- function(t, state, parms){
     dAUR_ZEN <- GFR*CB_ZEN*ZEN_fup 
     
     # Faeces 
-    dAFE_ZEN <- k_CO*ACOL_ZEN 
+    dAFE_ZEN <- k_ile*AIleL_ZEN 
     
     # β-Zearalenol
     dA_bZEL <- ((Vmax_SI_bZEL*CJej_ZEN*ZEN_fut) / 
@@ -858,10 +879,6 @@ R.PBK.model <- function(t, state, parms){
     dAIleL_ZEN_gluc <- k_jej*AJejL_ZEN_gluc - k_ile*AIleL_ZEN_gluc +
       - ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
            (Km_Hydro + (CIleL_ZEN_gluc)))
-    
-    dACOL_ZEN_gluc <- k_ile*AIleL_ZEN_gluc - k_CO*ACOL_ZEN_gluc +
-      - ((Vmax_Hydro_COL*CCOL_ZEN_gluc) / 
-           (Km_Hydro + (CCOL_ZEN_gluc)))
     
     # Small Intestinal tissue
     dAJej_IC_ZEN_gluc <- ((Vmax_SI_ZEN_gluc*CJej_ZEN*ZEN_fut) / 
@@ -920,7 +937,7 @@ R.PBK.model <- function(t, state, parms){
          (Km_MRP2 + (CK_ZEN_gluc*ZEN_gluc_fut)))
     # 
     # Feces
-    dAFE_ZEN_gluc <- k_CO*ACOL_ZEN_gluc 
+    dAFE_ZEN_gluc <- k_ile*AIleL_ZEN_gluc 
     
     ### α-Zearalenol ----
     
@@ -929,10 +946,6 @@ R.PBK.model <- function(t, state, parms){
       - CLile_aZEL*CIleL_aZEL - ka_Lymph*AIleL_aZEL +  
       + ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
            (Km_Hydro + (CIleL_ZEN_gluc)))
-    
-    dACOL_aZEL <- + k_ile*AIleL_aZEL - k_CO*ACOL_aZEL +
-      + ((Vmax_Hydro_COL*CCOL_ZEN_gluc) / 
-           (Km_Hydro + (CCOL_ZEN_gluc)))
     
     # Small intestinal tissue 
     dAJej_aZEL <- ((Vmax_SI_aZEL*CJej_ZEN*ZEN_fut) / 
@@ -972,7 +985,7 @@ R.PBK.model <- function(t, state, parms){
     dAUR_aZEL <- GFR*CB_aZEL*aZEL_fup
     
     # Feces
-    dAFE_aZEL <- k_CO*ACOL_aZEL
+    dAFE_aZEL <- k_ile*AIleL_aZEL
     
     
     ### α-Zearalenol glucuronide ----
@@ -990,11 +1003,6 @@ R.PBK.model <- function(t, state, parms){
     dAIleL_aZEL_gluc <- k_jej*AJejL_aZEL_gluc - k_ile*AIleL_aZEL_gluc +
       - ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
            (Km_Hydro + (CIleL_ZEN_gluc)))
-    
-    dACOL_aZEL_gluc <- k_ile*AIleL_aZEL_gluc +
-      - k_CO*ACOL_aZEL_gluc +
-      - ((Vmax_Hydro_COL*CCOL_ZEN_gluc) / 
-           (Km_Hydro + (CCOL_ZEN_gluc)))
     
     # Small Intestinal tissue
     dAJej_IC_aZEL_gluc <- ((Vmax_SI_aZEL_gluc*CJej_aZEL*aZEL_fut) / 
@@ -1053,14 +1061,14 @@ R.PBK.model <- function(t, state, parms){
                          (Km_MRP2 + (CK_aZEL_gluc*aZEL_gluc_fut)))
     
     # Feces
-    dAFE_aZEL_gluc <- k_CO*ACOL_aZEL_gluc 
+    dAFE_aZEL_gluc <- k_ile*AIleL_aZEL_gluc
     
     
     ## Mass balance ----
     ATotal <- ODOSEumol + IVDOSEumol
     ACalculated <- AOD_ZEN + 
       
-      ADuoL_ZEN + AJejL_ZEN + AIleL_ZEN + ACOL_ZEN +
+      ADuoL_ZEN + AJejL_ZEN + AIleL_ZEN + 
       ADuo_ZEN + AJej_ZEN + AIle_ZEN + 
       AL_ZEN + 
       AR_ZEN +
@@ -1072,7 +1080,7 @@ R.PBK.model <- function(t, state, parms){
       
       A_bZEL +
       
-      ADuoL_ZEN_gluc + AJejL_ZEN_gluc + AIleL_ZEN_gluc + ACOL_ZEN_gluc +
+      ADuoL_ZEN_gluc + AJejL_ZEN_gluc + AIleL_ZEN_gluc + 
       AJej_IC_ZEN_gluc + AJej_EC_ZEN_gluc + 
       AL_IC_ZEN_gluc + AL_EC_ZEN_gluc +
       ABile_ZEN_gluc + 
@@ -1084,7 +1092,7 @@ R.PBK.model <- function(t, state, parms){
       AUR_ZEN_gluc + 
       AFE_ZEN_gluc +
       
-      AIleL_aZEL + ACOL_aZEL +
+      AIleL_aZEL +
       AJej_aZEL + AIle_aZEL +
       AL_aZEL + 
       AR_aZEL +
@@ -1094,7 +1102,7 @@ R.PBK.model <- function(t, state, parms){
       AUR_aZEL +
       AFE_aZEL +
       
-      ADuoL_aZEL_gluc + AJejL_aZEL_gluc + AIleL_aZEL_gluc + ACOL_aZEL_gluc +
+      ADuoL_aZEL_gluc + AJejL_aZEL_gluc + AIleL_aZEL_gluc + 
       AJej_IC_aZEL_gluc + AJej_EC_aZEL_gluc +
       AL_IC_aZEL_gluc + AL_EC_aZEL_gluc +
       ABile_aZEL_gluc + 
@@ -1115,7 +1123,7 @@ R.PBK.model <- function(t, state, parms){
     # End
     list(c(
       dAOD_ZEN,
-      dADuoL_ZEN,dAJejL_ZEN, dAIleL_ZEN, dACOL_ZEN,
+      dADuoL_ZEN,dAJejL_ZEN, dAIleL_ZEN,
       dADuo_ZEN, dAJej_ZEN, dAIle_ZEN,
       dAL_ZEN,
       dAR_ZEN,
@@ -1127,7 +1135,7 @@ R.PBK.model <- function(t, state, parms){
       
       dA_bZEL,
       
-      dADuoL_ZEN_gluc, dAJejL_ZEN_gluc, dAIleL_ZEN_gluc, dACOL_ZEN_gluc,
+      dADuoL_ZEN_gluc, dAJejL_ZEN_gluc, dAIleL_ZEN_gluc, 
       dAJej_IC_ZEN_gluc, dAJej_EC_ZEN_gluc,
       dAL_IC_ZEN_gluc, dAL_EC_ZEN_gluc ,
       dABile_ZEN_gluc,
@@ -1139,7 +1147,7 @@ R.PBK.model <- function(t, state, parms){
       dAUR_ZEN_gluc,
       dAFE_ZEN_gluc ,
       
-      dAIleL_aZEL, dACOL_aZEL,
+      dAIleL_aZEL, 
       dAJej_aZEL, dAIle_aZEL,
       dAL_aZEL,
       dAR_aZEL,
@@ -1149,7 +1157,7 @@ R.PBK.model <- function(t, state, parms){
       dAUR_aZEL,
       dAFE_aZEL,
       
-      dADuoL_aZEL_gluc, dAJejL_aZEL_gluc, dAIleL_aZEL_gluc, dACOL_aZEL_gluc,
+      dADuoL_aZEL_gluc, dAJejL_aZEL_gluc, dAIleL_aZEL_gluc, 
       dAJej_IC_aZEL_gluc, dAJej_EC_aZEL_gluc,
       dAL_IC_aZEL_gluc, dAL_EC_aZEL_gluc,
       dABile_aZEL_gluc,
@@ -1164,7 +1172,7 @@ R.PBK.model <- function(t, state, parms){
     c(ATotal = ATotal,
       ACalculated = ACalculated,
       MB = MB,
-      CDuoL_ZEN = CDuoL_ZEN, CJejL_ZEN = CJejL_ZEN, CIleL_ZEN = CIleL_ZEN, CCOL_ZEN = CCOL_ZEN,
+      CDuoL_ZEN = CDuoL_ZEN, CJejL_ZEN = CJejL_ZEN, CIleL_ZEN = CIleL_ZEN, 
       CDuo_ZEN = CDuo_ZEN, CJej_ZEN = CJej_ZEN, CIle_ZEN = CIle_ZEN,
       CL_ZEN = CL_ZEN,
       CR_ZEN = CR_ZEN ,
@@ -1172,7 +1180,7 @@ R.PBK.model <- function(t, state, parms){
       CF_ZEN = CF_ZEN,
       CB_ZEN = CB_ZEN,
       
-      CDuoL_ZEN_gluc = CDuoL_ZEN_gluc, CJejL_ZEN_gluc = CJejL_ZEN_gluc, CIleL_ZEN_gluc = CIleL_ZEN_gluc, CCOL_ZEN_gluc = CCOL_ZEN_gluc,
+      CDuoL_ZEN_gluc = CDuoL_ZEN_gluc, CJejL_ZEN_gluc = CJejL_ZEN_gluc, CIleL_ZEN_gluc = CIleL_ZEN_gluc, 
       CJej_ZEN_gluc = CJej_IC_ZEN_gluc, 
       CL_ZEN_gluc = CL_IC_ZEN_gluc, 
       CBile_ZEN_gluc = CBile_ZEN_gluc,
@@ -1182,7 +1190,7 @@ R.PBK.model <- function(t, state, parms){
       CB_ZEN_gluc = CB_ZEN_gluc,
       CK_ZEN_gluc = CK_ZEN_gluc,
       
-      CIleL_aZEL = CIleL_aZEL, CCOL_aZEL = CCOL_aZEL,
+      CIleL_aZEL = CIleL_aZEL, 
       CJej_aZEL = CJej_aZEL, CIle_aZEL = CIle_aZEL,
       CL_aZEL = CL_aZEL,
       CR_aZEL = CR_aZEL,
@@ -1190,7 +1198,7 @@ R.PBK.model <- function(t, state, parms){
       CF_aZEL = CF_aZEL,
       CB_aZEL = CB_aZEL,
       
-      CDuoL_aZEL_gluc = CDuoL_aZEL_gluc, CJejL_aZEL_gluc = CJejL_aZEL_gluc, CIleL_aZEL_gluc = CIleL_aZEL_gluc, CCOL_aZEL_gluc = CCOL_aZEL_gluc,
+      CDuoL_aZEL_gluc = CDuoL_aZEL_gluc, CJejL_aZEL_gluc = CJejL_aZEL_gluc, CIleL_aZEL_gluc = CIleL_aZEL_gluc, 
       CJej_aZEL_gluc = CJej_IC_aZEL_gluc, 
       CL_aZEL_gluc = CL_IC_aZEL_gluc, 
       CBile_aZEL_gluc = CBile_aZEL_gluc,
@@ -1225,7 +1233,7 @@ BW <- if(Select_Author == "Shin"){0.26
 }else if(Select_Author == "Videmann"){0.26}
 
 # Oral dose
-ODOSEmg <- if(Select_Author == "Q.Lu"){8
+ODOSEmg <- if(Select_Author == "Shin"){8
 }else if(Select_Author == "Q.Lu"){6.65
 }else if(Select_Author == "Videmann"){1}                                        # mg/kg bw IV dose
 ODOSEumol <- ((ODOSEmg*1000)/MW_ZEN)*BW                                         # μmol
@@ -1249,7 +1257,7 @@ timeSeq <- timeSeq                                                 # per minute
 A_init <- c(
   AOD_ZEN = ifelse(Select_AdminType != "IV", ODOSEumol, 0), 
   
-  ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, ACOL_ZEN = 0,
+  ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, 
   ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
   AL_ZEN = 0, 
   AR_ZEN = 0,
@@ -1261,7 +1269,7 @@ A_init <- c(
   
   A_bZEL = 0,
   
-  ADuoL_ZEN_gluc = 0, AJejL_ZEN_gluc = 0, AIleL_ZEN_gluc = 0, ACOL_ZEN_gluc = 0,
+  ADuoL_ZEN_gluc = 0, AJejL_ZEN_gluc = 0, AIleL_ZEN_gluc = 0, 
   AJej_IC_ZEN_gluc = 0, AJej_EC_ZEN_gluc = 0, 
   AL_IC_ZEN_gluc = 0, AL_EC_ZEN_gluc = 0,
   ABile_ZEN_gluc = 0, 
@@ -1273,7 +1281,7 @@ A_init <- c(
   AUR_ZEN_gluc = 0, 
   AFE_ZEN_gluc = 0,
   
-  AIleL_aZEL = 0, ACOL_aZEL = 0,
+  AIleL_aZEL = 0, 
   AJej_aZEL = 0, AIle_aZEL = 0,
   AL_aZEL = 0, 
   AR_aZEL = 0,
@@ -1283,7 +1291,7 @@ A_init <- c(
   AUR_aZEL = 0,
   AFE_aZEL = 0,
   
-  ADuoL_aZEL_gluc = 0, AJejL_aZEL_gluc = 0, AIleL_aZEL_gluc = 0, ACOL_aZEL_gluc = 0,
+  ADuoL_aZEL_gluc = 0, AJejL_aZEL_gluc = 0, AIleL_aZEL_gluc = 0, 
   AJej_IC_aZEL_gluc = 0, AJej_EC_aZEL_gluc = 0,
   AL_IC_aZEL_gluc = 0, AL_EC_aZEL_gluc = 0,
   ABile_aZEL_gluc = 0, 
@@ -1352,7 +1360,6 @@ replacements <- c(
   "CIle" = "Ileum",
   "CJejL" = "Jejunum Lumen", 
   "CJej" = "Jejunum", 
-  "CCOL" = "Colon",
   "CL" = "Liver", 
   "CF" = "Fat", 
   "CR" = "Rapidly perfused", 
@@ -1435,7 +1442,6 @@ Clean.C <- PBK_OUTPUT %>%
   select(!c(starts_with("CDuo"), 
             starts_with("CIle"), 
             starts_with("CJej"), 
-            starts_with("CCOL"),
             starts_with("CInT"),
             starts_with("CInL"))) %>% 
   set_names(~(.) %>%

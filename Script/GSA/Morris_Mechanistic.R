@@ -45,7 +45,7 @@
   dir.create(OUTPUT, recursive = TRUE)
   
   # Model Code
-  source(here("Script", "GSA","PBK_model_human.R")) #"PBK_model_rat.R"
+  source(here("Script", "GSA","PBK_model_rat.R")) #"PBK_model_rat.R"
   
 
   # SENSITIVITY FUNCTION ####
@@ -59,7 +59,7 @@
     A_init <- c(
       AOD_ZEN = 0,
       
-      ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, ACOL_ZEN = 0,
+      ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, 
       ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
       AL_ZEN = 0, 
       AR_ZEN = 0,
@@ -71,7 +71,7 @@
       
       A_bZEL = 0,
       
-      ADuoL_ZEN_gluc = 0, AJejL_ZEN_gluc = 0, AIleL_ZEN_gluc = 0, ACOL_ZEN_gluc = 0,
+      ADuoL_ZEN_gluc = 0, AJejL_ZEN_gluc = 0, AIleL_ZEN_gluc = 0, 
       AJej_IC_ZEN_gluc = 0, AJej_EC_ZEN_gluc = 0, 
       AL_IC_ZEN_gluc = 0, AL_EC_ZEN_gluc = 0,
       ABile_ZEN_gluc = 0, 
@@ -83,7 +83,7 @@
       AUR_ZEN_gluc = 0, 
       AFE_ZEN_gluc = 0,
       
-      AIleL_aZEL = 0, ACOL_aZEL = 0,
+      AIleL_aZEL = 0, 
       AJej_aZEL = 0, AIle_aZEL = 0,
       AL_aZEL = 0, 
       AR_aZEL = 0,
@@ -93,7 +93,7 @@
       AUR_aZEL = 0,
       AFE_aZEL = 0,
       
-      ADuoL_aZEL_gluc = 0, AJejL_aZEL_gluc = 0, AIleL_aZEL_gluc = 0, ACOL_aZEL_gluc = 0,
+      ADuoL_aZEL_gluc = 0, AJejL_aZEL_gluc = 0, AIleL_aZEL_gluc = 0, 
       AJej_IC_aZEL_gluc = 0, AJej_EC_aZEL_gluc = 0,
       AL_IC_aZEL_gluc = 0, AL_EC_aZEL_gluc = 0,
       ABile_aZEL_gluc = 0, 
@@ -110,19 +110,36 @@
     
     
     PBK.out <- lsoda(y = A_init,
-                     times = seq(0, 24,by=1/60),
-                     func =  H.PBK.model, #R.PBK.model
+                     times = seq(0, 24,by=1),
+                     func = R.PBK.model, # H.PBK.model, #R.PBK.model
                      parms = P)
+    PBK_OUTPUT <- as.data.frame(PBK.out)
     
-    CB_ZEN <- PBK.out[,"CB_ZEN"]
-    CB_ZEN_gluc <- PBK.out[,"CB_ZEN_gluc"]
-    CB_aZEL <- PBK.out[,"CB_aZEL"]
-    CB_aZEL_gluc <- PBK.out[,"CB_aZEL_gluc"]
+    CmaxB_ZEN <- max(PBK.out[,"CB_ZEN"])
+    AUC_ZEN <- trapz(PBK_OUTPUT[ , "time"], PBK_OUTPUT[ , "CB_ZEN"])
     
-    return( c(CB_ZEN=CB_ZEN, 
-              CB_ZEN_gluc = CB_ZEN_gluc, 
-              CB_aZEL = CB_aZEL, 
-              CB_aZEL_gluc = CB_aZEL_gluc))
+    CmaxB_ZEN_gluc <- max(PBK.out[,"CB_ZEN_gluc"])
+    AUC_ZEN_gluc <- trapz(PBK_OUTPUT[ , "time"], PBK_OUTPUT[ , "CB_ZEN_gluc"])
+    
+    CmaxB_aZEL <- max(PBK.out[,"CB_aZEL"])
+    AUC_aZEL <- trapz(PBK_OUTPUT[ , "time"], PBK_OUTPUT[ , "CB_aZEL"])
+    
+    CmaxB_aZEL_gluc <- max(PBK.out[,"CB_aZEL_gluc"])
+    AUC_aZEL_gluc <- trapz(PBK_OUTPUT[ , "time"], PBK_OUTPUT[ , "CB_aZEL_gluc"])
+    
+    
+    return( c(CmaxB_ZEN = CmaxB_ZEN, 
+              AUC_ZEN = AUC_ZEN #,
+              # 
+              # CmaxB_ZEN_gluc = CmaxB_ZEN_gluc, 
+              # AUC_aZEL = AUC_aZEL,
+              # 
+              # CmaxB_aZEL = CmaxB_aZEL, 
+              # AUC_aZEL = AUC_aZEL,
+              # 
+              # CmaxB_aZEL_gluc = CmaxB_aZEL_gluc,
+              # AUC_aZEL_gluc = AUC_aZEL_gluc
+              ))
     
   }
   
@@ -132,7 +149,7 @@
   # Parameter upper and lower bounds
   
   # Parameters
-  Parameters_df <- read.csv(here("Input", "Parameters_human.csv")) #Parameters_rat.csv
+  Parameters_df <- read.csv(here("Input", "Parameters_rat.csv")) #Parameters_rat.csv Parameters_human.csv
   # Parameters <- as.list(Parameters_df$Value)
   # names(Parameters) <- Parameters_df$Parameter
 
@@ -193,7 +210,7 @@
   dev.off()
   save(Experience, file = here(OUTPUT, "ExperienceFull.RData"))
   
-  load(here(OUTPUT,"ExperienceFull.RData"))
+  # load(here(OUTPUT,"ExperienceFull.RData"))
   
   # RUN MORRIS DESIGN ####
   # ---------------------------------------------------------------------------- #
@@ -205,7 +222,7 @@
   y <- as.data.frame(y) #%>% mutate(Tout = "times = seq(0, 5*365,by=1/10)")
   save(y, file = here(OUTPUT, "y.RData"))
   
-  load(here(OUTPUT, "y.RData"))
+  # load(here(OUTPUT, "y.RData"))
   
   # CALCULATE MORRIS INDICES ####
   # ---------------------------------------------------------------------------- #

@@ -34,56 +34,56 @@ Times <- seq(from = starttime, to = stoptime, by = dtout)
 # Bile ####
 # Ref: Vonk et al 1978, DOI:10.1042/cs0550253
 DataBileFlow <- data.frame(
-  Time    = c(0.3,
-              0.7,
-              1.1,
-              1.9,
-              2.2,
-              2.7,
-              3.2,
-              3.7,
-              4.1,
-              4.7,
-              5.2,
-              5.8,
-              6.3,
-              6.7,
-              7.3,
-              7.8,
-              8.2,
-              8.7,
-              9.2,
-              9.6,
-              10.3,
-              10.8,
-              11.4,
-              11.9,
-              12.5,
-              12.8,
-              13.4,
-              13.9,
-              14.3,
-              14.7,
-              15.4,
-              15.7,
-              16.2,
+  Time    = c(16.3,
               16.7,
-              17.3,
+              17.1,
               17.9,
-              18.3,
-              18.8,
-              18.8,
+              18.2,
+              18.7,
               19.2,
               19.7,
-              20.2,
-              21.0,
+              20.1,
               20.7,
               21.2,
-              21.7,
+              21.8,
               22.3,
               22.7,
-              23.1,
-              23.7
+              23.3,
+              23.8,
+              0.2,
+              0.7,
+              1.2,
+              1.6,
+              2.3,
+              2.8,
+              3.4,
+              3.9,
+              4.5,
+              4.8,
+              5.4,
+              5.9,
+              6.3,
+              6.7,
+              7.4,
+              7.7,
+              8.2,
+              8.7,
+              9.3,
+              9.9,
+              10.3,
+              10.8,
+              10.8,
+              11.2,
+              11.7,
+              12.2,
+              12.0,
+              12.7,
+              13.2,
+              13.7,
+              14.3,
+              14.7,
+              15.1,
+              15.7
               
   ),
   Bileflow = c(13.2568,
@@ -142,13 +142,13 @@ plot(DataBileFlow)
 
 # Ref: DOI: Drummond et al. 1975 10.1152/ajplegacy.1975.229.5.1427
 DataExcretionR <- data.frame(
-  Time    = c(0,
+  Time    = c(16,
+              20,
+              0,
               4,
               8,
               12,
-              16,
-              20,
-              24),
+              16),
   ExcretionR = c(100/100,
                85/100,
                70/100,
@@ -172,9 +172,18 @@ plot(ExcretionRIPf(Times))
 df <- tibble(
   BileFlow = BileFlow,
   ExcretionR = ExcretionR,
-  BileContentsExcretionR = BileFlow*ExcretionR,
-  Time = Times
-)
+  BileContentsExcretionR = BileFlow*ExcretionR*1e-6*60,
+  Time = Times) 
+
+df <- df %>% mutate(Diff = BileContentsExcretionR/0.000381)
+
+plot(df$Time, df$Diff)
+
+select <- df %>% filter(Time %in% c(0,2,4,5,7,10,13,16,20,24))
+
+plot(select$Time, select$Diff)
+
+
 write.csv(df, "Bile.csv")
 df <- read.csv("Bile.csv")
 
@@ -257,7 +266,8 @@ DataAbsorptionR <- data.frame(
                   0.6918/9.2,
                   0.0424/9.2
   )
-)
+) %>% 
+  mutate(Diff = AbsorptionR/0.549358696)
 
 AbsorptionRIPf    <- approxfun(DataAbsorptionR$Time, DataAbsorptionR$AbsorptionR, method = "linear", rule = 2)
 AbsorptionR <- AbsorptionRIPf(df$Time)
