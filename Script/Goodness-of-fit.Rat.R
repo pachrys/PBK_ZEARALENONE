@@ -118,7 +118,7 @@ if(Select_Author == "Videmann"){
 Predicted <- Results.Rat$Raw.Data.Rat %>% select(time) %>% pull()
 B <- Cobs %>% filter(Tissue == "Blood") #%>% filter(Sex == "Male")
 b    <- approxfun(B$Time, B$Concentration, rule = 2)
-plot(b(Predicted))
+# plot(b(Predicted))
 t <- b(Predicted)
 df <- tibble(Time = Predicted, Concentration = t)
 AUC_ZEN <- trapz(Predicted, t)  # umol*h/L

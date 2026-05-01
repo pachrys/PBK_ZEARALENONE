@@ -72,7 +72,7 @@ print(parm.final[names(parm.GSA)])
 A_init <- c(
   AOD_ZEN = 0,
   
-  ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, ACOL_ZEN = 0,
+  ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, 
   ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
   AL_ZEN = 0, 
   AR_ZEN = 0,
@@ -84,7 +84,7 @@ A_init <- c(
   
   A_bZEL = 0,
   
-  ADuoL_ZEN_gluc = 0, AJejL_ZEN_gluc = 0, AIleL_ZEN_gluc = 0, ACOL_ZEN_gluc = 0,
+  ADuoL_ZEN_gluc = 0, AJejL_ZEN_gluc = 0, AIleL_ZEN_gluc = 0, 
   AJej_IC_ZEN_gluc = 0, AJej_EC_ZEN_gluc = 0, 
   AL_IC_ZEN_gluc = 0, AL_EC_ZEN_gluc = 0,
   ABile_ZEN_gluc = 0, 
@@ -106,7 +106,7 @@ A_init <- c(
   AUR_aZEL = 0,
   AFE_aZEL = 0,
   
-  ADuoL_aZEL_gluc = 0, AJejL_aZEL_gluc = 0, AIleL_aZEL_gluc = 0, ACOL_aZEL_gluc = 0,
+  ADuoL_aZEL_gluc = 0, AJejL_aZEL_gluc = 0, AIleL_aZEL_gluc = 0, 
   AJej_IC_aZEL_gluc = 0, AJej_EC_aZEL_gluc = 0,
   AL_IC_aZEL_gluc = 0, AL_EC_aZEL_gluc = 0,
   ABile_aZEL_gluc = 0, 

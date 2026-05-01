@@ -258,8 +258,8 @@ q.arg = q.arg
 
   # Run model row-wise from design (i.e each row is an eFAST test). parm.GSA = row
   results <- apply(design, 1, function(row) {
-GSA_model(row, parm.c = parm.c)  
-  })
+    GSA_model(row, parm.c = parm.c)  
+    })
   
   y <- results
   y <- as.data.frame(y) 

@@ -1301,56 +1301,56 @@ timeSeq <- timeSeq                                                              
 
 ## Initials ----
 
-
+# 
 # A_init <- c(
-#   AOD_ZEN = ifelse(Select_AdminType != "IV", ODOSEumol, 0), 
-#   
+#   AOD_ZEN = ifelse(Select_AdminType != "IV", ODOSEumol, 0),
+# 
 #   ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, ACOL_ZEN = 0,
-#   ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
-#   AL_ZEN = 0, 
+#   ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0,
+#   AL_ZEN = 0,
 #   AR_ZEN = 0,
 #   AS_ZEN = 0,
-#   AF_ZEN = 0, 
-#   AB_ZEN = ifelse(Select_AdminType != "PO", IVDOSEumol, 0), 
-#   AUR_ZEN = 0, 
-#   AFE_ZEN = 0, 
-#   
+#   AF_ZEN = 0,
+#   AB_ZEN = ifelse(Select_AdminType != "PO", IVDOSEumol, 0),
+#   AUR_ZEN = 0,
+#   AFE_ZEN = 0,
+# 
 #   A_bZEL = 0,
-#   
+# 
 #   ADuoL_ZEN_gluc = 0, AJejL_ZEN_gluc = 0, AIleL_ZEN_gluc = 0, ACOL_ZEN_gluc = 0,
-#   AJej_IC_ZEN_gluc = 0, AJej_EC_ZEN_gluc = 0, 
+#   AJej_IC_ZEN_gluc = 0, AJej_EC_ZEN_gluc = 0,
 #   AL_IC_ZEN_gluc = 0, AL_EC_ZEN_gluc = 0,
-#   ABile_ZEN_gluc = 0, 
+#   ABile_ZEN_gluc = 0,
 #   AR_ZEN_gluc = 0,
 #   AS_ZEN_gluc = 0,
-#   AF_ZEN_gluc = 0, 
-#   AB_ZEN_gluc = 0, 
+#   AF_ZEN_gluc = 0,
+#   AB_ZEN_gluc = 0,
 #   AK_ZEN_gluc = 0,
-#   AUR_ZEN_gluc = 0, 
+#   AUR_ZEN_gluc = 0,
 #   AFE_ZEN_gluc = 0,
-#   
+# 
 #   AIleL_aZEL = 0, ACOL_aZEL = 0,
 #   AJej_aZEL = 0, AIle_aZEL = 0,
-#   AL_aZEL = 0, 
+#   AL_aZEL = 0,
 #   AR_aZEL = 0,
 #   AS_aZEL = 0,
 #   AF_aZEL = 0,
 #   AB_aZEL = 0,
 #   AUR_aZEL = 0,
 #   AFE_aZEL = 0,
-#   
+# 
 #   ADuoL_aZEL_gluc = 0, AJejL_aZEL_gluc = 0, AIleL_aZEL_gluc = 0, ACOL_aZEL_gluc = 0,
 #   AJej_IC_aZEL_gluc = 0, AJej_EC_aZEL_gluc = 0,
 #   AL_IC_aZEL_gluc = 0, AL_EC_aZEL_gluc = 0,
-#   ABile_aZEL_gluc = 0, 
-#   AR_aZEL_gluc = 0, 
+#   ABile_aZEL_gluc = 0,
+#   AR_aZEL_gluc = 0,
 #   AS_aZEL_gluc = 0,
 #   AF_aZEL_gluc = 0,
 #   AB_aZEL_gluc = 0,
 #   AK_aZEL_gluc = 0,
 #   AUR_aZEL_gluc = 0,
 #   AFE_aZEL_gluc = 0
-#   
+# 
 # )
 
 ## Run the model ----
@@ -1559,7 +1559,7 @@ runfit <- function(p, parm.fixed){
 MCcost <- function(p){
   
   cat("\nTesting parameters:", round(10^p, 4), "\n")
-  out <- as.data.frame(PBK.out)
+  # out <- as.data.frame(PBK.out)
   out <- runfit(p,parm.fixed)
   cat("Simulation range:", range(out$CB_ZEN), "\n")
   model.out <- out
@@ -1605,6 +1605,19 @@ Fit_test <- modFit(f = MCcost,
                      numiter = 5,
                      verbose = TRUE
                    ))
+
+Fit_test <- modFit(f = MCcost, 
+              p=parms_log,
+              method ="Nelder-Mead", 
+              control = list(
+                trace = 1,             # Print progress (0=none, 1=some, 2+=more)
+                REPORT = 10            # Report every 10 iterations
+              ),
+              # control=list(),
+              lower=Lower_log, 
+              upper=Upper_log)
+
+
 summary(Fit_test)
 
 
