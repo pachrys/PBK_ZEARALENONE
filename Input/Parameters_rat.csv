@@ -44,9 +44,7 @@
 "FV_duol",0.183
 "FV_jejl",0.334
 "FV_ilel",0.483
-"FV_COL",0.012
 "Vfe_IleL",0.00041
-"Vfe_COL",0.00369
 "FV_L",0.036
 "FV_L_IC",0.573
 "FV_L_EC",0.161
@@ -56,9 +54,9 @@
 "FV_B",0.0644
 "FV_K",0.0092
 "VBile",0.016
-"SAduo",725.707902979242
-"SAjej",9500.17618445553
-"SAile",1507.9644737231
+"SAduo",60.4756585816035
+"SAjej",904.77868423386
+"SAile",125.663706143592
 "QC",4.8
 "QSIc",0.101
 "QDuoc",0.079
@@ -73,12 +71,11 @@
 "k_duo",10.2249488752556
 "k_jej",0.797785347874301
 "k_ile",3.58770135973882
-"k_CO",0.050761421319797
 "GFR",0.0786
 "PappCaco2_ZEN",1.04e-05
 "PappCaco2_aZEL",5.4e-06
 "ka_Lymph",0.55
-"S9SI",15.5
+"S9SI",3.9
 "Vmax_SI_aZEL.c",3.2e-05
 "Km_SI_aZEL",592
 "Vmax_SI_bZEL.c",7.2e-05
@@ -89,8 +86,8 @@
 "Km_SI_aZEL_gluc",7.426
 "S9gmGUS",4
 "Vmax_Hydro",4.42
-"Km_Hydro",46.2
-"S9L",46
+"Km_Hydro",3.08
+"S9L",32
 "Vmax_L_aZEL.c",3.2e-05
 "Km_L_aZEL",592
 "Vmax_L_bZEL.c",7.2e-05
