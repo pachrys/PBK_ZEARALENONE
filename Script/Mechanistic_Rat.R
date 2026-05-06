@@ -19,7 +19,7 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # For plotting
-test = "Q.Lu"
+test = "PO_Videmann_"
 
 CP_theme <- theme_minimal() +
   theme(
@@ -51,7 +51,7 @@ dir.create(OUTPUT, recursive = TRUE)
 # -------------------------------------------------------------------------#
 # -------------------------------------------------------------------------#
 
-timeSeq <- seq(0, 24, by=1/60)                                                  # per minute
+timeSeq <- seq(0, 24, by=1/100)                                                  # per minute
 
 
 
@@ -340,7 +340,7 @@ ka_Lymph <- 0.55                                                                
 
 #### Small intestine ----
 
-S9SI <- 3.9 #15.5                                                                    # small intestinal S9 protein yield (mg S9 protein/gram intestine); Reference: Doerksen et al. (2020) doi: 10.1007/s13318-020-00666-w sum of microsomal 3.9 mg/g and cytosolic 18mg/g 
+S9SI <- 21.9                                                                    # small intestinal S9 protein yield (mg S9 protein/gram intestine); Reference: Doerksen et al. (2020) doi: 10.1007/s13318-020-00666-w sum of microsomal 3.9 mg/g and cytosolic 18mg/g 
 
 # Hydrolysis
 # Assuming the same as liver
@@ -352,9 +352,10 @@ Km_SI_bZEL <- 21                                                                
 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
-Vmax_SI_ZEN_gluc.c <-  8.617*1e-3                                               # umol/min/mg protein; from nmol-> umol 
+Alamethicin_correction <- 1/3                                                   # correction for the overestimation of UGD metabolism in S9, Miners et al. (2021) https://doi.org/10.1016/j.pharmthera.2020.107689
+Vmax_SI_ZEN_gluc.c <-  8.617*1e-3 * Alamethicin_correction                      # umol/min/mg protein; from nmol-> umol 
 Km_SI_ZEN_gluc <- 6.198                                                         # uM 
-Vmax_SI_aZEL_gluc.c <- 6.963*1e-3                                               # umol/min/mg protein; from nmol-> umol
+Vmax_SI_aZEL_gluc.c <- 6.963*1e-3 * Alamethicin_correction                      # umol/min/mg protein; from nmol-> umol
 Km_SI_aZEL_gluc <- 7.426                                                        # uM
 
 # Glucuronide hydrolysis by gmGUS
@@ -365,7 +366,7 @@ Km_Hydro <- 3.08                                                                
 
 #### Liver ----
 
-S9L <- 32 #                                                                     # liver S9 protein yield, (mg S9 protein/gram liver) reference: microsomal 32mg/g liver 
+S9L <- 87                                                                       # liver S9 protein yield, (mg S9 protein/gram liver) reference: Mendez-catala et al. (2020) https://doi.org/10.1016/j.toxrep.2020.07.010
 
 # Hydrolysis
 # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
@@ -376,9 +377,10 @@ Km_L_bZEL <- 21                                                                 
 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
-Vmax_L_ZEN_gluc.c <- 7.029*1e-3                                                 # nmol->umol/min/mg S9
+Alamethicin_correction <- 1/3                                                   # correction for the overestimation of UGD metabolism in S9, Miners et al. (2021) https://doi.org/10.1016/j.pharmthera.2020.107689
+Vmax_L_ZEN_gluc.c <- 7.029*1e-3  /3                                               # nmol->umol/min/mg S9
 Km_L_ZEN_gluc <- 6.753                                                          # uM
-Vmax_L_aZEL_gluc.c <- 6.963*1e-3                                                # nmol->umol/min/mg S9
+Vmax_L_aZEL_gluc.c <- 6.963*1e-3  /3                                            # nmol->umol/min/mg S9
 Km_L_aZEL_gluc <- 7.426                                                         # uM 0.87
 
 
@@ -444,13 +446,13 @@ REF_IN_BCRP <- pmolMP_mgP_IN_BCRP / pmol_mg_BCRP
 REF_LI_BCRP <- pmolMP_mgP_LI_BCRP / pmol_mg_BCRP
 
 # Scaling factor
-SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2  #*0                          # mg MRP2 / mg small intestine
+SF_IN_MRP2 <- mgP_mgIN * REF_IN_MRP2 / f_in_out_MRP2                            # mg MRP2 / mg small intestine
 SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *10                        # mg MRP2 / mg liver
 SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2 *10                        # mg MRP2 / mg liver
 
-SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3 /10                        # mg MRP3 / mg liver 
+SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3                            # mg MRP3 / mg liver 
 
-SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP   #*0                         # mg BCRP / mg liver 
+SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP                            # mg BCRP / mg liver 
 SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *10                        # mg BCRP / mg liver 
 
 ## Collect all parameters ----
@@ -935,7 +937,7 @@ R.PBK.model <- function(t, state, parms){
     # Urine
     dAUR_ZEN_gluc <- ((Vmax_MRP2_KI*CK_ZEN_gluc*ZEN_gluc_fut) / 
          (Km_MRP2 + (CK_ZEN_gluc*ZEN_gluc_fut)))
-    # 
+    
     # Feces
     dAFE_ZEN_gluc <- k_ile*AIleL_ZEN_gluc 
     
@@ -1226,15 +1228,17 @@ MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone",
 ## Exposure ---- 
 
 Select_AdminType <- "PO" # IV # PO
-Select_Author <- "Q.Lu" # Shin # Q.Lu # Videmann 
+Select_Author <- "Videmann" # Shin # Q.Lu # Videmann # Malli
 
 BW <- if(Select_Author == "Shin"){0.26
 }else if(Select_Author == "Q.Lu"){0.2
+}else if(Select_Author == "Malli"){0.2
 }else if(Select_Author == "Videmann"){0.26}
 
 # Oral dose
 ODOSEmg <- if(Select_Author == "Shin"){8
 }else if(Select_Author == "Q.Lu"){6.65
+}else if(Select_Author == "Malli"){3
 }else if(Select_Author == "Videmann"){1}                                        # mg/kg bw IV dose
 ODOSEumol <- ((ODOSEmg*1000)/MW_ZEN)*BW                                         # μmol
 

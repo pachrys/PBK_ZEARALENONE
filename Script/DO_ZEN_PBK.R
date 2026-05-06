@@ -46,7 +46,7 @@
   dir.create(OUTPUT, recursive = TRUE)
   
   # Choose if physiology should change with age ("Yes" to include physiological changes due to age and "No" to assume the same physiology over time)
-  Lifestage = "No" 
+  Lifestage = "Yes" 
   
   # Load files
   Physio.c <- read_csv(here("Input", "PhysioVariables.csv"))
@@ -59,30 +59,31 @@
                                "MolecularWeight"])
   
   # Oral dose
-  ODOSEmg.BW <- 0.25/1000 # 716/1000#0.25/1000#4.2e-05 #45e-3 #0.2/1000  #100/70                  # mg/kg bw 
+  ODOSEmg.BW <- 0.25/1000
+    # TDI 0.25/1000, Hokkaido  0.005/1000, Tokai 0.008/1000, McKeon 0.0331/1000, Mirocha 100/70, # Warth 0.25/1000                                         # mg/kg bw 
   ODOSEumol.BW <- ((ODOSEmg.BW*1000)/MW_ZEN)                                    # μmol/kg bw
  
   # Load input ----
 
   Tstart  <-  0                                                                 # days, start of the simulation
-  Tstop  <- 6 #7                                                                   # days, stop of the simulation
-  Dt  <- 1/(24)# round(1/10,3) #(24*60)                                         # days, iteration steps (decrease/increase depending on run time)
-  
+  Tstop  <- 1
+  # McKeon, Mirocha 1, Warth 4                                                          # days, stop of the simulation
+  Dt  <- 1/(24*60)
+  # McKeon, Mirocha 1/(24*60), Warth 1/24
   
   exp <- ODOSEumol.BW                                                           # umol/kg/day
   Tinput <- 1                                                                   # for repeated exposure with in a day (let's say at every meal or so), default = 1
   tinterval <- 1                                                                # for repeated exposure or so default = 1
   expSTART <- 0                                                                 # time in days of the begining of exposure
-  expSTOP <- 4#13*Dt                                                            # time in days after which the exposure stopped
-  dosingT <-  c(0:4) #Dt#c(expSTOP,1+expSTOP, 2+expSTOP)
-  # exp1STOP <- 1+(13*Dt) 
-  # exp2STOP <- 2+(13*Dt) 
-  # exp3STOP <- 3+(13*Dt) 
+  expSTOP <- 1 
+  # McKeon,Mirocha 1, Warth 4                                                          # time in days after which the exposure stopped
+  dosingT <- c(0:Dt) 
+  # McKeon,Mirocha c(0:Dt), Warth c(0.4)
  
   # Subject-relevant information
-  expAGE <- 30 #30                                                                  # years, old age at exposure if not provided then age argument is not used physiology is based on BW
-  expBW <- 70 #                                                          # kg, if not provided then the BW of the corresponding age and sex is taken; if both BW and Age are not given then a default BW = 70 is taken; if BW is higher than the BW from the lifestage equations then the actual BW overwrites the calculated one
-  sex  <-  "M" #"F"                                                                  # sex either "F" or "M" if none then default is "M"
+  expAGE <- 30 #30                                                              # years, old age at exposure if not provided then age argument is not used physiology is based on BW
+  expBW <- NA #                                                                 # kg, if not provided then the BW of the corresponding age and sex is taken; if both BW and Age are not given then a default BW = 70 is taken; if BW is higher than the BW from the lifestage equations then the actual BW overwrites the calculated one
+  sex  <-  "F" #"F"                                                             # sex either "F" or "M" if none then default is "M"
 
 
   if(Lifestage == "Yes"){
@@ -143,11 +144,11 @@
  # Save Results ----
 
  # RawData <- MODEL_OUTPUT
- save(MODEL_OUTPUT, file = here(OUTPUT, "Warth.RData"))
+ save(MODEL_OUTPUT, file = here(OUTPUT, "TDI_F.RData"))
   
  print(MODEL_OUTPUT$Cmaxs)
-  
- Out <- MODEL_OUTPUT$PBK_OUTPUT
- Urine <- Out %>%  select(c(time, starts_with("AUR_")))
- write.csv(Urine, here(OUTPUT, "UrineWarth.csv"), row.names = FALSE)
- Dosing <- MODEL_OUTPUT$Dosing
+ #  
+ # Out <- MODEL_OUTPUT$PBK_OUTPUT
+ # Urine <- Out %>%  select(c(time, starts_with("AUR_")))
+ # write.csv(Urine, here(OUTPUT, "Mirocha.csv"), row.names = FALSE)
+ # Dosing <- MODEL_OUTPUT$Dosing

@@ -107,8 +107,6 @@ RUNandOUT <- function(exp,
   Dosingevents$time <- round(Dosingevents$time + Dt, 4)
   MB.df$ATotal <- ifelse(MB.df$time %in% Dosingevents$time, Dosingevents$value, 0) 
   MB.df$ATotal <- cumsum(MB.df$ATotal)
-  # Dosingevents <- Dosingevents %>% filter(row_number() <= n()-1)
-  # MB.df$ATotal <- c(0,cumsum(Dosingevents$value))
   MB.df$MB <- MB.df$ATotal - MB.df$ACalculated + 1                                               # rounding significance points
   MB.df$ERROR <- (MB.df$ATotal - MB.df$ACalculated) / MB.df$ACalculated * 100
   MB.df$ERROR <- round(MB.df$ERROR, 10)                                           # rounding significance points
@@ -350,7 +348,7 @@ RUNandOUT_lifestage <- function(exp,
   
   
   source(here("Script", "CALC_Parameters.R"), local = TRUE)
-  source(here("Script", "PBK_model.R"), local = TRUE)  
+  source(here("Script", "Final_PBK_model_Human.R"), local = TRUE)  
   
   
   ## Add state ####
@@ -470,8 +468,6 @@ RUNandOUT_lifestage <- function(exp,
   Dosingevents$time <- round(Dosingevents$time + Dt, 4)
   MB.df$ATotal <- ifelse(MB.df$time %in% Dosingevents$time, Dosingevents$value, 0) 
   MB.df$ATotal <- cumsum(MB.df$ATotal)
-  # Dosingevents <- Dosingevents %>% filter(row_number() <= n()-1)
-  # MB.df$ATotal <- c(0,cumsum(Dosingevents$value))
   MB.df$MB <- MB.df$ATotal - MB.df$ACalculated + 1                                               # rounding significance points
   MB.df$ERROR <- (MB.df$ATotal - MB.df$ACalculated) / MB.df$ACalculated * 100
   MB.df$ERROR <- round(MB.df$ERROR, 10)                                           # rounding significance points
