@@ -87,7 +87,7 @@ R.PBK.model <- function(t, state, parms){
                                                0.0090,
                                                0.0084),
                              method = "natural")
-    ka_Lymph <- LymphIPf(t)
+    ka_L <- LymphIPf(t)
     
     ## Metabolism
     
@@ -248,13 +248,13 @@ R.PBK.model <- function(t, state, parms){
     
     # Intestinal lumen 
     dADuoL_ZEN <- + k_GER*AOD_ZEN - k_duo*ADuoL_ZEN + 
-      - CLduo_ZEN*CDuoL_ZEN - ka_Lymph*ADuoL_ZEN
+      - CLduo_ZEN*CDuoL_ZEN - ka_L*ADuoL_ZEN
     
     dAJejL_ZEN <- + k_duo*ADuoL_ZEN - k_jej*AJejL_ZEN + 
-      - CLjej_ZEN*CJejL_ZEN - ka_Lymph*AJejL_ZEN
+      - CLjej_ZEN*CJejL_ZEN - ka_L*AJejL_ZEN
     
     dAIleL_ZEN <- + k_jej*AJejL_ZEN - k_ile*AIleL_ZEN +  
-      - CLile_ZEN*CIleL_ZEN - ka_Lymph*AIleL_ZEN +  
+      - CLile_ZEN*CIleL_ZEN - ka_L*AIleL_ZEN +  
       + ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
            (Km_Hydro + (CIleL_ZEN_gluc)))
     
@@ -295,7 +295,7 @@ R.PBK.model <- function(t, state, parms){
       + (QSI + QL)*CVL_ZEN + 
       + QF*CVF_ZEN + QR*CVR_ZEN + QS*CVS_ZEN + 
       - GFR*CB_ZEN*ZEN_fup +
-      + ka_Lymph*(ADuoL_ZEN + AJejL_ZEN + AIleL_ZEN)
+      + ka_L*(ADuoL_ZEN + AJejL_ZEN + AIleL_ZEN)
     
     # Urine
     dAUR_ZEN <- GFR*CB_ZEN*ZEN_fup 
@@ -388,7 +388,7 @@ R.PBK.model <- function(t, state, parms){
     
     # Intestinal lumen
     dAIleL_aZEL <- - k_ile*AIleL_aZEL +  
-      - CLile_aZEL*CIleL_aZEL - ka_Lymph*AIleL_aZEL +  
+      - CLile_aZEL*CIleL_aZEL - ka_L*AIleL_aZEL +  
       + ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
            (Km_Hydro + (CIleL_ZEN_gluc)))
     
@@ -424,7 +424,7 @@ R.PBK.model <- function(t, state, parms){
       + (QSI + QL)*CVL_aZEL + 
       + QF*CVF_aZEL + QR*CVR_aZEL + QS*CVS_aZEL +
       - GFR*CB_aZEL*aZEL_fup +
-      + ka_Lymph*AIleL_aZEL
+      + ka_L*AIleL_aZEL
     
     # Urine
     dAUR_aZEL <- GFR*CB_aZEL*aZEL_fup
@@ -509,58 +509,58 @@ R.PBK.model <- function(t, state, parms){
     dAFE_aZEL_gluc <- k_ile*AIleL_aZEL_gluc
     
     
-    ## Mass balance ----
-    ATotal <- ODOSEumol #+ IVDOSEumol
-    ACalculated <- AOD_ZEN + 
-      
-      ADuoL_ZEN + AJejL_ZEN + AIleL_ZEN + 
-      ADuo_ZEN + AJej_ZEN + AIle_ZEN + 
-      AL_ZEN + 
-      AR_ZEN +
-      AS_ZEN +
-      AF_ZEN + 
-      AB_ZEN + 
-      AUR_ZEN + 
-      AFE_ZEN + 
-      
-      A_bZEL +
-      
-      ADuoL_ZEN_gluc + AJejL_ZEN_gluc + AIleL_ZEN_gluc + 
-      AJej_IC_ZEN_gluc + AJej_EC_ZEN_gluc + 
-      AL_IC_ZEN_gluc + AL_EC_ZEN_gluc +
-      ABile_ZEN_gluc + 
-      AR_ZEN_gluc +
-      AS_ZEN_gluc +
-      AF_ZEN_gluc + 
-      AB_ZEN_gluc + 
-      AK_ZEN_gluc +
-      AUR_ZEN_gluc + 
-      AFE_ZEN_gluc +
-      
-      AIleL_aZEL +
-      AJej_aZEL + AIle_aZEL +
-      AL_aZEL + 
-      AR_aZEL +
-      AS_aZEL +
-      AF_aZEL +
-      AB_aZEL +
-      AUR_aZEL +
-      AFE_aZEL +
-      
-      ADuoL_aZEL_gluc + AJejL_aZEL_gluc + AIleL_aZEL_gluc + 
-      AJej_IC_aZEL_gluc + AJej_EC_aZEL_gluc +
-      AL_IC_aZEL_gluc + AL_EC_aZEL_gluc +
-      ABile_aZEL_gluc + 
-      AR_aZEL_gluc + 
-      AS_aZEL_gluc +
-      AF_aZEL_gluc +
-      AB_aZEL_gluc +
-      AK_aZEL_gluc +
-      AUR_aZEL_gluc +
-      AFE_aZEL_gluc 
-    
-    MB <- ATotal - ACalculated + 1
-    
+    # ## Mass balance ----
+    # ATotal <- ODOSEumol #+ IVDOSEumol
+    # ACalculated <- AOD_ZEN + 
+    #   
+    #   ADuoL_ZEN + AJejL_ZEN + AIleL_ZEN + 
+    #   ADuo_ZEN + AJej_ZEN + AIle_ZEN + 
+    #   AL_ZEN + 
+    #   AR_ZEN +
+    #   AS_ZEN +
+    #   AF_ZEN + 
+    #   AB_ZEN + 
+    #   AUR_ZEN + 
+    #   AFE_ZEN + 
+    #   
+    #   A_bZEL +
+    #   
+    #   ADuoL_ZEN_gluc + AJejL_ZEN_gluc + AIleL_ZEN_gluc + 
+    #   AJej_IC_ZEN_gluc + AJej_EC_ZEN_gluc + 
+    #   AL_IC_ZEN_gluc + AL_EC_ZEN_gluc +
+    #   ABile_ZEN_gluc + 
+    #   AR_ZEN_gluc +
+    #   AS_ZEN_gluc +
+    #   AF_ZEN_gluc + 
+    #   AB_ZEN_gluc + 
+    #   AK_ZEN_gluc +
+    #   AUR_ZEN_gluc + 
+    #   AFE_ZEN_gluc +
+    #   
+    #   AIleL_aZEL +
+    #   AJej_aZEL + AIle_aZEL +
+    #   AL_aZEL + 
+    #   AR_aZEL +
+    #   AS_aZEL +
+    #   AF_aZEL +
+    #   AB_aZEL +
+    #   AUR_aZEL +
+    #   AFE_aZEL +
+    #   
+    #   ADuoL_aZEL_gluc + AJejL_aZEL_gluc + AIleL_aZEL_gluc + 
+    #   AJej_IC_aZEL_gluc + AJej_EC_aZEL_gluc +
+    #   AL_IC_aZEL_gluc + AL_EC_aZEL_gluc +
+    #   ABile_aZEL_gluc + 
+    #   AR_aZEL_gluc + 
+    #   AS_aZEL_gluc +
+    #   AF_aZEL_gluc +
+    #   AB_aZEL_gluc +
+    #   AK_aZEL_gluc +
+    #   AUR_aZEL_gluc +
+    #   AFE_aZEL_gluc 
+    # 
+    # MB <- ATotal - ACalculated + 1
+    # 
     
     
     
@@ -619,6 +619,6 @@ R.PBK.model <- function(t, state, parms){
       CB_aZEL = CB_aZEL,
       CB_aZEL_gluc = CB_aZEL_gluc
     ))
-    
+#     
   })
 }

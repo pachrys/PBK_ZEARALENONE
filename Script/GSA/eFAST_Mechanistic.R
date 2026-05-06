@@ -70,7 +70,7 @@ print(parm.final[names(parm.GSA)])
 
 
 A_init <- c(
-  AOD_ZEN = 0,
+  AOD_ZEN = 0.82,
   
   ADuoL_ZEN = 0, AJejL_ZEN = 0, AIleL_ZEN = 0, 
   ADuo_ZEN = 0, AJej_ZEN = 0, AIle_ZEN = 0, 
@@ -96,7 +96,7 @@ A_init <- c(
   AUR_ZEN_gluc = 0, 
   AFE_ZEN_gluc = 0,
   
-  AIleL_aZEL = 0, ACOL_aZEL = 0,
+  AIleL_aZEL = 0, 
   AJej_aZEL = 0, AIle_aZEL = 0,
   AL_aZEL = 0, 
   AR_aZEL = 0,
@@ -118,7 +118,6 @@ A_init <- c(
   AUR_aZEL_gluc = 0,
   AFE_aZEL_gluc = 0
   
-  
 )
 
 PBK.out <- lsoda(y = A_init,
@@ -126,15 +125,32 @@ PBK.out <- lsoda(y = A_init,
  func =  R.PBK.model,
  parms = parm.final)
 
-CB_ZEN <- PBK.out[,"CB_ZEN"]
-CB_ZEN_gluc <- PBK.out[,"CB_ZEN_gluc"]
-CB_aZEL <- PBK.out[,"CB_aZEL"]
-CB_aZEL_gluc <- PBK.out[,"CB_aZEL_gluc"]
+PBK_OUTPUT <- as.data.frame(PBK.out)
 
-return( c(CB_ZEN=CB_ZEN, 
-  CB_ZEN_gluc = CB_ZEN_gluc, 
-  CB_aZEL = CB_aZEL, 
-  CB_aZEL_gluc = CB_aZEL_gluc))
+CmaxB_ZEN <- max(PBK.out[,"CB_ZEN"])
+AUC_ZEN <- trapz(PBK_OUTPUT[ , "time"], PBK_OUTPUT[ , "CB_ZEN"])
+
+CmaxB_ZEN_gluc <- max(PBK.out[,"CB_ZEN_gluc"])
+AUC_ZEN_gluc <- trapz(PBK_OUTPUT[ , "time"], PBK_OUTPUT[ , "CB_ZEN_gluc"])
+
+CmaxB_aZEL <- max(PBK.out[,"CB_aZEL"])
+AUC_aZEL <- trapz(PBK_OUTPUT[ , "time"], PBK_OUTPUT[ , "CB_aZEL"])
+
+CmaxB_aZEL_gluc <- max(PBK.out[,"CB_aZEL_gluc"])
+AUC_aZEL_gluc <- trapz(PBK_OUTPUT[ , "time"], PBK_OUTPUT[ , "CB_aZEL_gluc"])
+
+return( c(CmaxB_ZEN = CmaxB_ZEN, 
+          AUC_ZEN = AUC_ZEN ,
+          
+          CmaxB_ZEN_gluc = CmaxB_ZEN_gluc,
+          AUC_ZEN_gluc = AUC_ZEN_gluc,
+          
+          CmaxB_aZEL = CmaxB_aZEL,
+          AUC_aZEL = AUC_aZEL,
+          
+          CmaxB_aZEL_gluc = CmaxB_aZEL_gluc,
+          AUC_aZEL_gluc = AUC_aZEL_gluc
+))
   }
   
   
@@ -145,35 +161,27 @@ return( c(CB_ZEN=CB_ZEN,
 
   # Parameters
   Parameters <- read.csv(here("Input", "Parameters_rat.csv"))
-  # Dosing
-  PhysChem <- read_delim("Input/PhysChem.csv", 
-                         delim = ";", escape_double = FALSE, trim_ws = TRUE)
+  eFASTParameters <- read.csv(here("Input", "toeFAST_rat.csv"))$parm_names
   
-  # oral dose
-  MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone", 
-                          "MolecularWeight"])
-  BW_rat <- 0.26 #kg
-  ODOSEmg <- 1 #{mg/kg bw} # oral dose, variable
-  ODOSEumol <- ODOSEmg*1000/MW_ZEN*0.26 # (μmol) unit change to μmol
-  
-  Dosing <- c(Paramter = "ODOSEumol",
-              Value = ODOSEumol)
-  Parameters <- rbind(Parameters, Dosing)
-  Parameters$Value <- as.numeric(Parameters$Value)
+  # # Dosing
+  # PhysChem <- read_delim("Input/PhysChem.csv", 
+  #                        delim = ";", escape_double = FALSE, trim_ws = TRUE)
+  # 
+  # # oral dose
+  # MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone", 
+  #                         "MolecularWeight"])
+  # BW_rat <- 0.26 #kg
+  # ODOSEmg <- 1 #{mg/kg bw} # oral dose, variable
+  # ODOSEumol <- ODOSEmg*1000/MW_ZEN*0.26 # (μmol) unit change to μmol
+  # 
+  # Dosing <- c(Paramter = "ODOSEumol",
+  #             Value = ODOSEumol)
+  # Parameters <- rbind(Parameters, Dosing)
+  # Parameters$Value <- as.numeric(Parameters$Value)
 
-  P <- Parameters %>% 
-filter(Parameter %in% c(
-  "BW", "FV_B", "FV_Duo", "FV_K", "FV_L",
-  "FV_SIL", "FV_ilel", "Km_Hydro",  
-  "Km_L_ZEN_gluc", "Km_MRP2", "Km_MRP3",
-  "ODOSEumol","PappCaco2_ZEN","QC", "QDuoc",  
-  "QIlec","QJejc", "QSIc",
-  "S9L", "S9gmGUS","SF_KI_MRP2", "SF_LI_MRP2", "SF_LI_MRP3", 
-  "Vfe_IleL", "Vmax_Hydro", "Vmax_L_ZEN_gluc.c",   
-  "Vmax_MRP2.c", "Vmax_MRP3.c", "ZEN_BPR", "ZEN_PL", 
-  "ZEN_PS", "ZEN_PSI", "ZEN_fut", "ZEN_gluc_BPR", "ZEN_gluc_PS", 
-  "ZEN_gluc_fut", "aZEL_gluc_BPR", "aZEL_gluc_PS",
-  "k_duo", "k_ile", "k_jej")) 
+  
+  
+  P <- Parameters %>% filter(Parameter %in% eFASTParameters)
   P$Value <- as.numeric(P$Value)
   P <- P %>% mutate(Binf = Value*0.9, 
    Bsup = Value*1.1, 
