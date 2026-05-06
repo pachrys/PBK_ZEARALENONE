@@ -99,7 +99,7 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
     Physio_params[[paste0("V_lungFraction", suffix)]]                           # fraction of rapidly perfused tissue
   FV_B <- Physio_params[[paste0("V_bloodFraction", suffix)]]
   
-  VBile <- 100/1000                                                             # L, volume of the bile from the ICRP, vbile is 50-100ml
+  VBile <- 80/1000 # ml -> L/kg 100/1000                                                             # L, volume of the bile from the ICRP, vbile is 50-100ml
   
   # Total body volume
   VTotc <- Physio_params$VolumesSum                  
@@ -118,16 +118,25 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   Ljej <- 104                                                                   # cm; length 
   Lile <- 156                                                                   # cm; length 
   
-  # Microvilli amplification factor
-  # villi and microvilli together amplify the small intestinal surface area by 60–120 times https://doi.org/10.3109/00365521.2014.898326
-  # Reference: Desesso et al. (2001) https://doi.org/10.1016/S0278-6915(00)00136-8
+  # Intestinal fold and villi amplification factors
+  # Reference: H. F. Helander & L. Fändriks 2014 https://doi.org/10.3109/00365521.2014.898326 and Desesso et al. (2001) https://doi.org/10.1016/S0278-6915(00)00136-8
   
-  Amp <- 120                                                                    # small intestine 
-  Ampduo <- 1*Amp                                                               # duodenum       
-  Ampjej <- 0.7*Amp                                                             # jejunum
-  Ampile <- 0.5*Amp   
+  Plicae <- 3
+  DuoVilli <- 6.5
+  JejVilli <- 8.6
+  IleVilli <- 4.5
+
+  Ampduo <- Plicae*DuoVilli                                                     # duodenum
+  Ampjej <- Plicae*JejVilli                                                     # jejunum
+  Ampile <- Plicae*IleVilli                                                     # ileum
+
+  # Amp <- 120                                                                  # small intestine
+  # Ampduo <- 1*Amp                                              # duodenum
+  # Ampjej <- 0.7*Amp                                            # jejunum
+  # Ampile <- 0.5*Amp                                            # ileum
+
   
-  # Surface aeria
+  # Surface area
   SAduo = 2*pi*Rduo*Lduo*Ampduo                                                 # cm2
   SAjej = 2*pi*Rjej*Ljej*Ampjej                                                 # cm2
   SAile = 2*pi*Rile*Lile*Ampile                                                 # cm2
@@ -327,11 +336,11 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   
   #### Small intestine ----
   
-  S9SI <- 35.2                                                                  # small intestinal S9 protein yield (mg S9 protein/gram intestine); Reference: S. A. Peters et al. DOI:10.1007/s40262-015-0351-6
+  S9SI <- 35.2                                                                  # small intestinal S9 protein yield (mg S9 protein/gram intestine); Reference: S. A. Peters et al. DOI:10.1007/s40262-015-0351-6 (28476 mg/intestine /809g intestine)
   
   # Hydrolysis
   # Assuming the same as liver
-  # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
+  # Reference: Mendez-Catala et al. (2020) doi:10.1016/j.tvjl.2005.03.004
   
   Vmax_SI_aZEL.c <- 358.7*1e-6                                                  # umol/min/mg protein; from pmol-> umol
   Km_SI_aZEL <- 9                                                               # uM
@@ -340,34 +349,36 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   
   # Glucuronidation
   # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
-  Vmax_SI_ZEN_gluc.c <- 0.49*1e-3                                               # umol/min/mg protein; from nmol-> umol 
+  Alamethicin_correction <- 1/3                                                 # correction for the overestimation of UGD metabolism in S9, Miners et al. (2021) https://doi.org/10.1016/j.pharmthera.2020.107689
+  Vmax_SI_ZEN_gluc.c <- 0.49*1e-3  * Alamethicin_correction                     # umol/min/mg protein; from nmol-> umol 
   Km_SI_ZEN_gluc <- 1.17                                                        # uM
-  Vmax_SI_aZEL_gluc.c <- 6.963*1e-3                                             # umol/min/mg protein; from nmol-> umol
+  Vmax_SI_aZEL_gluc.c <- 6.963*1e-3   * Alamethicin_correction                  # umol/min/mg protein; from nmol-> umol
   Km_SI_aZEL_gluc <- 7.426                                                      # uM
 
   # Glucuronide hydrolysis by gmGUS
   # Reference: Ebuzoeme et al. (2021) https://doi.org/  10.3390/pharmaceutics13071043 (wogonoside glucuronide)
   S9gmGUS <- 4                                                                  # mg protein/ml feces
   Vmax_Hydro <- 5.35                                                            # umol/h
-  Km_Hydro <- 0.41*15                                                           # uM
+  Km_Hydro <- 0.41#*15                                                          # uM
 
   #### Liver ----
   
-  S9L <- 122                                                                    # liver S9 protein yield, (mg S9 protein/gram liver) reference: Moerenhout et al. (2024) DOI 10.1021/acs.est.4c06534 sum of microsomal 32mg/g liver and cytosolic 80.7mg/g liver content
+  S9L <- 122 #143             #122                                                       # liver S9 protein yield, (mg S9 protein/gram liver) reference: Mendez-Catala et al. (2020) /Moerenhout et al. (2024) DOI 10.1021/acs.est.4c06534 sum of microsomal 32mg/g liver and cytosolic 80.7mg/g liver content
 
   # Hydrolysis
-  # Reference: Malekinejad et al. (2006) doi:10.1016/j.tvjl.2005.03.004
-  Vmax_L_aZEL.c <- 358.7*1e-6                                                   # pmol->umol/min/mg protein
+  # Reference: Mendez-Catala et al. (2020) doi:10.1016/j.tvjl.2005.03.004
+  Vmax_L_aZEL.c <- 358.7*1e-6                                                   # umol/min/mg protein; from pmol-> umol
   Km_L_aZEL <- 9                                                                # uM
-  Vmax_L_bZEL.c <- 209.3*1e-6                                                   # pmol->umol/min/mg protein   
+  Vmax_L_bZEL.c <- 209.3*1e-6                                                   # umol/min/mg protein; from pmol-> umol   
   Km_L_bZEL <- 2.043                                                            # uM
   
   # Glucuronidation
   # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
-  Vmax_L_ZEN_gluc.c <- 2.97*1e-3                                                # nmol->umol/min/mg S9
+  Alamethicin_correction <- 1/3                                                 # correction for the overestimation of UGD metabolism in S9, Miners et al. (2021) https://doi.org/10.1016/j.pharmthera.2020.107689
+  Vmax_L_ZEN_gluc.c <- 2.97*1e-3     * Alamethicin_correction                   # nmol->umol/min/mg S9
   Km_L_ZEN_gluc <- 2.043                                                        # uM
-  Vmax_L_aZEL_gluc.c <- 2.983*1e-3                                              # nmol->umol/min/mg S9
-  Km_L_aZEL_gluc <- 2.415                                                       # uM 0.87
+  Vmax_L_aZEL_gluc.c <- 2.983*1e-3   * Alamethicin_correction                   # nmol->umol/min/mg S9
+  Km_L_aZEL_gluc <- 2.415                                                       # uM 
   
   
   ### Excretion ----
@@ -375,7 +386,7 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   #### Biliary excretion ----
   # specifying the duration of gallbladder emptying (assuming 3 meals per day at 8, 14 and 20h)
   
-  Tgb <- 25/60   / 24                                                           # day time for the bile to travel through he gallbladder
+  Tgb <- 1.5   / 24                                                             # day; time for the bile to travel through the gallbladder
   Bile.fasted <- 0                                                              # L/day
   Bile.fed <- 1                                                                 # L/day
   
@@ -435,7 +446,7 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   SF_LI_MRP2 <- mgP_mgLI * REF_LI_MRP2 / f_in_out_MRP2 *10                      # mg MRP2 / mg liver
   SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2 *10                      # mg MRP2 / mg liver
   
-  SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3 /10                      # mg MRP3 / mg liver 
+  SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3                          # mg MRP3 / mg liver 
   
   SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP                          # mg BCRP / mg liver 
   SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *10                      # mg BCRP / mg liver 

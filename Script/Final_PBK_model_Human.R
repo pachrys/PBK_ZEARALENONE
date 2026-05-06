@@ -81,8 +81,8 @@ PBK_RUN <- function(y, parms, times, events){
         S9SI * VJej * 1e3                                                       # umol/day; from umol/ min->day /mg protein -> whole intestine (kg)
       Vmax_SI_aZEL_gluc <- Vmax_SI_aZEL_gluc.c * 60 * 24 *
         S9SI * VJej  * 1e3                                                      # umol/day; from umol/ min->day /mg protein -> whole intestine (kg)
-      
-      Vmax_Hydro_IleL <- Vmax_Hydro * 60 * S9gmGUS * Vfe_IleL                   # umol/h; from umol/ min->h /mg protein -> whole intestinal micriobiome (kg)
+     
+      Vmax_Hydro_IleL <- Vmax_Hydro * 60 * S9gmGUS * Vfe_IleL #* 1000                  # umol/h; from umol/ min->h /mg protein -> whole intestinal micriobiome (kg)
       
       ### Liver
       Vmax_L_aZEL <- Vmax_L_aZEL.c * 60 * S9L * VL * 1e3 * 24                   # umol/day; from umol/ min->day /mg protein -> whole liver (kg)
@@ -105,9 +105,10 @@ PBK_RUN <- function(y, parms, times, events){
       
       ## Biliary clearance
       
-      CL_Bile <- ifelse(((t > (8/24) & t < ((8/24) +  Tgb)) |
-                           (t > (14/24) & t < ((14/24) + Tgb)) |
-                           (t > (20/24) & t < ((20/24) + Tgb))), Bile.fed, Bile.fasted)
+      CL_Bile <- ifelse(((t > (0) & t < ((0) +  Tgb)) | 
+                           (t > (6/24) & t < ((6/24) + Tgb)) |
+                           (t > (12/24) & t < ((12/24) + Tgb))), 
+                        0.7, Bile.fasted) 
       
       
       ## Tissue Concentrations ----
@@ -219,7 +220,7 @@ PBK_RUN <- function(y, parms, times, events){
         - CLjej_ZEN*CJejL_ZEN 
       
       dAIleL_ZEN <- + k_jej*AJejL_ZEN - k_ile*AIleL_ZEN +  
-        - CLile_ZEN*CIleL_ZEN  +
+        - CLile_ZEN*CIleL_ZEN + 
         + ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
              (Km_Hydro + (CIleL_ZEN_gluc)))
       
@@ -260,7 +261,7 @@ PBK_RUN <- function(y, parms, times, events){
         + (QSI + QL)*CVL_ZEN + 
         + QF*CVF_ZEN + QR*CVR_ZEN + QS*CVS_ZEN + 
         - GFR*CB_ZEN*ZEN_fup 
-      
+
       # Urine
       dAUR_ZEN <- GFR*CB_ZEN*ZEN_fup 
       
@@ -344,7 +345,7 @@ PBK_RUN <- function(y, parms, times, events){
       # Urine
       dAUR_ZEN_gluc <- ((Vmax_MRP2_KI*CK_ZEN_gluc*ZEN_gluc_fut) / 
                           (Km_MRP2 + (CK_ZEN_gluc*ZEN_gluc_fut)))
-      # 
+       
       # Feces
       dAFE_ZEN_gluc <- k_ile*AIleL_ZEN_gluc
       
@@ -352,11 +353,11 @@ PBK_RUN <- function(y, parms, times, events){
       
       # Intestinal lumen
       dAIleL_aZEL <- - k_ile*AIleL_aZEL +  
-        - CLile_aZEL*CIleL_aZEL +  
+        - CLile_aZEL*CIleL_aZEL +    
         + ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
              (Km_Hydro + (CIleL_ZEN_gluc)))
-      
-      
+     
+      # Small intestinal tissue 
       dAJej_aZEL <- ((Vmax_SI_aZEL*CJej_ZEN*ZEN_fut) / 
                        (Km_SI_aZEL + (CJej_ZEN*ZEN_fut))) +
         + QJej*(CB_aZEL-CVJej_aZEL) +
@@ -394,8 +395,6 @@ PBK_RUN <- function(y, parms, times, events){
       
       # Feces
       dAFE_aZEL <- k_ile*AIleL_aZEL
-      
-      
       
       
       ### α-Zearalenol glucuronide ----

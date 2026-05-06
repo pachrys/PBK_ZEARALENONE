@@ -39,7 +39,7 @@ OUTPUT <- here("Output", format(Sys.Date(), "%Y-%m-%d")) #,
 dir.create(OUTPUT, recursive = TRUE)
 
 # Input ---- 
-load(here(OUTPUT, "PO_Malli_Results.Rat.RData"))
+load(here(OUTPUT, "PO_Videmann_Results.Rat.RData"))
 Select_AdminType <- Results.Rat$Metadata.Run.Rat$Select_AdminType
 # Select_AdminType <- "IV.PERF"
 Select_Author <- Results.Rat$Metadata.Run.Rat$Select_Author
