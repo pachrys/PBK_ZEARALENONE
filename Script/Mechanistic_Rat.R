@@ -19,7 +19,7 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # For plotting
-test = "Q.Lu"
+test = "PO_Malli_"
 
 CP_theme <- theme_minimal() +
   theme(
@@ -51,7 +51,7 @@ dir.create(OUTPUT, recursive = TRUE)
 # -------------------------------------------------------------------------#
 # -------------------------------------------------------------------------#
 
-timeSeq <- seq(0, 24, by=1/60)                                                  # per minute
+timeSeq <- seq(0, 24, by=1/100)                                                  # per minute
 
 
 
@@ -450,7 +450,7 @@ SF_KI_MRP2 <- mgP_mgKI * REF_KI_MRP2 / f_in_out_MRP2 *10                        
 
 SF_LI_MRP3 <- mgP_mgLI * REF_LI_MRP3 / f_in_out_MRP3 /10                        # mg MRP3 / mg liver 
 
-SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP   #*0                         # mg BCRP / mg liver 
+SF_IN_BCRP <- mgP_mgIN * REF_IN_BCRP / f_in_out_BCRP  #*0                         # mg BCRP / mg liver 
 SF_LI_BCRP <- mgP_mgLI * REF_LI_BCRP / f_in_out_BCRP *10                        # mg BCRP / mg liver 
 
 ## Collect all parameters ----
@@ -1226,15 +1226,17 @@ MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone",
 ## Exposure ---- 
 
 Select_AdminType <- "PO" # IV # PO
-Select_Author <- "Q.Lu" # Shin # Q.Lu # Videmann 
+Select_Author <- "Malli" # Shin # Q.Lu # Videmann # Malli
 
 BW <- if(Select_Author == "Shin"){0.26
 }else if(Select_Author == "Q.Lu"){0.2
+}else if(Select_Author == "Malli"){0.2
 }else if(Select_Author == "Videmann"){0.26}
 
 # Oral dose
 ODOSEmg <- if(Select_Author == "Shin"){8
 }else if(Select_Author == "Q.Lu"){6.65
+}else if(Select_Author == "Malli"){3
 }else if(Select_Author == "Videmann"){1}                                        # mg/kg bw IV dose
 ODOSEumol <- ((ODOSEmg*1000)/MW_ZEN)*BW                                         # μmol
 
