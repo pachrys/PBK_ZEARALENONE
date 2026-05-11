@@ -4,8 +4,7 @@
 # Date: 30-07-20266
 # --------------------------------------------------------------------------- #
 
-
-  H.PBK.model <- function(t, state, parms){
+H.PBK.model <- function(t, state, parms){
     with(as.list(c(state, parms)), {
       
       ## Model Parameters ----
@@ -80,8 +79,8 @@
         S9SI * VJej * 1e3                                                       # umol/day; from umol/ min->day /mg protein -> whole intestine (kg)
       Vmax_SI_aZEL_gluc <- Vmax_SI_aZEL_gluc.c * 60 * 24 *
         S9SI * VJej  * 1e3                                                      # umol/day; from umol/ min->day /mg protein -> whole intestine (kg)
-      
-      Vmax_Hydro_IleL <- Vmax_Hydro * 60 * S9gmGUS * Vfe_IleL                   # umol/h; from umol/ min->h /mg protein -> whole intestinal micriobiome (kg)
+     
+      Vmax_Hydro_IleL <- Vmax_Hydro * 60 * S9gmGUS * Vfe_IleL #* 1000                  # umol/h; from umol/ min->h /mg protein -> whole intestinal micriobiome (kg)
       
       ### Liver
       Vmax_L_aZEL <- Vmax_L_aZEL.c * 60 * S9L * VL * 1e3 * 24                   # umol/day; from umol/ min->day /mg protein -> whole liver (kg)
@@ -104,9 +103,10 @@
       
       ## Biliary clearance
       
-      CL_Bile <- ifelse(((t > (8/24) & t < ((8/24) +  Tgb)) |
-                           (t > (14/24) & t < ((14/24) + Tgb)) |
-                           (t > (20/24) & t < ((20/24) + Tgb))), Bile.fed, Bile.fasted)
+      CL_Bile <- ifelse(((t > (0) & t < ((0) +  Tgb)) | 
+                           (t > (6/24) & t < ((6/24) + Tgb)) |
+                           (t > (12/24) & t < ((12/24) + Tgb))), 
+                        0.7, Bile.fasted) 
       
       
       ## Tissue Concentrations ----
@@ -196,12 +196,15 @@
       
       
       ## Oral exposure ----
- 
-      PO = if(t < 0.01){ODOSEumol}else{0}
+      # if(t<expSTOP){DoseOn=1} else{DoseOn=0}
+      #       Oral = exp*BW*DoseOn         
+      # OralD = Oral/Tinput*(t %% tinterval<Tinput)
+      # 
+      
       
       ## Differential Equations ----
       
-      dAOD_ZEN <- PO - k_GER*AOD_ZEN                                        
+      dAOD_ZEN <- - k_GER*AOD_ZEN      #+ OralD                                  
       
       
       ### Zearalenone ----
@@ -215,7 +218,7 @@
         - CLjej_ZEN*CJejL_ZEN 
       
       dAIleL_ZEN <- + k_jej*AJejL_ZEN - k_ile*AIleL_ZEN +  
-        - CLile_ZEN*CIleL_ZEN  +
+        - CLile_ZEN*CIleL_ZEN + 
         + ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
              (Km_Hydro + (CIleL_ZEN_gluc)))
       
@@ -256,7 +259,7 @@
         + (QSI + QL)*CVL_ZEN + 
         + QF*CVF_ZEN + QR*CVR_ZEN + QS*CVS_ZEN + 
         - GFR*CB_ZEN*ZEN_fup 
-      
+
       # Urine
       dAUR_ZEN <- GFR*CB_ZEN*ZEN_fup 
       
@@ -340,7 +343,7 @@
       # Urine
       dAUR_ZEN_gluc <- ((Vmax_MRP2_KI*CK_ZEN_gluc*ZEN_gluc_fut) / 
                           (Km_MRP2 + (CK_ZEN_gluc*ZEN_gluc_fut)))
-      # 
+       
       # Feces
       dAFE_ZEN_gluc <- k_ile*AIleL_ZEN_gluc
       
@@ -348,11 +351,11 @@
       
       # Intestinal lumen
       dAIleL_aZEL <- - k_ile*AIleL_aZEL +  
-        - CLile_aZEL*CIleL_aZEL +  
+        - CLile_aZEL*CIleL_aZEL +    
         + ((Vmax_Hydro_IleL*CIleL_ZEN_gluc) / 
              (Km_Hydro + (CIleL_ZEN_gluc)))
-      
-      
+     
+      # Small intestinal tissue 
       dAJej_aZEL <- ((Vmax_SI_aZEL*CJej_ZEN*ZEN_fut) / 
                        (Km_SI_aZEL + (CJej_ZEN*ZEN_fut))) +
         + QJej*(CB_aZEL-CVJej_aZEL) +
@@ -390,8 +393,6 @@
       
       # Feces
       dAFE_aZEL <- k_ile*AIleL_aZEL
-      
-      
       
       
       ### α-Zearalenol glucuronide ----
@@ -577,48 +578,13 @@
         
         # dATotal
       ),
-      c(#ATotal = ATotal,
-        ACalculated = ACalculated,
-        #MB = MB,
-        CDuoL_ZEN = CDuoL_ZEN, CJejL_ZEN = CJejL_ZEN, CIleL_ZEN = CIleL_ZEN, #CCOL_ZEN = CCOL_ZEN,
-        CDuo_ZEN = CDuo_ZEN, CJej_ZEN = CJej_ZEN, CIle_ZEN = CIle_ZEN,
-        CL_ZEN = CL_ZEN,
-        CR_ZEN = CR_ZEN ,
-        CS_ZEN = CS_ZEN,
-        CF_ZEN = CF_ZEN,
-        CB_ZEN = CB_ZEN,
-
-        CDuoL_ZEN_gluc = CDuoL_ZEN_gluc, CJejL_ZEN_gluc = CJejL_ZEN_gluc, CIleL_ZEN_gluc = CIleL_ZEN_gluc, #CCOL_ZEN_gluc = CCOL_ZEN_gluc,
-        CJej_ZEN_gluc = CJej_IC_ZEN_gluc, 
-        CL_ZEN_gluc = CL_IC_ZEN_gluc, 
-        CBile_ZEN_gluc = CBile_ZEN_gluc,
-        CR_ZEN_gluc = CR_ZEN_gluc,
-        CS_ZEN_gluc = CS_ZEN_gluc,
-        CF_ZEN_gluc = CF_ZEN_gluc,
+      c(CB_ZEN = CB_ZEN,
         CB_ZEN_gluc = CB_ZEN_gluc,
-        CK_ZEN_gluc = CK_ZEN_gluc,
-
-        CIleL_aZEL = CIleL_aZEL, 
-        CJej_aZEL = CJej_aZEL, CIle_aZEL = CIle_aZEL,
-        CL_aZEL = CL_aZEL,
-        CR_aZEL = CR_aZEL,
-        CS_aZEL = CS_aZEL,
-        CF_aZEL = CF_aZEL,
         CB_aZEL = CB_aZEL,
-
-        
-        CDuoL_aZEL_gluc = CDuoL_aZEL_gluc, CJejL_aZEL_gluc = CJejL_aZEL_gluc, CIleL_aZEL_gluc = CIleL_aZEL_gluc, #CCOL_aZEL_gluc = CCOL_aZEL_gluc, #CJejL_aZEL_gluc = CJejL_aZEL_gluc
-        CJej_aZEL_gluc = CJej_IC_aZEL_gluc, 
-        CL_aZEL_gluc = CL_IC_aZEL_gluc, 
-        CBile_aZEL_gluc = CBile_aZEL_gluc,
-        CR_aZEL_gluc = CR_aZEL_gluc,
-        CS_aZEL_gluc = CS_aZEL_gluc,
-        CF_aZEL_gluc = CF_aZEL_gluc,
-        CB_aZEL_gluc = CB_aZEL_gluc,
-        CK_aZEL_gluc = CK_aZEL_gluc
-
+        CB_aZEL_gluc = CB_aZEL_gluc
       ))
       
     })
   }
   
+ 
