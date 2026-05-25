@@ -386,12 +386,10 @@ print(Experience)
   
   
   
-  CB_ZEN.sim.results.eFAST <- sim.results.eFAST[str_detect(rownames(sim.results.eFAST), "CB_ZEN") &
-                                                    !str_detect(rownames(sim.results.eFAST), "CB_ZEN_gluc"), ]
+  CB_ZEN.sim.results.eFAST <- sim.results.eFAST[str_detect(rownames(sim.results.eFAST), "ZEN") &
+                                                    !str_detect(rownames(sim.results.eFAST), "ZEN_gluc"), ]
   
-  
-  
-  
+
   for (i in (1:length(CB_ZEN.sim.results.eFAST[,1])))
   {
     tell(Experience, CB_ZEN.sim.results.eFAST[i,])
@@ -485,11 +483,9 @@ print(Experience)
   
   
   
-  CB_aZEL.sim.results.eFAST <- sim.results.eFAST[str_detect(rownames(sim.results.eFAST), "CB_aZEL") &
-                                                     str_detect(rownames(sim.results.eFAST), "CB_aZEL_gluc"), ]
-  
-  
-  
+  CB_aZEL.sim.results.eFAST <- sim.results.eFAST[str_detect(rownames(sim.results.eFAST), "aZEL") &
+                                                     str_detect(rownames(sim.results.eFAST), "aZEL_gluc"), ]
+
   
   for (i in (1:length(CB_aZEL.sim.results.eFAST[,1])))
   {
@@ -583,9 +579,7 @@ print(Experience)
   
   
   
-  
-
-  CB_ZEN_gluc.sim.results.eFAST  <- sim.results.eFAST [str_detect(rownames(sim.results.eFAST), "CB_ZEN_gluc"), ]
+  CB_ZEN_gluc.sim.results.eFAST  <- sim.results.eFAST [str_detect(rownames(sim.results.eFAST), "ZEN_gluc"), ]
   
   
   
@@ -682,7 +676,7 @@ print(Experience)
   
   
   
-  CB_aZEL_gluc.sim.results.eFAST  <- sim.results.eFAST [str_detect(rownames(sim.results.eFAST), "CB_aZEL_gluc."), ]
+  CB_aZEL_gluc.sim.results.eFAST  <- sim.results.eFAST [str_detect(rownames(sim.results.eFAST), "aZEL_gluc"), ]
 
   
   

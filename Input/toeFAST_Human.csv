@@ -1,0 +1,29 @@
+"","Occurence","parm_names","parm_type","IGlobal_mu.star"
+"1",3,"BW","Physiological",69.1973125368851
+"2",3,"FV_L","Physiological",20.4568141494971
+"3",1,"FV_SI","Physiological",1.19740186247364
+"4",1,"FV_SIL","Physiological",5.44180825082339
+"5",2,"FV_SI_EC","Physiological",4.56029188770996
+"6",1,"FV_ilel","Physiological",5.4312493863673
+"7",2,"GFR","Physiological",2.01964380890804
+"8",3,"Km_L_ZEN_gluc","Glucuronidation",5.5855150511104
+"9",2,"Km_MRP3","Glucuronide absorption",6.75577979571027
+"10",3,"PappCaco2_ZEN","Aglycone absorption",4.62430840642942
+"11",2,"QC","Physiological",2.32375523782104
+"12",2,"QFc","Physiological",2.18404191304836
+"13",1,"QIlec","Physiological",1.14848738305525
+"14",2,"QSIc","Physiological",3.45507478343878
+"15",1,"S9L","Glucuronidation",6.57733183752541
+"16",2,"SAile","Physiological",4.90837572683132
+"17",3,"Vmax_L_ZEN_gluc.c","Glucuronidation",5.48915203444633
+"18",3,"Vmax_L_bZEL.c","Reduction",1.36711768753257
+"19",2,"Vmax_SI_aZEL_gluc.c","Glucuronidation",1.41474055534943
+"20",1,"ZEN_BPR","Partitioning",8.75113558020104
+"21",3,"ZEN_PL","Partitioning",6.56139089809439
+"22",1,"ZEN_PSI","Partitioning",1.68624042340483
+"23",3,"ZEN_fut","Fraction unbound",6.76066957297287
+"24",2,"ZEN_gluc_fup","Fraction unbound",2.06742111678646
+"25",2,"aZEL_gluc_PL","Partitioning",4.36238232891788
+"26",1,"aZEL_gluc_PSI","Partitioning",2.29381224556472
+"27",1,"k_GER","Physiological",1.4492785764617
+"28",1,"k_ile","Physiological",5.08074981847375
