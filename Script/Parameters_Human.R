@@ -99,7 +99,7 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
     Physio_params[[paste0("V_lungFraction", suffix)]]                           # fraction of rapidly perfused tissue
   FV_B <- Physio_params[[paste0("V_bloodFraction", suffix)]]
   
-  VBile <- Physio_params[[paste0("Vbile", suffix)]]                             # L, volume of the bile from the ICRP, vbile is 50-100ml
+  VBile <- Physio_params[[paste0("Vbile", suffix)]]                             # L, volume of the bile from the ICRP
   
   # Total body volume
   VTotc <- Physio_params$VolumesSum                  
@@ -130,16 +130,10 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
   Ampjej <- Plicae*JejVilli                                                     # jejunum
   Ampile <- Plicae*IleVilli                                                     # ileum
 
-  # Amp <- 120                                                                  # small intestine
-  # Ampduo <- 1*Amp                                              # duodenum
-  # Ampjej <- 0.7*Amp                                            # jejunum
-  # Ampile <- 0.5*Amp                                            # ileum
-
-  
   # Surface area
-  SAduo = 2*pi*Rduo*Lduo*Ampduo*Physio_params[[paste0("SAcorrection", suffix)]]    #*0.3 toddler, *0.8 adolescent                                              # cm2
-  SAjej = 2*pi*Rjej*Ljej*Ampjej*Physio_params[[paste0("SAcorrection", suffix)]]    #*0.3 toddler, *0.8 adolescent                                              # cm2
-  SAile = 2*pi*Rile*Lile*Ampile*Physio_params[[paste0("SAcorrection", suffix)]]   #*0.3 toddler, *0.8 adolescent                                              # cm2
+  SAduo = 2*pi*Rduo*Lduo*Ampduo*Physio_params[[paste0("SAcorrection", suffix)]] # cm2
+  SAjej = 2*pi*Rjej*Ljej*Ampjej*Physio_params[[paste0("SAcorrection", suffix)]] # cm2
+  SAile = 2*pi*Rile*Lile*Ampile*Physio_params[[paste0("SAcorrection", suffix)]] # cm2
   
   
   ### Fractional blood flow rates ----

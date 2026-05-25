@@ -1,4 +1,10 @@
 # --------------------------------------------------------------------------- #
+# Original code taken from: Pachoulide et al. 2025 DOI: 10.1016/j.envint.2026.110161; https://doi.org/10.5281/zenodo.17427866
+# Modified to include changes in the volume of bile and intestinal surface area
+# --------------------------------------------------------------------------- #
+
+
+
 # SCRIPT FOR CALCULATING PHYSIOLOGICAL CONSTANTS 
 # Note: Actually not needed to run the model as exported csv file is used as input
 # By: Chrysanthi Pachoulide, Joost Westernhout initial ref. A. Ratier et al. 2024 doi: 10.1016/j.envint.2024.108621

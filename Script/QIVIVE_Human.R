@@ -288,9 +288,6 @@ targetCmaxP <- c(0.490,
   
   All <- rbind(Collect, Collectn)
   
-  write.csv(All, "N_Results_ReverseDosimetry.csv")
-  save(ZENeqCmaxP_OED, file = "ZENeqCmaxP_OED.RData")
-  save(ZENeqCmaxP, file = "ZENeqCmaxP_TDINOEL.RData")
-  save(CloseToInVitro_OED, file = "CloseToInVitro_OED.RData")
-  save(CloseToInVitro, file = "CloseToInVitro_TDINOEL.RData")
+  write.csv(All, "Results_ReverseDosimetry.csv")
+
   

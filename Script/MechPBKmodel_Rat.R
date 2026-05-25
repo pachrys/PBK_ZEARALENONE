@@ -23,7 +23,7 @@ test = "IV_Q.Lu"
 
 CP_theme <- theme_minimal() +
   theme(
-    plot.background = element_rect(fill = 'white'), #element_blank(), #
+    plot.background = element_rect(fill = 'white'),
     plot.margin = margin(0.3, 0.3, 0.3, 0.3, "cm"), 
     plot.title = element_text(hjust = 0, size = 48, face = "bold"),
     plot.title.position = "plot", 
@@ -51,7 +51,7 @@ dir.create(OUTPUT, recursive = TRUE)
 # -------------------------------------------------------------------------#
 # -------------------------------------------------------------------------#
 
-timeSeq <- seq(0, 24, by=1/100)                                                  # per minute
+timeSeq <- seq(0, 24, by=1/100)                                                 
 
 
 
@@ -69,9 +69,6 @@ names <- substr(Rat.dat$tissue, 1, 2)
 F_Vo.names <- paste0("FV", names)
 F_Vo.dat <- cbind(F_Vo.names, select(Rat.dat, F_Vo)) %>%
   pivot_wider(names_from = F_Vo.names, values_from = F_Vo)
-# Bile_Lymph.df <- read_delim(here("Input", "Bile_LymphN.csv"),
-#                             delim = ",",
-#                             escape_double = FALSE, trim_ws = TRUE)
 
 ## Physiological constants ----
 # Reference (if not stated otherwise): Punt et al. (2020) https://dx.doi.org/10.1021/acs.chemrestox.0c00307
@@ -374,7 +371,7 @@ Km_L_bZEL <- 21                                                                 
 # Glucuronidation
 # Reference: Mendez-Catala et al. (2021) DOI 10.1002/mnfr.202100443
 Alamethicin_correction <- 1/3                                                   # correction for the overestimation of UGD metabolism in S9, Miners et al. (2021) https://doi.org/10.1016/j.pharmthera.2020.107689
-Vmax_L_ZEN_gluc.c <- 7.029*1e-3  /3                                               # nmol->umol/min/mg S9
+Vmax_L_ZEN_gluc.c <- 7.029*1e-3  /3                                             # nmol->umol/min/mg S9
 Km_L_ZEN_gluc <- 6.753                                                          # uM
 Vmax_L_aZEL_gluc.c <- 6.963*1e-3  /3                                            # nmol->umol/min/mg S9
 Km_L_aZEL_gluc <- 7.426                                                         # uM 0.87
@@ -385,10 +382,6 @@ Km_L_aZEL_gluc <- 7.426                                                         
 #### Biliary excretion ----
 
 Bile.fasted <- 6.35e-6 * 60                                                     # L/h
-# BileIPf <- approxfun(Bile_Lymph.df$Time,                                        # L/h
-#                      Bile_Lymph.df$BileContentsExcretionR*1e-6*60,
-#                      rule = 2)
-# plot(BileIPf(timeSeq))
 
 #### Active transport ----
 # Reference: Yanfei Li et al. 2019 doi:10.1016/j.jsbmb.2019.03.027.
@@ -547,7 +540,7 @@ Parameters_df <- Parameters_df %>% filter(!grepl("ZEN_PK", Parameter),
                                           !grepl("\\bZEN_gluc_PR\\b", Parameter),
                                           !grepl("\\baZEL_gluc_PR\\b", Parameter))
 
-write.csv(Parameters_df, here("Input", "Parameters_rat.csv"), row.names = FALSE)
+write.csv(Parameters_df, here(OUTPUT, "Parameters_rat.csv"), row.names = FALSE)
 
 # PBK Model ----
 
@@ -676,8 +669,6 @@ R.PBK.model <- function(t, state, parms){
     Vmax_BCRP_IN <- Vmax_BCRP.c * 60 * SF_IN_BCRP * VSI * 1e6                   # umol/min/mg liver; scaling: umol/min->h/mg BCRP * mg BCRP / mg liver -> whole liver (kg)
     
     ## Biliary clearance
-    
-    # CL_Bile <- ifelse(t > 3 && t < 6, Bile.fasted, 1) #
     BileIPf    <- splinefun(c(0,
                               2,
                               4,
@@ -698,7 +689,7 @@ R.PBK.model <- function(t, state, parms){
                                                  1.7761,
                                                  1.5435),
                             method = "natural")
-    CL_Bile <- BileIPf(Times)
+    CL_Bile <- BileIPf(t)
     
     ## Tissue Concentrations ----
     
@@ -1608,7 +1599,7 @@ Results.Rat <- list(
   Raw.Data.Rat = PBK_OUTPUT,
   C.Tissues.Rat = Clean.C,
   C.All.Rat = C.Pre_long,
-  Plots = list(CBlood.plot, CTissues.plot), #MB.plot, 
+  Plots = list(MB.plot, CBlood.plot, CTissues.plot),  
   TK.data = TK.data
 )
 
