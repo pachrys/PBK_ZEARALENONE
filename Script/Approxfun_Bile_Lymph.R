@@ -158,6 +158,7 @@ DataExcretionR <- data.frame(
                100/100
   )
 )
+
 PlotExcretionR <- plot(DataExcretionR)
 
 BileFlowIPf    <- approxfun(DataBileFlow$Time, DataBileFlow$Bileflow, method = "linear", rule = 2)
@@ -191,6 +192,40 @@ area.df = df %>%
   filter(Time >= 7) %>% 
   filter(Time <=19) %>% 
   mutate(BileContentsExcretionR = max(df$BileContentsExcretionR))
+
+DataExcretionR <- data.frame(
+  Time    = Times )%>% 
+  mutate(ExcretionR = ifelse(((Time > (0) & Time < ((0) +  1.5)) | 
+                   (Time > (6) & Time < ((6) + 1.5)) |
+                   (Time > (12) & Time < ((12) + 1.5))), 
+                    0.7, 0)) 
+
+ExcretionRIPf    <- approxfun(DataExcretionR$Time, DataExcretionR$ExcretionR, method = "linear", rule = 2)
+ExcretionR <- ExcretionRIPf(Times)
+plot(ExcretionRIPf(Times))
+df <- tibble(
+  Time = Times, 
+  ExcretionR = ExcretionR
+)
+
+
+ggplot(df, aes(Time, ExcretionR*1000*1000/(24*60)))+
+  geom_point() +
+  scale_x_continuous(breaks = seq(0, 24, by = 1)) +
+  geom_vline(xintercept = 0, color = "purple") + 
+  annotate("text", x = 1.8, y = 515, label="Exposure", 
+           color = "purple",size = 10) +
+  CP_theme+
+  labs(x = "Time (h)", 
+       y = "Bile secretion rate (μl/min)")
+ggsave(
+  filename = here("BileContentExcretionRate_Human.png"),
+  dpi = 600,
+  width = 11,
+  height = 7,
+  units = "cm"
+)
+
 
 ggplot(df, aes(Time, BileContentsExcretionR))+
   geom_area(data = area.df, orientation = "x", fill = "goldenrod1", alpha = 0.2) +

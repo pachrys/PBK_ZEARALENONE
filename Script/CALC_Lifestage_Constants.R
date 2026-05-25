@@ -346,4 +346,61 @@ Variables_df <- Variables_df %>%
       7.9681e-04*(age^3) - (7.8062e-06*(age^4)) + (2.7227e-08*(age^5))
   )
 
+
+## Volume of bile and Intestinal surface areaa ----
+# Estimate the volume of bile thoughout lifetime, derived from ICRP 89 DOI: 10.14573/altex.2302011
+VbileIPf    <- approxfun(c(0,
+                           1*365,
+                           3*365,
+                           6*365,
+                           9*365,
+                           18*365,
+                           40*365,
+                           55*365,
+                           65*365,
+                           80*365
+), c(3/1000,
+     9/1000,
+     9/1000,
+     35/1000,
+     35/1000,
+     80/1000,
+     80/1000,
+     80/1000,
+     80/1000,
+     80/1000))
+Vbile <- VbileIPf(TIME)
+# plot(Vbile)
+
+# Correct the intestinal surface area thoughout lifetime, derived from ICRP 89 DOI: 10.14573/altex.2302011
+
+SAcorrectionIPf    <- approxfun(c(0,
+                                  1*365,
+                                  3*365,
+                                  6*365,
+                                  9*365,
+                                  18*365,
+                                  40*365,
+                                  55*365,
+                                  65*365,
+                                  80*365
+), c(0.3,
+     0.3,
+     0.4,
+     0.6,
+     0.8,
+     1,
+     1,
+     1,
+     1,
+     1))
+SAcorrection <- SAcorrectionIPf(TIME)
+# plot(SAcorrection)
+
+Variables_df <- Variables_df %>% 
+mutate(Vbile_M = Vbile,
+       Vbile_F = Vbile,
+       SAcorrection_M = SAcorrection,
+       SAcorrection_F = SAcorrection)
+
 write.csv(Variables_df, here("Input", "PhysioVariables.csv"), row.names = FALSE)

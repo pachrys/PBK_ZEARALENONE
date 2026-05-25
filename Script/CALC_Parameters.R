@@ -99,7 +99,7 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
     Physio_params[[paste0("V_lungFraction", suffix)]]                           # fraction of rapidly perfused tissue
   FV_B <- Physio_params[[paste0("V_bloodFraction", suffix)]]
   
-  VBile <- 80/1000 # ml -> L/kg 100/1000                                                             # L, volume of the bile from the ICRP, vbile is 50-100ml
+  VBile <- Physio_params[[paste0("Vbile", suffix)]]                             # L, volume of the bile from the ICRP, vbile is 50-100ml
   
   # Total body volume
   VTotc <- Physio_params$VolumesSum                  
@@ -137,9 +137,9 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
 
   
   # Surface area
-  SAduo = 2*pi*Rduo*Lduo*Ampduo                                                 # cm2
-  SAjej = 2*pi*Rjej*Ljej*Ampjej                                                 # cm2
-  SAile = 2*pi*Rile*Lile*Ampile                                                 # cm2
+  SAduo = 2*pi*Rduo*Lduo*Ampduo*Physio_params[[paste0("SAcorrection", suffix)]]    #*0.3 toddler, *0.8 adolescent                                              # cm2
+  SAjej = 2*pi*Rjej*Ljej*Ampjej*Physio_params[[paste0("SAcorrection", suffix)]]    #*0.3 toddler, *0.8 adolescent                                              # cm2
+  SAile = 2*pi*Rile*Lile*Ampile*Physio_params[[paste0("SAcorrection", suffix)]]   #*0.3 toddler, *0.8 adolescent                                              # cm2
   
   
   ### Fractional blood flow rates ----
@@ -363,7 +363,7 @@ PARAMS <- function(expAGE = NULL, expBW = NULL, sex = NULL) {
 
   #### Liver ----
   
-  S9L <- 122 #143             #122                                                       # liver S9 protein yield, (mg S9 protein/gram liver) reference: Mendez-Catala et al. (2020) /Moerenhout et al. (2024) DOI 10.1021/acs.est.4c06534 sum of microsomal 32mg/g liver and cytosolic 80.7mg/g liver content
+  S9L <- 122                                                                    # liver S9 protein yield, (mg S9 protein/gram liver) reference: Mendez-Catala et al. (2020) /Moerenhout et al. (2024) DOI 10.1021/acs.est.4c06534 sum of microsomal 32mg/g liver and cytosolic 80.7mg/g liver content
 
   # Hydrolysis
   # Reference: Mendez-Catala et al. (2020) doi:10.1016/j.tvjl.2005.03.004

@@ -197,11 +197,11 @@
       
       ## Oral exposure ----
  
-      PO = if(t < 0.01){ODOSEumol}else{0}
+      # PO = if(t < 0.01){ODOSEumol}else{0}
       
       ## Differential Equations ----
       
-      dAOD_ZEN <- PO - k_GER*AOD_ZEN                                        
+      dAOD_ZEN <- - k_GER*AOD_ZEN                                        
       
       
       ### Zearalenone ----

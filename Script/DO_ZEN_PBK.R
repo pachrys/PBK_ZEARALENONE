@@ -39,7 +39,10 @@
       legend.position = "right"
     )
   
-  
+  test = "Ado_M"
+  expAGE <- 15 #30 #30                                                          # years, old age at exposure if not provided then age argument is not used physiology is based on BW
+  expBW <- NA #                                                                 # kg, if not provided then the BW of the corresponding age and sex is taken; if both BW and Age are not given then a default BW = 70 is taken; if BW is higher than the BW from the lifestage equations then the actual BW overwrites the calculated one
+  sex  <-  "F" #"F"                                                             # sex either "F" or "M" if none then default is "M"
   
   # Set output storage directory
   OUTPUT <- here("Output", format(Sys.Date(), "%Y-%m-%d")) 
@@ -60,15 +63,15 @@
   
   # Oral dose
   ODOSEmg.BW <- 0.25/1000
-    # TDI 0.25/1000, Hokkaido  0.005/1000, Tokai 0.008/1000, McKeon 0.0331/1000, Mirocha 100/70, # Warth 0.25/1000                                         # mg/kg bw 
+    # TDI 0.25/1000, Hokkaido  0.016/1000, Tokai 0.020/1000, McKeon 0.0331/1000, Mirocha 100/70, # Warth 0.25/1000                                         # mg/kg bw 
   ODOSEumol.BW <- ((ODOSEmg.BW*1000)/MW_ZEN)                                    # μmol/kg bw
  
   # Load input ----
 
   Tstart  <-  0                                                                 # days, start of the simulation
-  Tstop  <- 1
+  Tstop  <- 10
   # McKeon, Mirocha 1, Warth 4                                                          # days, stop of the simulation
-  Dt  <- 1/(24*60)
+  Dt  <- 1/(24)
   # McKeon, Mirocha 1/(24*60), Warth 1/24
   
   exp <- ODOSEumol.BW                                                           # umol/kg/day
@@ -77,13 +80,13 @@
   expSTART <- 0                                                                 # time in days of the begining of exposure
   expSTOP <- 1 
   # McKeon,Mirocha 1, Warth 4                                                          # time in days after which the exposure stopped
-  dosingT <- c(0:Dt) 
+  dosingT <- c(0:1) #, 2, 4, 5) 
   # McKeon,Mirocha c(0:Dt), Warth c(0.4)
  
   # Subject-relevant information
-  expAGE <- 30 #30                                                              # years, old age at exposure if not provided then age argument is not used physiology is based on BW
+  # expAGE <- 1 #30 #30                                                              # years, old age at exposure if not provided then age argument is not used physiology is based on BW
   expBW <- NA #                                                                 # kg, if not provided then the BW of the corresponding age and sex is taken; if both BW and Age are not given then a default BW = 70 is taken; if BW is higher than the BW from the lifestage equations then the actual BW overwrites the calculated one
-  sex  <-  "F" #"F"                                                             # sex either "F" or "M" if none then default is "M"
+  # sex  <-  "F" #"F"                                                             # sex either "F" or "M" if none then default is "M"
 
 
   if(Lifestage == "Yes"){
@@ -144,11 +147,11 @@
  # Save Results ----
 
  # RawData <- MODEL_OUTPUT
- save(MODEL_OUTPUT, file = here(OUTPUT, "TDI_F.RData"))
+ save(MODEL_OUTPUT, file = here(OUTPUT, paste0(test, ".RData")))
   
- print(MODEL_OUTPUT$Cmaxs)
- #  
+ # print(MODEL_OUTPUT$Cmaxs)
+ # 
  # Out <- MODEL_OUTPUT$PBK_OUTPUT
  # Urine <- Out %>%  select(c(time, starts_with("AUR_")))
- # write.csv(Urine, here(OUTPUT, "Mirocha.csv"), row.names = FALSE)
+ # write.csv(Urine, here(OUTPUT, "Tokai.csv"), row.names = FALSE)
  # Dosing <- MODEL_OUTPUT$Dosing

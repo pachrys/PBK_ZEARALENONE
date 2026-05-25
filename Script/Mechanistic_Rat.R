@@ -19,7 +19,7 @@ font_add(family = "Garamond", regular = "GARA.TTF")
 showtext_auto()
 
 # For plotting
-test = "PO_Videmann_"
+test = "IV_Q.Lu"
 
 CP_theme <- theme_minimal() +
   theme(
@@ -112,10 +112,10 @@ FV_B <- pull(Rat.input[Rat.input$tissue == "RBCs", "F_Vo"]) +
 
 FV_K <- pull(Rat.input[Rat.input$tissue == "Kidney", "F_Vo"])                   # kidney tissue
 
-VBile <- 16e-3                                                                  # L from ml; Reference: Vonk, Doorn, and Strubbe 1978
+VBile <- 16e-3                                                                  # L from ml; Reference: Vonk, Doorn, and Strubbe (1978) DOI: 10.1042/cs0550253 
 
 ### To calculate the surface aeria of the intestine ----
-# Reference (if not stated otherwise): Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 et al
+# Reference (if not stated otherwise): Musther et al. (2017) DOI: 10.1016/j.xphs.2017.05.003 
 
 # Radius
 R <- 0.18                                                                       # cm; radius small intestine
@@ -128,7 +128,7 @@ Lduo <- 7                                                                       
 Ljej <- 90                                                                      # cm jejunum
 Lile <- 20                                                                      # cm ileum
 
-# TO REMOVE: Villi amplification factor
+# Villi amplification factor
 # Reference: Desesso et al. (2001) https://doi.org/10.1016/S0278-6915(00)00136-8
 # Reference: Stenling and Helander 1981 10.1007/BF00233821, rat villi amplification factor at a non-fasted state
 
@@ -324,17 +324,13 @@ rm(Kp_fus_BPR)
 
 ### Absorption/transfer rates ---
 
-# Apparent permebility accross the intestinal membrane
+# Apparent permeability across the intestinal membrane
 # Reference: Pfeiffer et al. (2011) DOI 10.1002/mnfr.201000381
 PappCaco2_ZEN <- 10.4 * 1e-6                                                    # cm/s 
 PappCaco2_aZEL <- 5.4 * 1e-6                                                    # cm/s
 
 # Absorption to (& release from) the lymph
 ka_Lymph <- 0.55                                                                # /h
-# LymphIPf <- approxfun(Bile_Lymph.df$Time,
-#                       Bile_Lymph.df$LymphR,
-#                       rule = 2)                                                 # /h
-# plot(LymphIPf(timeSeq))
 
 ### Metabolism ----
 
@@ -702,7 +698,7 @@ R.PBK.model <- function(t, state, parms){
                                                  1.7761,
                                                  1.5435),
                             method = "natural")
-    CL_Bile <- BileIPf(t)
+    CL_Bile <- BileIPf(Times)
     
     ## Tissue Concentrations ----
     
@@ -791,9 +787,9 @@ R.PBK.model <- function(t, state, parms){
    
     
     # ## IV Perf ----
-    
+    # 
     # if(t<=6){DoseOn=1} else{DoseOn=0}
-    # IV = IVDOSEumol*DoseOn                                                    # ug, PFOA oral dose
+    # IV = IVDOSEumol*DoseOn                                                    
     
     ## Differential Equations ----
     
@@ -1227,8 +1223,8 @@ MW_ZEN <- pull(PhysChem[PhysChem$Substance == "Zearalenone",
 
 ## Exposure ---- 
 
-Select_AdminType <- "PO" # IV # PO
-Select_Author <- "Videmann" # Shin # Q.Lu # Videmann # Malli
+Select_AdminType <- "IV" # IV # PO
+Select_Author <- "Q.Lu" # Shin # Q.Lu # Videmann # Malli
 
 BW <- if(Select_Author == "Shin"){0.26
 }else if(Select_Author == "Q.Lu"){0.2
@@ -1244,7 +1240,7 @@ ODOSEumol <- ((ODOSEmg*1000)/MW_ZEN)*BW                                         
 
 # IV dose
 IVDOSEmg <- if(Select_AdminType != "IV"){0
-}else if(Select_Author == "Shin"){1 #4 #2 # 4 #8#1.13#8
+}else if(Select_Author == "Shin"){2.25 #1 #4 #2 # 4 #8 #1.13 #2.25
 }else if(Select_Author == "Q.Lu"){6.65}
 
 IVDOSEumol <-((IVDOSEmg*1000)/MW_ZEN)*BW                                        # μmol
