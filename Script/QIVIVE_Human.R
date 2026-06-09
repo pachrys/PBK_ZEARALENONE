@@ -82,12 +82,16 @@ targetCmaxP <- c(0.490,
                      func =  H.PBK.model, 
                      parms = P)
     
-    CmaxP_ZEN = (max(PBK.out[,"CB_ZEN"]) / 0.67)
-    CmaxP_ZENeq_aZEL = max(PBK.out[,"CB_ZEN"])/0.67 + ((max(PBK.out[,"CB_aZEL"])/0.67)*RPF)
-    CmaxP_ZENeq_aZEL_gluc  = (max(PBK.out[,"CB_ZEN"])/0.67) + 
-      (max(PBK.out[,"CB_ZEN_gluc"])/0.55) + 
-      ((max(PBK.out[,"CB_aZEL"]/0.67)*RPF)) + 
-      ((max(PBK.out[,"CB_aZEL_gluc"])/0.55)*RPF)
+    out <- as.data.frame(PBK.out)
+    CmaxP_ZEN <- max(out$CB_ZEN)/0.67
+    Tmax <- filter(out, CB_ZEN == max(out$CB_ZEN)) %>% pull(time) 
+    CP_aZEL <- filter(out, time == Tmax) %>% pull(CB_aZEL) /0.67
+    CP_ZEN_gluc <- filter(out, time == Tmax) %>% pull(CB_ZEN_gluc) /0.55
+    CP_aZEL_gluc <- filter(out, time == Tmax) %>% pull(CB_aZEL_gluc) /0.55
+    
+    
+    CmaxP_ZENeq_aZEL = CmaxP_ZEN + CP_aZEL*RPF
+    CmaxP_ZENeq_aZEL_gluc = CmaxP_ZEN + CP_aZEL*RPF + CP_ZEN_gluc + CP_aZEL_gluc*RPF
     
     max_vals <- c(
       CmaxP_ZEN = CmaxP_ZEN,
@@ -125,42 +129,43 @@ targetCmaxP <- c(0.490,
   }
   
   
-  # TDI_Cmax <- ZENeqCmaxP[[1]]
-  # TDI_CloseToInVitro <- CloseToInVitro[[1]] 
-  # TargetOD <- c(TDI_CloseToInVitro$CmaxP_ZEN*TDI,
-  #               TDI_CloseToInVitro$CmaxP_ZENeq_aZEL*TDI,
-  #               TDI_CloseToInVitro$CmaxP_ZENeq_aZEL_gluc*TDI)
-  # write.csv(TargetOD, "TargetOD.csv") 
+  TDI_Cmax <- ZENeqCmaxP[[1]]
+  TDI_CloseToInVitro <- CloseToInVitro[[1]]
+  TargetOD <- c(TDI_CloseToInVitro$CmaxP_ZEN*TDI,
+                TDI_CloseToInVitro$CmaxP_ZENeq_aZEL*TDI,
+                TDI_CloseToInVitro$CmaxP_ZENeq_aZEL_gluc*TDI)
+  write.csv(TargetOD, "TargetOD.csv")
 
   # 2. predict with estimated OD
  
   CloseToInVitro <- list()
   ZENeqCmaxP <- list()
-  testODmg.BW <- c(0.226064355,
-                   0.165546622,
-                   0.026543386,
-                   0.724695818,
-                   1.710424482,
-                   0.733750284,
-                   0.751395909,
-                   0.142892616,
-                   0.020631542,
-                   0.015019469,
-                   0.002386707,
-                   0.069122382,
-                   0.17266403,
-                   0.07003313,
-                   0.071810608,
-                   0.012936907,
-                   0.000102914,
-                   7.54E-05,
-                   1.22E-05,
-                   0.000331943,
-                   0.000800895,
-                   0.000336147,
-                   0.000344344,
-                   6.59E-05
-  ) 
+  testODmg.BW <- TargetOD
+  #   c(0.226064355,
+  #                  0.165546622,
+  #                  0.026543386,
+  #                  0.724695818,
+  #                  1.710424482,
+  #                  0.733750284,
+  #                  0.751395909,
+  #                  0.142892616,
+  #                  0.020631542,
+  #                  0.015019469,
+  #                  0.002386707,
+  #                  0.069122382,
+  #                  0.17266403,
+  #                  0.07003313,
+  #                  0.071810608,
+  #                  0.012936907,
+  #                  0.000102914,
+  #                  7.54E-05,
+  #                  1.22E-05,
+  #                  0.000331943,
+  #                  0.000800895,
+  #                  0.000336147,
+  #                  0.000344344,
+  #                  6.59E-05
+  # ) 
   
   for (i in seq_along(testODmg.BW)) {
     
@@ -288,6 +293,6 @@ targetCmaxP <- c(0.490,
   
   All <- rbind(Collect, Collectn)
   
-  write.csv(All, "Results_ReverseDosimetry.csv")
+  write.csv(All, "Updated_Results_ReverseDosimetry.csv")
 
   

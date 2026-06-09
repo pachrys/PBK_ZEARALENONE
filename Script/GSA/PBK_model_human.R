@@ -196,24 +196,10 @@ H.PBK.model <- function(t, state, parms){
       
       
       ## Oral exposure ----
-<<<<<<< HEAD
- 
-      # PO = if(t < 0.01){ODOSEumol}else{0}
       
       ## Differential Equations ----
       
-      dAOD_ZEN <- - k_GER*AOD_ZEN                                        
-=======
-      # if(t<expSTOP){DoseOn=1} else{DoseOn=0}
-      #       Oral = exp*BW*DoseOn         
-      # OralD = Oral/Tinput*(t %% tinterval<Tinput)
-      # 
-      
-      
-      ## Differential Equations ----
-      
-      dAOD_ZEN <- - k_GER*AOD_ZEN      #+ OralD                                  
->>>>>>> 6f307f85ee4552bd929f452fef73a3a98d03bbdd
+      dAOD_ZEN <- - k_GER*AOD_ZEN      #+ OralD   
       
       
       ### Zearalenone ----
