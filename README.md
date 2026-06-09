@@ -1,13 +1,5 @@
-This repository contains all the work related to the publication: "A Mechanistic PBK Model for Estrogenic Mycotoxin Zearalenone and its Metabolites"
+This repository contains all the work related to the publication: "Use of a mechanistic physiologically based kinetic model and quantitative in vitro to in vivo extrapolation to evaluate the tolerable daily intake of Zearalenone"
 
-Model code and GSA code are available under "Script":
-**Rat** models:
-- Initial (according to Mendez-Catala et al. 2021)
-- Mechanistic 
-- Final
-Goodness of fit code is under "Goodness-of-fit.Rat.R"
-
-**Human** model:
-- To run the model use DO_ZEN_PBK.R file; the model code is under "Final_PBK_model_Human.R"
-- Parameters are calculated in "CALC_Lifestage_Constants.R" and "CALC_Parameters.R"
-- Results are produced automatically in "RUN_and_OUTPUT.R"
+PBK-model, QIVIVE, GoF and GSA codes are available under "Script"
+Input files are available under "Input"
+Results get loaded in "Output"
