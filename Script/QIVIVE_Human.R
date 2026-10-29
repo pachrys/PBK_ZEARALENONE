@@ -1,3 +1,9 @@
+# --------------------------------------------------------------------------- #
+# Script for the Rat PBK Model 
+# By: Chrysanthi Pachoulide
+# Date: 01-02-2026
+# --------------------------------------------------------------------------- #
+
 rm(list=ls()) # to clear out the global environment
 
 # Load packages
@@ -6,8 +12,13 @@ library(ggplot2)
 library(deSolve)
 library(tidyverse)
 
-source(here("Script", "GSA","PBK_model_human.R"))
-Parameters <- read.csv(here("Input", "Parameters_human.csv"))
+
+OUTPUT <- here("Output", "test_QIVIVE") 
+dir.create(OUTPUT, recursive = TRUE)
+
+
+source(here("Script", "PBK_model_4GSA_4QIVIVE_Human.R"))
+Parameters <- read.csv(here("Input", "Parameters_Human.csv"))
 P <- as.list(Parameters$Value)
 names(P) <- Parameters$Parameter
 RPF <- 63
@@ -15,6 +26,7 @@ RPF <- 63
 NOEL <- 10/1000 # mg/kg bw
 TDI <- 0.25/1000 # mg/kg bw
 
+# In vitro estrogenicity values 
 targetCmaxP <- c(0.490,
                  0.359,
                  0.058,
@@ -293,6 +305,6 @@ targetCmaxP <- c(0.490,
   
   All <- rbind(Collect, Collectn)
   
-  write.csv(All, "Updated_Results_ReverseDosimetry.csv")
+  write.csv(All, here(OUTPUT,"Results_QIVIVE.csv"))
 
   
