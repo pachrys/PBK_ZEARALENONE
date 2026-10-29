@@ -14,7 +14,7 @@ The repository has 3 main folders:
 
 The repository contains NG-PBK models predicting the internal concentrations of zearalenone, $\alpha$-zearalenol, zearalenone-glucuronide and $\alpha$-zearalenol-glucuronide in rats and humans. A schematic representation of the models in rat and human can be found in Figure 1.
 
-![Figure 1. Structure of the NG-PBK models in rats and humans](PBK-model-structure.png){#fig-modelStructure}
+![Figure 1. Structure of the NG-PBK models in rats and humans](PBK-model-structure.png) Figure 1. schematic representation of the rat and human NG-PBK models.
 
 ### To run the human NG-PBK model
 
